@@ -1,0 +1,35 @@
+{
+  "name": "@myorg/cached-http-client",
+  "version": "1.0.0",
+  "description": "Generic HTTP client with caching, throttling, and retry logic",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "http",
+    "cache",
+    "retry",
+    "throttle",
+    "rate-limit"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {}
+}

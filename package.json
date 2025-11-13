@@ -1,9 +1,14 @@
 {
-  "name": "email-link-extractor",
+  "name": "email-links-monorepo",
   "version": "1.0.0",
-  "description": "Extract and categorize links from email files using Hexagonal Architecture",
-  "type": "module",
+  "private": true,
+  "description": "Monorepo for email link extractor and cached HTTP client library",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "build": "bun run build:lib",
+    "build:lib": "cd packages/cached-http-client && bun run build",
     "start": "bun run src/cli/index.ts",
     "dev": "bun run --watch src/cli/index.ts"
   },
@@ -14,6 +19,7 @@
     "jszip": "^3.10.1"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
   }
 }
