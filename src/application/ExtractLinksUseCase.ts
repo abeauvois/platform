@@ -15,7 +15,7 @@ interface QueuedLink {
  * Application Use Case: Orchestrates the email link extraction process
  */
 export class ExtractLinksUseCase {
-    private static readonly MAX_WAIT_SECONDS = 5 * 60; // 5 minutes
+    private static readonly MAX_WAIT_SECONDS = 15 * 60; // 15 minutes
     private static readonly RATE_LIMIT_BUFFER_MS = 5000; // 5 second buffer
     private static readonly COUNTDOWN_INTERVAL = 10; // Show countdown every 10 seconds
 
@@ -190,7 +190,7 @@ export class ExtractLinksUseCase {
         console.log(`\n⏳ ${retryQueue.length} Twitter links rate-limited. Reset in ${waitSeconds} seconds`);
 
         if (waitSeconds > ExtractLinksUseCase.MAX_WAIT_SECONDS) {
-            console.log(`⚠️  Wait time exceeds 5 minutes. Skipping retry - links kept as "Unknown"`);
+            console.log(`⚠️  Wait time exceeds 15 minutes. Skipping retry - links kept as "Unknown"`);
             await this.exportResults(categorizedLinks, outputCsvPath, notionDatabaseId);
             return;
         }
@@ -227,6 +227,11 @@ export class ExtractLinksUseCase {
                 console.log(`⏳ ${remaining}s remaining...`);
             }
             await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Clear the rate limit now that we've waited
+        if ('clearRateLimit' in this.tweetScraper) {
+            (this.tweetScraper as any).clearRateLimit();
         }
 
         console.log(`✅ Rate limit reset! Retrying...\n`);

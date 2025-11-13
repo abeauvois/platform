@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ILinkAnalyzer, LinkAnalysis } from '../../domain/ports/ILinkAnalyzer.js';
+import { ILogger } from '../../domain/ports/ILogger.js';
 
 /**
  * Adapter: Implements link analysis using Anthropic's Claude API
@@ -8,7 +9,10 @@ export class AnthropicAnalyzer implements ILinkAnalyzer {
     private readonly client: Anthropic;
     private readonly model = 'claude-3-5-haiku-20241022'; // Free tier model
 
-    constructor(apiKey: string) {
+    constructor(
+        apiKey: string,
+        private readonly logger: ILogger
+    ) {
         this.client = new Anthropic({ apiKey });
     }
 
@@ -79,7 +83,7 @@ URL: ${url}`;
                 description: result.description
             };
         } catch (error) {
-            console.error('Error calling Anthropic API:', error);
+            this.logger.error(`Error calling Anthropic API: ${error instanceof Error ? error.message : error}`);
             throw new Error(`Failed to analyze URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }

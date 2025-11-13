@@ -1,4 +1,5 @@
 import { Client } from '@notionhq/client';
+import type { DatabaseObjectResponse, QueryDataSourceResponse } from '@notionhq/client/build/src/api-endpoints.js';
 import { EmailLink } from '../../domain/entities/EmailLink.js';
 import { INotionWriter } from '../../domain/ports/INotionWriter.js';
 
@@ -41,6 +42,7 @@ export class NotionDatabaseWriter implements INotionWriter {
      * @param urlsToUpdate Set of URLs that should be updated
      */
     async updatePages(links: EmailLink[], databaseId: string, urlsToUpdate: Set<string>): Promise<void> {
+        console.log("🚀 ~ NotionDatabaseWriter ~ updatePages ~ urlsToUpdate:", urlsToUpdate)
         if (urlsToUpdate.size === 0) {
             return;
         }
@@ -71,23 +73,37 @@ export class NotionDatabaseWriter implements INotionWriter {
     }
 
     /**
-     * Find a Notion page by URL
+     * Find a Notion page by URL using the new API structure (Database → Data Sources → Pages)
      */
     private async findPageByUrl(url: string, databaseId: string): Promise<string | null> {
         try {
-            // Use the databases query API (cast to any to work around TypeScript definitions)
-            const response: any = await (this.client as any).databases.query({
+            // Step 1: Get the database and its data sources
+            const database = await this.client.databases.retrieve({
                 database_id: databaseId,
-                filter: {
-                    property: 'Link',
-                    title: {
-                        equals: url,
-                    },
-                },
-            });
+            }) as DatabaseObjectResponse;
 
-            if (response.results && response.results.length > 0) {
-                return response.results[0].id;
+            if (database.object !== 'database' || !database.data_sources?.length) {
+                console.log('No data sources found in database');
+                return null;
+            }
+
+            // Step 2: Query each data source for pages matching the URL
+            // Note: Using 'any' for dataSources.query as the SDK client types don't expose this method yet
+            for (const dataSource of database.data_sources) {
+                const response = await (this.client as any).dataSources.query({
+                    data_source_id: dataSource.id,
+                    filter: {
+                        property: 'Link',
+                        title: {
+                            equals: url,
+                        },
+                    },
+                }) as QueryDataSourceResponse;
+
+                // Step 3: Return the first matching page ID
+                if (response.results && response.results.length > 0) {
+                    return response.results[0].id;
+                }
             }
 
             return null;

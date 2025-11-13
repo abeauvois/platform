@@ -3,6 +3,7 @@
 import { TwitterScraper } from './src/infrastructure/adapters/TwitterScraper.js';
 import { AnthropicAnalyzer } from './src/infrastructure/adapters/AnthropicAnalyzer.js';
 import { EnvConfig } from './src/infrastructure/config/EnvConfig.js';
+import { CliuiLogger } from './src/infrastructure/adapters/CliuiLogger.js';
 import { readFileSync } from 'fs';
 
 async function testTwitterEnrichment() {
@@ -15,9 +16,10 @@ async function testTwitterEnrichment() {
         const twitterBearerToken = config.get('TWITTER_BEARER_TOKEN');
         const anthropicApiKey = config.get('ANTHROPIC_API_KEY');
 
-        // Initialize adapters
-        const twitterScraper = new TwitterScraper(twitterBearerToken);
-        const analyzer = new AnthropicAnalyzer(anthropicApiKey);
+        // Initialize logger and adapters
+        const logger = new CliuiLogger();
+        const twitterScraper = new TwitterScraper(twitterBearerToken, logger);
+        const analyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
 
         // Read test CSV
         const csvContent = readFileSync('data/fixtures/test-output.csv', 'utf-8');

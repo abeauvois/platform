@@ -1,27 +1,70 @@
 import { ITweetScraper } from '../../domain/ports/ITweetScraper.js';
+import { ILogger } from '../../domain/ports/ILogger.js';
+import { CachedHttpClient } from './CachedHttpClient.js';
 
 /**
  * Adapter: Implements tweet scraping using Twitter API v2 with Bearer Token
- * Includes rate limit handling and retry logic
+ * Uses CachedHttpClient for built-in caching, throttling, and retry logic
+ * 
+ * Features:
+ * - Request throttling to prevent hitting rate limits (via CachedHttpClient)
+ * - Automatic rate limit detection and tracking (via CachedHttpClient)
+ * - In-memory caching of tweet content (via CachedHttpClient)
+ * - Exponential backoff retry logic (via CachedHttpClient)
+ * - Support for t.co URL resolution
+ * 
+ * Rate Limit Configuration:
+ * The minRequestIntervalMs parameter controls the minimum time between API requests.
+ * Recommended values by X API tier:
+ * - Free:       60000ms (1 min) - 1 request per 15 mins
+ * - Basic:      4000ms (4 sec) - ~15 requests per 15 mins  
+ * - Pro:        1000ms (1 sec) - 450-900 requests per 15 mins
+ * - Enterprise: 100ms (0.1 sec) - Very high limits
+ * 
+ * Example usage:
+ * ```typescript
+ * // For Basic tier (conservative)
+ * const scraper = new TwitterScraper(bearerToken, logger, 4000);
+ * 
+ * // For Pro tier (default)
+ * const scraper = new TwitterScraper(bearerToken, logger); // Uses 1000ms default
+ * ```
  */
 export class TwitterScraper implements ITweetScraper {
-    private readonly tweetCache: Map<string, string> = new Map();
-    private rateLimitResetTime: number = 0;
+    private readonly httpClient: CachedHttpClient<string>;
 
-    constructor(private readonly bearerToken: string) { }
+    constructor(
+        private readonly bearerToken: string,
+        private readonly logger: ILogger,
+        minRequestIntervalMs: number = 1000 // Default: 1 second between requests
+    ) {
+        // Initialize the generic HTTP client with Twitter-specific settings
+        this.httpClient = new CachedHttpClient<string>(logger, {
+            throttleMs: minRequestIntervalMs,
+            retries: 2,
+            cacheTtl: 0, // No expiration for tweet cache
+        });
+    }
 
     /**
      * Get the rate limit reset time in milliseconds
      */
     getRateLimitResetTime(): number {
-        return this.rateLimitResetTime;
+        return this.httpClient.getRateLimitResetTime();
     }
 
     /**
      * Check if currently rate limited
      */
     isRateLimited(): boolean {
-        return this.rateLimitResetTime > Date.now();
+        return this.httpClient.isRateLimited();
+    }
+
+    /**
+     * Clear the rate limit (for testing or after waiting)
+     */
+    clearRateLimit(): void {
+        this.httpClient.clearRateLimit();
     }
 
     async fetchTweetContent(url: string): Promise<string | null> {
@@ -29,13 +72,13 @@ export class TwitterScraper implements ITweetScraper {
             // If it's a t.co link, resolve it first
             let resolvedUrl = url;
             if (url.includes('t.co/')) {
-                console.log(`  🔗 Resolving t.co shortened URL...`);
+                this.logger.info('🔗 Resolving t.co shortened URL...');
                 const resolved = await this.resolveShortUrl(url);
                 if (resolved) {
                     resolvedUrl = resolved;
-                    console.log(`  ✓ Resolved to: ${resolvedUrl}`);
+                    this.logger.info(`✓ Resolved to: ${resolvedUrl}`);
                 } else {
-                    console.log(`  ⚠️  Could not resolve t.co URL`);
+                    this.logger.warning('Could not resolve t.co URL');
                     return null;
                 }
             }
@@ -43,103 +86,51 @@ export class TwitterScraper implements ITweetScraper {
             // Extract tweet ID from URL
             const tweetId = this.extractTweetId(resolvedUrl);
             if (!tweetId) {
-                console.log(`  ⚠️  Could not extract tweet ID from URL: ${resolvedUrl}`);
+                this.logger.warning(`Could not extract tweet ID from URL: ${resolvedUrl}`);
                 return null;
             }
 
-            // Check cache first
-            if (this.tweetCache.has(tweetId)) {
-                console.log(`  💾 Using cached tweet content`);
-                return this.tweetCache.get(tweetId)!;
-            }
-
-            // Check if we're rate limited
-            const now = Date.now();
-            if (this.rateLimitResetTime > now) {
-                const waitSeconds = Math.ceil((this.rateLimitResetTime - now) / 1000);
-                console.log(`  ⏳ Rate limited. Skipping (resets in ${waitSeconds}s)`);
-                return null;
-            }
-
-            // Fetch with retry logic
-            const content = await this.fetchWithRetry(tweetId);
-
-            // Cache successful result
-            if (content) {
-                this.tweetCache.set(tweetId, content);
-            }
+            // Use CachedHttpClient to fetch with caching, throttling, and retry logic
+            const content = await this.httpClient.fetch(
+                tweetId,
+                async () => await this.fetchTweetFromApi(tweetId)
+            );
 
             return content;
         } catch (error) {
-            console.error(`  ⚠️  Error fetching tweet: ${error instanceof Error ? error.message : error}`);
+            this.logger.error(`Error fetching tweet: ${error instanceof Error ? error.message : error}`);
             return null;
         }
     }
 
-    private async fetchWithRetry(tweetId: string, maxRetries: number = 2): Promise<string | null> {
+    /**
+     * Fetch tweet from Twitter API
+     * This method is passed to CachedHttpClient as the fetcher function
+     */
+    private async fetchTweetFromApi(tweetId: string): Promise<string> {
         const apiUrl = `https://api.twitter.com/2/tweets/${tweetId}?tweet.fields=text,author_id,created_at`;
 
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                // Add delay between retries
-                if (attempt > 0) {
-                    const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-                    console.log(`  ⏳ Retry ${attempt}/${maxRetries} after ${delayMs}ms...`);
-                    await new Promise(resolve => setTimeout(resolve, delayMs));
-                }
+        const response = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `Bearer ${this.bearerToken}`,
+            },
+        });
 
-                const response = await fetch(apiUrl, {
-                    headers: {
-                        'Authorization': `Bearer ${this.bearerToken}`,
-                    },
-                });
-
-                // Handle rate limiting
-                if (response.status === 429) {
-                    const resetTime = response.headers.get('x-rate-limit-reset');
-                    if (resetTime) {
-                        this.rateLimitResetTime = parseInt(resetTime) * 1000;
-                        const waitSeconds = Math.ceil((this.rateLimitResetTime - Date.now()) / 1000);
-                        console.log(`  ⚠️  Rate limited. Resets in ${waitSeconds} seconds`);
-                    } else {
-                        console.log(`  ⚠️  Rate limited. Try again later`);
-                    }
-                    return null;
-                }
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.log(`  ⚠️  Twitter API error: ${response.status} - ${response.statusText}`);
-
-                    // Don't retry on auth errors
-                    if (response.status === 401 || response.status === 403) {
-                        return null;
-                    }
-
-                    // Retry on server errors
-                    if (response.status >= 500 && attempt < maxRetries) {
-                        continue;
-                    }
-
-                    return null;
-                }
-
-                const data: any = await response.json();
-
-                if (data.data && data.data.text) {
-                    return data.data.text;
-                }
-
-                return null;
-            } catch (error) {
-                if (attempt === maxRetries) {
-                    throw error;
-                }
-                // Continue to next retry
-            }
+        // Create error with status for CachedHttpClient to handle
+        if (!response.ok) {
+            const error: any = new Error(`Twitter API error: ${response.status} - ${response.statusText}`);
+            error.status = response.status;
+            error.headers = response.headers;
+            throw error;
         }
 
-        return null;
+        const data: any = await response.json();
+
+        if (data.data && data.data.text) {
+            return data.data.text;
+        }
+
+        throw new Error('No tweet text found in response');
     }
 
     /**
@@ -189,7 +180,7 @@ export class TwitterScraper implements ITweetScraper {
 
             return null;
         } catch (error) {
-            console.log(`  ⚠️  Error resolving URL: ${error instanceof Error ? error.message : error}`);
+            this.logger.warning(`Error resolving URL: ${error instanceof Error ? error.message : error}`);
             return null;
         }
     }

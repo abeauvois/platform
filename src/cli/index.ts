@@ -8,6 +8,7 @@ import { CsvFileWriter } from '../infrastructure/adapters/CsvFileWriter.js';
 import { NotionDatabaseWriter } from '../infrastructure/adapters/NotionDatabaseWriter.js';
 import { TwitterScraper } from '../infrastructure/adapters/TwitterScraper.js';
 import { EnvConfig } from '../infrastructure/config/EnvConfig.js';
+import { CliuiLogger } from '../infrastructure/adapters/CliuiLogger.js';
 
 /**
  * CLI Entry Point: Email Link Extractor
@@ -64,13 +65,16 @@ Architecture:
     const twitterBearerToken = config.get('TWITTER_BEARER_TOKEN');
     console.log('✅ Configuration loaded\n');
 
+    // Initialize logger (infrastructure layer)
+    const logger = new CliuiLogger();
+
     // Initialize adapters (infrastructure layer)
     const zipExtractor = new BunZipExtractor();
     const emailParser = new MimeEmailParser();
-    const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey);
+    const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
     const csvWriter = new CsvFileWriter();
     const notionWriter = new NotionDatabaseWriter(notionToken);
-    const tweetScraper = new TwitterScraper(twitterBearerToken);
+    const tweetScraper = new TwitterScraper(twitterBearerToken, logger);
 
     // Initialize use case (application layer)
     const useCase = new ExtractLinksUseCase(
