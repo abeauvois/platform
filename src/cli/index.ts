@@ -2,7 +2,7 @@
 
 import { ExtractLinksUseCase } from '../application/ExtractLinksUseCase.js';
 import { BunZipExtractor } from '../infrastructure/adapters/BunZipExtractor.js';
-import { MimeEmailParser } from '../infrastructure/adapters/MimeEmailParser.js';
+import { EmailLinksExtractor } from '../infrastructure/adapters/EmailLinksExtractor.js';
 import { AnthropicAnalyzer } from '../infrastructure/adapters/AnthropicAnalyzer.js';
 import { CsvFileWriter } from '../infrastructure/adapters/CsvFileWriter.js';
 import { NotionDatabaseWriter } from '../infrastructure/adapters/NotionDatabaseWriter.js';
@@ -70,7 +70,7 @@ Architecture:
 
     // Initialize adapters (infrastructure layer)
     const zipExtractor = new BunZipExtractor();
-    const emailParser = new MimeEmailParser();
+    const LinksExtractor = new EmailLinksExtractor();
     const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
     const csvWriter = new CsvFileWriter();
     const notionWriter = new NotionDatabaseWriter(notionToken);
@@ -79,7 +79,7 @@ Architecture:
     // Initialize use case (application layer)
     const useCase = new ExtractLinksUseCase(
       zipExtractor,
-      emailParser,
+      LinksExtractor,
       linkAnalyzer,
       csvWriter,
       notionWriter,

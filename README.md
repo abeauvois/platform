@@ -96,7 +96,7 @@ import { BunZipExtractor } from "./infrastructure/adapters/BunZipExtractor.js";
 
 const useCase = new ExtractLinksUseCase(
   new BunZipExtractor(),
-  new MimeEmailParser(),
+  new EmailLinksExtractor(),
   new AnthropicAnalyzer(apiKey),
   new CsvFileWriter()
 );

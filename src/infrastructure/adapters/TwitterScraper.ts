@@ -72,7 +72,6 @@ export class TwitterScraper implements ITweetScraper {
             // If it's a t.co link, resolve it first
             let resolvedUrl = url;
             if (url.includes('t.co/')) {
-                this.logger.info('🔗 Resolving t.co shortened URL...');
                 const resolved = await this.resolveShortUrl(url);
                 if (resolved) {
                     resolvedUrl = resolved;
@@ -164,6 +163,7 @@ export class TwitterScraper implements ITweetScraper {
      */
     private async resolveShortUrl(shortUrl: string): Promise<string | null> {
         try {
+            this.logger.info('🔗 Resolving t.co shortened URL...');
             // Use HEAD request to follow redirects without downloading content
             const response = await fetch(shortUrl, {
                 method: 'HEAD',

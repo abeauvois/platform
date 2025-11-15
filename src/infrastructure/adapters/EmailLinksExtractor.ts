@@ -1,9 +1,9 @@
-import { IEmailParser } from '../../domain/ports/IEmailParser.js';
+import { ILinksExtractor } from '../../domain/ports/ILinksExtractor';
 
 /**
  * Adapter: Parses MIME format emails and extracts HTTP/HTTPS links
  */
-export class MimeEmailParser implements IEmailParser {
+export class EmailLinksExtractor implements ILinksExtractor {
     private readonly URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 
     extractLinks(emailContent: string): string[] {

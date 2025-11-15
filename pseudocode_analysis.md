@@ -271,7 +271,7 @@ export class ExtractLinksConfig {
 export class EmailExtractionService {
   constructor(
     private readonly zipExtractor: IZipExtractor,
-    private readonly emailParser: IEmailParser,
+    private readonly LinksExtractor: ILinksExtractor,
     private readonly logger: ILogger
   ) {}
 

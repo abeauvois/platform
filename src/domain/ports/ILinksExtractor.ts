@@ -1,7 +1,7 @@
 /**
  * Port: Defines interface for parsing email files
  */
-export interface IEmailParser {
+export interface ILinksExtractor {
     /**
      * Extracts HTTP/HTTPS links from email content
      * @param emailContent Raw email file content

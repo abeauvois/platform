@@ -1,5 +1,5 @@
 import { EmailLink } from '../../domain/entities/EmailLink';
-import { IEmailParser } from '../../domain/ports/IEmailParser';
+import { ILinksExtractor } from '../../domain/ports/ILinksExtractor';
 import { ILogger } from '../../domain/ports/ILogger';
 import { IZipExtractor } from '../../domain/ports/IZipExtractor';
 
@@ -9,7 +9,7 @@ import { IZipExtractor } from '../../domain/ports/IZipExtractor';
 export class EmailExtractionService {
     constructor(
         private readonly zipExtractor: IZipExtractor,
-        private readonly emailParser: IEmailParser,
+        private readonly LinksExtractor: ILinksExtractor,
         private readonly logger: ILogger
     ) { }
 
@@ -41,7 +41,7 @@ export class EmailExtractionService {
         const emailLinks: EmailLink[] = [];
 
         for (const [filename, content] of emailFiles.entries()) {
-            const links = this.emailParser.extractLinks(content);
+            const links = this.LinksExtractor.extractLinks(content);
 
             if (links.length > 0) {
                 const mainLink = links[0];
