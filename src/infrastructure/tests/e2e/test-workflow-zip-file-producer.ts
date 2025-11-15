@@ -1,8 +1,8 @@
 /**
- * End-to-End Test for Workflow Pipeline
+ * End-to-End Test for Workflow Pipeline with ZipFileProducer
  * 
- * Tests the complete workflow from actual .eml files through to extracted links:
- * - ZipFileProducer (reads from test_mylinks directory)
+ * Tests the complete workflow from actual zip file through to extracted links:
+ * - ZipFileProducer (reads from test_mylinks.zip file)
  * - EmailParserStage (parses email content)
  * - EmailLinkCollector (collects links)
  * - WorkflowExecutor (orchestrates the pipeline)
@@ -44,19 +44,19 @@ class TestLogger implements ILogger {
 }
 
 async function runWorkflowTest() {
-    console.log('🧪 Starting Workflow Pipeline E2E Test\n');
+    console.log('🧪 Starting Workflow Pipeline E2E Test (ZipFileProducer)\n');
 
-    // Setup: Get path to test fixtures
-    const testFixturesPath = join(process.cwd(), 'data', 'fixtures', 'test_mylinks');
-    console.log(`📁 Test fixtures path: ${testFixturesPath}\n`);
+    // Setup: Get path to test zip file
+    const testZipPath = join(process.cwd(), 'data', 'fixtures', 'test_mylinks.zip');
+    console.log(`📦 Test zip file: ${testZipPath}\n`);
 
     // Initialize real adapters (no mocking)
     const zipExtractor = new BunZipExtractor();
     const linksExtractor = new EmailLinksExtractor();
     const logger = new TestLogger();
 
-    // Create workflow components
-    const producer = new ZipFileProducer(testFixturesPath, zipExtractor);
+    // Create workflow components using ZipFileProducer
+    const producer = new ZipFileProducer(testZipPath, zipExtractor);
     const stage = new EmailParserStage(linksExtractor);
     const pipeline = new Pipeline(stage);
     const consumer = new EmailLinkCollector(logger);
@@ -168,7 +168,7 @@ async function runWorkflowTest() {
     }
 
     console.log('\n✅ All assertions passed!');
-    console.log('🎉 Workflow Pipeline E2E Test completed successfully!\n');
+    console.log('🎉 Workflow Pipeline E2E Test (ZipFileProducer) completed successfully!\n');
 
     return {
         totalLinks: emailLinks.length,

@@ -1,0 +1,27 @@
+MIME-Version: 1.0
+Date: Fri, 15 Nov 2025 19:30:00 +0100
+Message-ID: <test001@example.com>
+Subject: Email with two links
+From: Test User <test@example.com>
+To: Test Recipient <recipient@example.com>
+Content-Type: multipart/alternative; boundary="boundary123"
+
+--boundary123
+Content-Type: text/plain; charset="UTF-8"
+
+Check out these interesting links:
+
+https://github.com/example/project
+
+https://twitter.com/example/user
+
+--boundary123
+Content-Type: text/html; charset="UTF-8"
+
+<div>
+<p>Check out these interesting links:</p>
+<a href="https://github.com/example/project">GitHub Project</a>
+<a href="https://twitter.com/example/user">Twitter</a>
+</div>
+
+--boundary123--

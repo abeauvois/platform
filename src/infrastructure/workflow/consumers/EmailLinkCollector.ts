@@ -19,7 +19,7 @@ export class EmailLinkCollector implements IConsumer<EmailLink> {
 
     async consume(emailLink: EmailLink): Promise<void> {
         this.emailLinks.push(emailLink);
-        this.logger.info(`  📧 ${emailLink.sourceFile}: ${emailLink.url}`);
+        this.logger.info(`  📧 ${emailLink.sourceFile.slice(0, 80)}: ${emailLink.url.slice(0, 50)}`);
     }
 
     async onComplete(): Promise<void> {

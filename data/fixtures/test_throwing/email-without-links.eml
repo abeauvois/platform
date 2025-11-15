@@ -1,0 +1,25 @@
+MIME-Version: 1.0
+Date: Fri, 15 Nov 2025 19:35:00 +0100
+Message-ID: <test002@example.com>
+Subject: Email without any links
+From: Test User <test@example.com>
+To: Test Recipient <recipient@example.com>
+Content-Type: multipart/alternative; boundary="boundary456"
+
+--boundary456
+Content-Type: text/plain; charset="UTF-8"
+
+This is an email with no links at all.
+Just plain text discussing various topics without any URLs.
+It could be about the weather, daily activities, or random thoughts.
+
+--boundary456
+Content-Type: text/html; charset="UTF-8"
+
+<div>
+<p>This is an email with no links at all.</p>
+<p>Just plain text discussing various topics without any URLs.</p>
+<p>It could be about the weather, daily activities, or random thoughts.</p>
+</div>
+
+--boundary456--
