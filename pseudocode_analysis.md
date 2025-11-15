@@ -192,19 +192,9 @@ RETURN categorized links + retry queue
                     └─────────────────┘
 ```
 
-### 4. Retry Mechanism Current vs. Improved
+### 4. Retry Mechanism
 
-**Current Behavior:**
-
-```
-Initial Analysis → 429 Error → Add to Queue → Wait for Reset → Retry Once
-                                                                    │
-                                                              Success | 429 Again
-                                                                    │
-                                                              ✓ Done | ✗ Abandon
-```
-
-**Improved Behavior:**
+**Behavior:**
 
 ```
 Initial Analysis → 429 Error → Add to Queue (attempt=0)

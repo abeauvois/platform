@@ -1,15 +1,20 @@
-import { EmailLink } from '../../domain/entities/EmailLink';
-import { ILinksExtractor } from '../../domain/ports/ILinksExtractor';
-import { ILogger } from '../../domain/ports/ILogger';
-import { IZipExtractor } from '../../domain/ports/IZipExtractor';
+import { EmailLink } from '../../domain/entities/EmailLink.js';
+import { ILinksExtractor } from '../../domain/ports/ILinksExtractor.js';
+import { ILogger } from '../../domain/ports/ILogger.js';
+import { IZipExtractor } from '../../domain/ports/IZipExtractor.js';
+import { Pipeline, WorkflowExecutor } from '../../domain/workflow/index.js';
+import { EmailFile } from '../../domain/entities/EmailFile.js';
+import { ZipFileProducer } from '../../infrastructure/workflow/producers/ZipFileProducer.js';
+import { EmailParserStage } from '../../infrastructure/workflow/stages/EmailParserStage.js';
+import { EmailLinkCollector } from '../../infrastructure/workflow/consumers/EmailLinkCollector.js';
 
 /**
- * Service responsible for extracting and parsing email files
+ * Service responsible for extracting and parsing email files using workflow pipeline
  */
 export class EmailExtractionService {
     constructor(
         private readonly zipExtractor: IZipExtractor,
-        private readonly LinksExtractor: ILinksExtractor,
+        private readonly linksExtractor: ILinksExtractor,
         private readonly logger: ILogger
     ) { }
 
@@ -19,40 +24,41 @@ export class EmailExtractionService {
      * @returns Array of EmailLink objects with extracted links
      */
     async extractAndParseEmails(zipFilePath: string): Promise<EmailLink[]> {
-        const emailFiles = await this.extractFiles(zipFilePath);
-        return this.parseLinks(emailFiles);
-    }
+        // Create workflow components
+        const producer = new ZipFileProducer(zipFilePath, this.zipExtractor);
+        const pipeline = this.createPipeline();
+        const consumer = new EmailLinkCollector(this.logger);
 
-    /**
-     * Extract .eml files from zip archive
-     */
-    private async extractFiles(zipFilePath: string): Promise<Map<string, string>> {
-        this.logger.info('📦 Extracting .eml files from zip...');
-        const emailFiles = await this.zipExtractor.extractEmlFiles(zipFilePath);
-        this.logger.info(`✅ Found ${emailFiles.size} email files`);
-        return emailFiles;
-    }
+        // Create and execute workflow
+        const workflow = new WorkflowExecutor<EmailFile, EmailLink>(
+            producer,
+            pipeline,
+            consumer
+        );
 
-    /**
-     * Parse links from email files
-     */
-    private parseLinks(emailFiles: Map<string, string>): EmailLink[] {
-        this.logger.info('\n🔍 Parsing emails and extracting links...');
-        const emailLinks: EmailLink[] = [];
-
-        for (const [filename, content] of emailFiles.entries()) {
-            const links = this.LinksExtractor.extractLinks(content);
-
-            if (links.length > 0) {
-                const mainLink = links[0];
-                emailLinks.push(new EmailLink(mainLink, '', '', filename));
-                this.logger.info(`  📧 ${filename}: ${mainLink}`);
-            } else {
-                this.logger.warning(`  ⚠️  ${filename}: No links found`);
+        // Execute with error handling
+        await workflow.execute({
+            onStart: async () => {
+                this.logger.info('� Extracting .eml files from zip...');
+            },
+            onError: async (error: Error, item: EmailFile) => {
+                this.logger.warning(`  ⚠️  ${item.filename}: ${error.message}`);
+            },
+            onComplete: async (stats) => {
+                this.logger.info(`✅ Found ${stats.itemsProduced} email files`);
             }
-        }
+        });
 
-        this.logger.info(`\n✅ Extracted ${emailLinks.length} links`);
-        return emailLinks;
+        // Return collected links
+        return consumer.getEmailLinks();
+    }
+
+    /**
+     * Create the pipeline for email processing
+     * This can be customized or extended with additional stages
+     */
+    private createPipeline(): Pipeline<EmailFile, EmailLink> {
+        const emailParserStage = new EmailParserStage(this.linksExtractor);
+        return new Pipeline<EmailFile, EmailLink>(emailParserStage);
     }
 }
