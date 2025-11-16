@@ -13,7 +13,15 @@
     "cli:help": "bun run src/cli/index.ts --help",
     "cli:version": "bun run src/cli/index.ts --version",
     "start": "bun run src/cli/index.ts",
-    "dev": "bun run --watch src/cli/index.ts"
+    "dev": "bun run --watch src/cli/index.ts",
+    "it": "bun run test:integration:notion && bun run test:integration:twitter",
+    "it:notion": "bun run src/infrastructure/tests/integration/notion/test-notion.ts",
+    "it:notion:findpage": "bun run src/infrastructure/tests/integration/notion/test-findPageByUrl.ts",
+    "it:twitter": "echo 'Running Twitter integration tests...' && bun run src/infrastructure/tests/integration/twitter/test-twitter-enrichment.ts",
+    "test:e2e": "bun run test:e2e:zip && bun run test:e2e:folder",
+    "test:e2e:zip": "bun run src/infrastructure/tests/e2e/test-workflow-zip-file-producer.ts",
+    "test:e2e:folder": "bun run src/infrastructure/tests/e2e/test-workflow-single-folder-producer.ts",
+    "test:unit": "bun run src/infrastructure/tests/unit/test-csv-repository.ts && bun run src/infrastructure/tests/unit/test-deduplication.ts"
   },
 
   "dependencies": {

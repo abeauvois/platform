@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { EmailLink } from '../../../../domain/entities/EmailLink.js';
-import { NotionDatabaseWriter } from '../../../adapters/NotionDatabaseWriter.js';
+import { NotionLinkRepository } from '../../../repositories/NotionLinkRepository.js';
 import { EnvConfig } from '../../../config/EnvConfig.js';
 
 async function testNotion() {
@@ -36,8 +36,8 @@ async function testNotion() {
 
         console.log('🧪 Testing Notion integration with 3 test links...\n');
 
-        const notionWriter = new NotionDatabaseWriter(notionToken);
-        await notionWriter.write(testLinks, notionDatabaseId);
+        const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
+        await notionRepository.saveMany(testLinks);
 
         console.log('\n✅ Test completed successfully!');
     } catch (error) {

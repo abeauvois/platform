@@ -3,7 +3,7 @@ import { ICsvWriter } from '../domain/ports/ICsvWriter';
 import { ILinksExtractor } from '../domain/ports/ILinksExtractor';
 import { ILinkAnalyzer } from '../domain/ports/ILinkAnalyzer';
 import { ILogger } from '../domain/ports/ILogger';
-import { INotionWriter } from '../domain/ports/INotionWriter';
+import { ILinkRepository } from '../domain/ports/ILinkRepository';
 import { ITweetScraper } from '../domain/ports/ITweetScraper';
 import { IZipExtractor } from '../domain/ports/IZipExtractor';
 import { LinkExtractionOrchestrator } from './LinkExtractionOrchestrator';
@@ -32,7 +32,7 @@ export class ExtractLinksUseCase {
         private readonly linksExtractor: ILinksExtractor,
         private readonly linkAnalyzer: ILinkAnalyzer,
         private readonly csvWriter: ICsvWriter,
-        private readonly notionWriter: INotionWriter,
+        private readonly notionRepository: ILinkRepository,
         private readonly tweetScraper: ITweetScraper,
         private readonly logger: ILogger
     ) {
@@ -40,7 +40,7 @@ export class ExtractLinksUseCase {
         const extractionService = new EmailExtractionService(zipExtractor, linksExtractor, logger);
         const analysisService = new LinkAnalysisService(linkAnalyzer, tweetScraper, logger);
         const retryHandler = new RetryHandlerService(tweetScraper, linkAnalyzer, logger);
-        const exportService = new ExportService(csvWriter, notionWriter, logger);
+        const exportService = new ExportService(csvWriter, notionRepository, logger);
 
         this.orchestrator = new LinkExtractionOrchestrator(
             extractionService,

@@ -5,7 +5,7 @@ import { ZipExtractor } from '../infrastructure/adapters/ZipExtractor.js';
 import { EmailLinksExtractor } from '../infrastructure/adapters/EmailLinksExtractor.js';
 import { AnthropicAnalyzer } from '../infrastructure/adapters/AnthropicAnalyzer.js';
 import { CsvFileWriter } from '../infrastructure/adapters/CsvFileWriter.js';
-import { NotionDatabaseWriter } from '../infrastructure/adapters/NotionDatabaseWriter.js';
+import { NotionLinkRepository } from '../infrastructure/repositories/NotionLinkRepository.js';
 import { TwitterScraper } from '../infrastructure/adapters/TwitterScraper.js';
 import { EnvConfig } from '../infrastructure/config/EnvConfig.js';
 import { CliuiLogger } from '../infrastructure/adapters/CliuiLogger.js';
@@ -99,14 +99,14 @@ async function main() {
     const linksExtractor = new EmailLinksExtractor();
     const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
     const csvWriter = new CsvFileWriter();
-    const notionWriter = new NotionDatabaseWriter(notionToken);
+    const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
     const tweetScraper = new TwitterScraper(twitterBearerToken, logger);
 
     // Initialize services (application layer)
     const extractionService = new EmailExtractionService(zipExtractor, linksExtractor, logger);
     const analysisService = new LinkAnalysisService(linkAnalyzer, tweetScraper, logger);
     const retryHandler = new RetryHandlerService(tweetScraper, linkAnalyzer, logger);
-    const exportService = new ExportService(csvWriter, notionWriter, logger);
+    const exportService = new ExportService(csvWriter, notionRepository, logger);
 
     // Initialize use case (application layer)
     const useCase = new LinkExtractionOrchestrator(
