@@ -1,9 +1,9 @@
 import { ILinksExtractor } from '../../domain/ports/ILinksExtractor';
 
 /**
- * Adapter: Parses MIME format emails and extracts HTTP/HTTPS links
+ * Adapter: Extracts HTTP/HTTPS links
  */
-export class EmailLinksExtractor implements ILinksExtractor {
+export class HttpLinksExtractor implements ILinksExtractor {
     private readonly URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 
     extractLinks(emailContent: string): string[] {

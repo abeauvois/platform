@@ -2,7 +2,7 @@
 
 import { cli } from 'cleye';
 import { ZipExtractor } from '../infrastructure/adapters/ZipExtractor.js';
-import { EmailLinksExtractor } from '../infrastructure/adapters/EmailLinksExtractor.js';
+import { HttpLinksExtractor } from '../infrastructure/adapters/HttpLinksExtractor.js';
 import { AnthropicAnalyzer } from '../infrastructure/adapters/AnthropicAnalyzer.js';
 import { CsvFileWriter } from '../infrastructure/adapters/CsvFileWriter.js';
 import { NotionLinkRepository } from '../infrastructure/repositories/NotionLinkRepository.js';
@@ -96,7 +96,7 @@ async function main() {
     // Initialize adapters (infrastructure layer)
     const logger = new CliuiLogger();
     const zipExtractor = new ZipExtractor();
-    const linksExtractor = new EmailLinksExtractor();
+    const linksExtractor = new HttpLinksExtractor();
     const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
     const csvWriter = new CsvFileWriter();
     const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);

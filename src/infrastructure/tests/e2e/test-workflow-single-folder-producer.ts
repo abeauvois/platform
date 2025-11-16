@@ -10,7 +10,7 @@
  * No mocking - uses real fixtures and adapters
  */
 
-import { EmailLinksExtractor } from '../../adapters/EmailLinksExtractor.js';
+import { HttpLinksExtractor } from '../../adapters/HttpLinksExtractor.js';
 import { SingleFolderProducer } from '../../workflow/producers/SingleFolderProducer.js';
 import { EmailParserStage } from '../../workflow/stages/EmailParserStage.js';
 import { EmailLinkCollector } from '../../workflow/consumers/EmailLinkCollector.js';
@@ -98,7 +98,7 @@ async function testWithUri(uri: string) {
     console.log(`\n🔗 Using URI: ${uri}\n`);
 
     // Initialize real adapters (no mocking)
-    const linksExtractor = new EmailLinksExtractor();
+    const linksExtractor = new HttpLinksExtractor();
     const logger = new TestLogger();
 
     // Create workflow components using SingleFolderProducer with URI
@@ -230,7 +230,7 @@ async function testWithUri(uri: string) {
 async function testPartialExtraction(uri: string) {
     console.log(`\n🔗 Using URI: ${uri}\n`);
 
-    const linksExtractor = new EmailLinksExtractor();
+    const linksExtractor = new HttpLinksExtractor();
     const logger = new TestLogger();
 
     const producer = new SingleFolderProducer(uri);
@@ -297,7 +297,7 @@ async function testErrorCase(uri: string, description: string) {
     console.log(`   Testing: ${description}`);
     console.log(`   URI: ${uri}`);
 
-    const linksExtractor = new EmailLinksExtractor();
+    const linksExtractor = new HttpLinksExtractor();
     const logger = new TestLogger();
 
     try {
