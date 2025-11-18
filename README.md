@@ -105,6 +105,53 @@ bun run cli:version
 bun run src/cli/index.ts --version
 ```
 
+### Gmail Command
+
+Fetch recent Gmail messages received since the last execution:
+
+```bash
+bun run cli gmail
+```
+
+**Features:**
+
+- Incremental fetching - only shows new emails since last run
+- Persistent tracking via `.gmail-last-run` timestamp file
+- Rich display with sender, subject, date, and preview
+- OAuth 2.0 authentication
+
+**Setup:**
+
+1. Create a Google Cloud project and enable Gmail API
+2. Create OAuth 2.0 credentials (Desktop app)
+3. Generate a refresh token
+4. Add credentials to `.env`:
+
+```bash
+GMAIL_CLIENT_ID=your_client_id
+GMAIL_CLIENT_SECRET=your_client_secret
+GMAIL_REFRESH_TOKEN=your_refresh_token
+```
+
+📖 **Full documentation**: See [docs/GMAIL_COMMAND.md](./docs/GMAIL_COMMAND.md) for detailed setup instructions, troubleshooting, and examples.
+
+### Select Command
+
+Interactively select and filter links from a CSV file:
+
+```bash
+bun run cli select output.csv
+```
+
+**Features:**
+
+- Interactive UI powered by @clack/prompts
+- Multiple selection modes (by link, by tag, all)
+- Export selected links to new CSV
+- Display in terminal or copy to clipboard
+
+📖 **Full documentation**: See [docs/SELECT_COMMAND.md](./docs/SELECT_COMMAND.md)
+
 ## Output Format
 
 The CSV file contains three columns:

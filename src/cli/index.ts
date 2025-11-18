@@ -15,14 +15,22 @@ import { RetryHandlerService } from '../application/services/RetryHandlerService
 import { ExportService } from '../application/services/ExportService.js';
 import { LinkExtractionOrchestrator } from '../application/LinkExtractionOrchestrator.js';
 import { selectCommand } from './commands/select.js';
+import { gmailCommand } from './commands/gmail.js';
 
 /**
  * CLI Entry Point: Email Link Extractor
  * Modern CLI powered by Cleye + Clack for beautiful interactive prompts
  */
 
-// Check for 'select' command first (manual parsing)
-if (process.argv.includes('select')) {
+// Check for 'gmail' command first (manual parsing)
+if (process.argv.includes('gmail')) {
+  (async () => {
+    await gmailCommand();
+    process.exit(0);
+  })();
+}
+// Check for 'select' command (manual parsing)
+else if (process.argv.includes('select')) {
   (async () => {
     const selectIndex = process.argv.indexOf('select');
     const inputCsv = process.argv[selectIndex + 1];
@@ -57,7 +65,8 @@ if (process.argv.includes('select')) {
         'bun run src/cli/index.ts data/fixtures/test_mylinks',
         'bun run src/cli/index.ts mylinks.zip results.csv',
         'bun run src/cli/index.ts mylinks.zip --verbose',
-        'bun run src/cli/index.ts select output.csv'
+        'bun run src/cli/index.ts select output.csv',
+        'bun run src/cli/index.ts gmail'
       ],
 
       render: (nodes, renderers) => {
@@ -65,9 +74,13 @@ if (process.argv.includes('select')) {
         return `${defaultRender}
 
 Commands:
+  gmail                     Fetch recent Gmail messages since last execution
   select [input-csv]        Interactively select and filter links from CSV
 
 Environment Variables:
+  GMAIL_CLIENT_ID           Your Gmail OAuth client ID (required for gmail command)
+  GMAIL_CLIENT_SECRET       Your Gmail OAuth client secret (required for gmail command)
+  GMAIL_REFRESH_TOKEN       Your Gmail OAuth refresh token (required for gmail command)
   ANTHROPIC_API_KEY         Your Anthropic API key (required, from .env file)
   NOTION_INTEGRATION_TOKEN  Your Notion integration token (required, from .env file)
   NOTION_DATABASE_ID        Your Notion database ID (required, from .env file)
