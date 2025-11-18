@@ -31,8 +31,12 @@ export async function gmailCommand() {
         const gmailClient = new GoogleGmailClient(clientId, clientSecret, refreshToken, logger);
         const timestampRepo = new FileTimestampRepository('.gmail-last-run');
 
-        // Execute use case with optional email filter
-        const useCase = new FetchRecentGmailsUseCase(gmailClient, timestampRepo, filterEmail);
+        // Create workflow service
+        const { GmailFetchWorkflowService } = await import('../../application/services/GmailFetchWorkflowService.js');
+        const workflowService = new GmailFetchWorkflowService(gmailClient, timestampRepo, logger, filterEmail);
+
+        // Execute use case with workflow service
+        const useCase = new FetchRecentGmailsUseCase(workflowService);
         const messages = await useCase.execute();
 
         spinner.stop(`Found ${messages.length} new message${messages.length === 1 ? '' : 's'}`);

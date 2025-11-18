@@ -17,17 +17,15 @@ export class ExportService {
      * Export results to both CSV and Notion
      * @param links Categorized links to export
      * @param outputCsvPath Path for CSV output
-     * @param notionDatabaseId Notion database ID
      * @param updatedUrls Optional set of URLs that were updated (for Notion page updates)
      */
     async exportResults(
         links: EmailLink[],
         outputCsvPath: string,
-        notionDatabaseId: string,
         updatedUrls?: Set<string>
     ): Promise<void> {
         await this.exportToCsv(links, outputCsvPath);
-        await this.exportToNotion(links, notionDatabaseId, updatedUrls);
+        await this.exportToNotion(links, updatedUrls);
     }
 
     /**
@@ -45,7 +43,6 @@ export class ExportService {
      */
     private async exportToNotion(
         links: EmailLink[],
-        databaseId: string,
         updatedUrls?: Set<string>
     ): Promise<void> {
         this.logger.info('\n📝 Exporting to Notion...');

@@ -14,7 +14,7 @@ import { statSync } from 'fs';
 /**
  * Service responsible for extracting and parsing email files using workflow pipeline
  */
-export class EmailExtractionService {
+export class EmailExtractionWorkflowService {
     constructor(
         private readonly zipExtractor: IZipExtractor,
         private readonly linksExtractor: ILinksExtractor,

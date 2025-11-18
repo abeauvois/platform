@@ -11,7 +11,7 @@
  */
 
 import { ZipExtractor } from '../../adapters/ZipExtractor.js';
-import { HttpLinksExtractor } from '../../adapters/HttpLinksExtractor.js';
+import { HttpLinksParser } from '../../adapters/HttpLinksParser.js';
 import { ZipFileProducer } from '../../workflow/producers/ZipFileProducer.js';
 import { EmailParserStage } from '../../workflow/stages/EmailParserStage.js';
 import { EmailLinkCollector } from '../../workflow/consumers/EmailLinkCollector.js';
@@ -52,7 +52,7 @@ async function runWorkflowTest() {
 
     // Initialize real adapters (no mocking)
     const zipExtractor = new ZipExtractor();
-    const linksExtractor = new HttpLinksExtractor();
+    const linksExtractor = new HttpLinksParser();
     const logger = new TestLogger();
 
     // Create workflow components using ZipFileProducer

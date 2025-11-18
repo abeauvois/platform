@@ -36,17 +36,17 @@ export class ZipExtractor implements IZipExtractor {
             const buffer = readFileSync(zipFilePath);
             const zip = await JSZip.loadAsync(buffer);
 
-            const emlFiles = new Map<string, string>();
+            const files = new Map<string, string>();
 
             for (const [filename, zipEntry] of Object.entries(zip.files)) {
                 // Only process files with allowed extensions (not directories)
                 if (!zipEntry.dir && this.hasAllowedExtension(filename)) {
                     const content = await zipEntry.async('text');
-                    emlFiles.set(filename, content);
+                    files.set(filename, content);
                 }
             }
 
-            return emlFiles;
+            return files;
         } catch (error) {
             throw new Error(`Failed to extract zip file: ${zipFilePath}. ${error instanceof Error ? error.message : String(error)}`);
         }

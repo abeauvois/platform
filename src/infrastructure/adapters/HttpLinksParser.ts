@@ -3,7 +3,7 @@ import { ILinksExtractor } from '../../domain/ports/ILinksExtractor';
 /**
  * Adapter: Extracts HTTP/HTTPS links
  */
-export class HttpLinksExtractor implements ILinksExtractor {
+export class HttpLinksParser implements ILinksExtractor {
     private readonly URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 
     extractLinks(emailContent: string): string[] {

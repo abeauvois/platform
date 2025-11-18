@@ -1,7 +1,7 @@
 import { ILogger } from '../domain/ports/ILogger';
 import { QueuedLink } from './QueuedLink.types';
 
-import { EmailExtractionService } from './services/EmailExtractionService';
+import { EmailExtractionWorkflowService } from './services/EmailExtractionWorkflowService';
 import { ExportService } from './services/ExportService';
 import { LinkAnalysisService } from './services/LinkAnalysisService';
 import { RetryHandlerService } from './services/RetryHandlerService';
@@ -12,7 +12,7 @@ import { RetryHandlerService } from './services/RetryHandlerService';
  */
 export class LinkExtractionOrchestrator {
     constructor(
-        private readonly extractionService: EmailExtractionService,
+        private readonly extractionService: EmailExtractionWorkflowService,
         private readonly analysisService: LinkAnalysisService,
         private readonly retryHandler: RetryHandlerService,
         private readonly exportService: ExportService,
@@ -23,12 +23,10 @@ export class LinkExtractionOrchestrator {
      * Execute the complete link extraction workflow
      * @param sourcePath Path to emails source (zip file or directory)
      * @param outputCsvPath Path for CSV output
-     * @param notionDatabaseId Notion database ID for export
      */
     async execute(
         sourcePath: string,
-        outputCsvPath: string,
-        notionDatabaseId: string
+        outputCsvPath: string
     ): Promise<void> {
         // 1. Extract and parse emails
         const emailLinks = await this.extractionService.extractAndParseEmails(sourcePath);
@@ -46,7 +44,6 @@ export class LinkExtractionOrchestrator {
         await this.exportService.exportResults(
             categorizedLinks,
             outputCsvPath,
-            notionDatabaseId,
             allUpdatedUrls
         );
 

@@ -7,7 +7,7 @@ import { ILinkRepository } from '../domain/ports/ILinkRepository';
 import { ITweetScraper } from '../domain/ports/ITweetScraper';
 import { IZipExtractor } from '../domain/ports/IZipExtractor';
 import { LinkExtractionOrchestrator } from './LinkExtractionOrchestrator';
-import { EmailExtractionService } from './services/EmailExtractionService';
+import { EmailExtractionWorkflowService } from './services/EmailExtractionWorkflowService';
 import { ExportService } from './services/ExportService';
 import { LinkAnalysisService } from './services/LinkAnalysisService';
 import { RetryHandlerService } from './services/RetryHandlerService';
@@ -37,7 +37,7 @@ export class ExtractLinksUseCase {
         private readonly logger: ILogger
     ) {
         // Initialize the new service-based architecture
-        const extractionService = new EmailExtractionService(zipExtractor, linksExtractor, logger);
+        const extractionService = new EmailExtractionWorkflowService(zipExtractor, linksExtractor, logger);
         const analysisService = new LinkAnalysisService(linkAnalyzer, tweetScraper, logger);
         const retryHandler = new RetryHandlerService(tweetScraper, linkAnalyzer, logger);
         const exportService = new ExportService(csvWriter, notionRepository, logger);
@@ -60,6 +60,6 @@ export class ExtractLinksUseCase {
      */
     async execute(zipFilePath: string, outputCsvPath: string, notionDatabaseId: string): Promise<void> {
         // Delegate to the new orchestrator implementation
-        return this.orchestrator.execute(zipFilePath, outputCsvPath, notionDatabaseId);
+        return this.orchestrator.execute(zipFilePath, outputCsvPath);
     }
 }
