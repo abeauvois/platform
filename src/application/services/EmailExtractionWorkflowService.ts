@@ -1,4 +1,4 @@
-import { EmailLink } from '../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { ILinksExtractor } from '../../domain/ports/ILinksExtractor.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
 import { IZipExtractor } from '../../domain/ports/IZipExtractor.js';
@@ -8,7 +8,7 @@ import { IProducer } from '../../domain/workflow/IProducer.js';
 import { ZipFileProducer } from '../../infrastructure/workflow/producers/ZipFileProducer.js';
 import { SingleFolderProducer } from '../../infrastructure/workflow/producers/SingleFolderProducer.js';
 import { EmailParserStage } from '../../infrastructure/workflow/stages/EmailParserStage.js';
-import { EmailLinkCollector } from '../../infrastructure/workflow/consumers/EmailLinkCollector.js';
+import { BookmarkCollector } from '../../infrastructure/workflow/consumers/BookmarkCollector.js';
 import { statSync } from 'fs';
 
 /**
@@ -24,16 +24,16 @@ export class EmailExtractionWorkflowService {
     /**
      * Extract email files from zip and parse links from them
      * @param sourcePath Path to the zip file or directory containing .eml files
-     * @returns Array of EmailLink objects with extracted links
+     * @returns Array of Bookmark objects with extracted links
      */
-    async extractAndParseEmails(sourcePath: string): Promise<EmailLink[]> {
+    async extractAndParseEmails(sourcePath: string): Promise<Bookmark[]> {
         // Determine source type and create appropriate producer
         const producer = this.createProducer(sourcePath);
         const pipeline = this.createPipeline();
-        const consumer = new EmailLinkCollector(this.logger);
+        const consumer = new BookmarkCollector(this.logger);
 
         // Create and execute workflow
-        const workflow = new WorkflowExecutor<EmailFile, EmailLink>(
+        const workflow = new WorkflowExecutor<EmailFile, Bookmark>(
             producer,
             pipeline,
             consumer
@@ -53,7 +53,7 @@ export class EmailExtractionWorkflowService {
         });
 
         // Return collected links
-        return consumer.getEmailLinks();
+        return consumer.getBookmarks();
     }
 
     /**
@@ -86,8 +86,8 @@ export class EmailExtractionWorkflowService {
      * Create the pipeline for email processing
      * This can be customized or extended with additional stages
      */
-    private createPipeline(): Pipeline<EmailFile, EmailLink> {
+    private createPipeline(): Pipeline<EmailFile, Bookmark> {
         const emailParserStage = new EmailParserStage(this.linksExtractor);
-        return new Pipeline<EmailFile, EmailLink>(emailParserStage);
+        return new Pipeline<EmailFile, Bookmark>(emailParserStage);
     }
 }

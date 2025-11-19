@@ -1,4 +1,4 @@
-import { EmailLink } from '../entities/EmailLink.js';
+import { Bookmark } from '../entities/Bookmark.js';
 
 /**
  * Port: Defines interface for writing CSV files
@@ -6,8 +6,8 @@ import { EmailLink } from '../entities/EmailLink.js';
 export interface ICsvWriter {
     /**
      * Writes email links to a CSV file
-     * @param links Array of EmailLink entities
+     * @param links Array of Bookmark entities
      * @param outputPath Path for the output CSV file
      */
-    write(links: EmailLink[], outputPath: string): Promise<void>;
+    write(links: Bookmark[], outputPath: string): Promise<void>;
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { TwitterScraper } from '../../../adapters/TwitterScraper.js';
-import { AnthropicAnalyzer } from '../../../adapters/AnthropicAnalyzer.js';
+import { UrlAndContextAnthropicAnalyser } from '../../../adapters/UrlAndContextAnthropicAnalyser.js';
 import { EnvConfig } from '../../../config/EnvConfig.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
 import { readFileSync } from 'fs';
@@ -19,7 +19,7 @@ async function testTwitterEnrichment() {
         // Initialize logger and adapters
         const logger = new CliuiLogger();
         const twitterScraper = new TwitterScraper(twitterBearerToken, logger);
-        const analyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
+        const analyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
 
         // Read test CSV
         const csvContent = readFileSync('data/fixtures/test-output.csv', 'utf-8');

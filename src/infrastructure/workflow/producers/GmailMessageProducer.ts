@@ -1,6 +1,6 @@
-import { IProducer } from '../../../domain/workflow/IProducer.js';
 import { GmailMessage } from '../../../domain/entities/GmailMessage.js';
-import { IGmailClient } from '../../../domain/ports/IGmailClient.js';
+import { IProducer } from '../../../domain/workflow/IProducer.js';
+import { IEmailClient } from '../../../domain/ports/IEmailClient.js';
 import { ITimestampRepository } from '../../../domain/ports/ITimestampRepository.js';
 
 /**
@@ -9,7 +9,7 @@ import { ITimestampRepository } from '../../../domain/ports/ITimestampRepository
  */
 export class GmailMessageProducer implements IProducer<GmailMessage> {
     constructor(
-        private readonly gmailClient: IGmailClient,
+        private readonly gmailClient: IEmailClient,
         private readonly timestampRepository: ITimestampRepository,
         private readonly filterEmail?: string
     ) { }

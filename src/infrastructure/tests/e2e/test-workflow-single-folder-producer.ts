@@ -4,7 +4,7 @@
  * Tests the complete workflow from actual .eml files through to extracted links:
  * - SingleFolderProducer (reads from test_mylinks directory using URI)
  * - EmailParserStage (parses email content)
- * - EmailLinkCollector (collects links)
+ * - BookmarkCollector (collects links)
  * - WorkflowExecutor (orchestrates the pipeline)
  * 
  * No mocking - uses real fixtures and adapters
@@ -13,7 +13,7 @@
 import { HttpLinksParser } from '../../adapters/HttpLinksParser.js';
 import { SingleFolderProducer } from '../../workflow/producers/SingleFolderProducer.js';
 import { EmailParserStage } from '../../workflow/stages/EmailParserStage.js';
-import { EmailLinkCollector } from '../../workflow/consumers/EmailLinkCollector.js';
+import { BookmarkCollector } from '../../workflow/consumers/BookmarkCollector.js';
 import { Pipeline } from '../../../domain/workflow/Pipeline.js';
 import { WorkflowExecutor } from '../../../domain/workflow/WorkflowExecutor.js';
 import { ILogger } from '../../../domain/ports/ILogger.js';
@@ -105,7 +105,7 @@ async function testWithUri(uri: string) {
     const producer = new SingleFolderProducer(uri);
     const stage = new EmailParserStage(linksExtractor);
     const pipeline = new Pipeline(stage);
-    const consumer = new EmailLinkCollector(logger);
+    const consumer = new BookmarkCollector(logger);
 
     // Create workflow executor
     const workflow = new WorkflowExecutor(producer, pipeline, consumer);
@@ -132,28 +132,28 @@ async function testWithUri(uri: string) {
     });
 
     // Get results
-    const emailLinks = consumer.getEmailLinks();
+    const Bookmarks = consumer.getBookmarks();
 
     // Display results
     console.log('\n📊 Results Summary:');
-    console.log(`   Total links extracted: ${emailLinks.length}`);
+    console.log(`   Total links extracted: ${Bookmarks.length}`);
     console.log(`   Errors encountered: ${errorCount}`);
 
     // Group links by source file
     const linksBySource = new Map<string, string[]>();
-    emailLinks.forEach(link => {
-        const urls = linksBySource.get(link.sourceFile) || [];
+    Bookmarks.forEach(link => {
+        const urls = linksBySource.get(link.sourceUri) || [];
         urls.push(link.url);
-        linksBySource.set(link.sourceFile, urls);
+        linksBySource.set(link.sourceUri, urls);
     });
 
     console.log(`   Unique emails with links: ${linksBySource.size}`);
 
     // Display sample results
-    if (emailLinks.length > 0) {
+    if (Bookmarks.length > 0) {
         console.log('\n📝 Sample Results:');
-        emailLinks.slice(0, 3).forEach(link => {
-            console.log(`\n   Source: ${link.sourceFile}`);
+        Bookmarks.slice(0, 3).forEach(link => {
+            console.log(`\n   Source: ${link.sourceUri}`);
             console.log(`   URL: ${link.url}`);
         });
     }
@@ -162,10 +162,10 @@ async function testWithUri(uri: string) {
     console.log('\n🔍 Running Assertions:');
 
     // Assert: Should extract some links
-    if (emailLinks.length === 0) {
+    if (Bookmarks.length === 0) {
         throw new Error('❌ FAILED: No links were extracted');
     }
-    console.log(`   ✓ Extracted ${emailLinks.length} link(s)`);
+    console.log(`   ✓ Extracted ${Bookmarks.length} link(s)`);
 
     // Assert: Should have processed multiple source files
     if (linksBySource.size === 0) {
@@ -174,24 +174,24 @@ async function testWithUri(uri: string) {
     console.log(`   ✓ Processed ${linksBySource.size} email file(s)`);
 
     // Assert: Known emails should be present
-    const linkedinEmailLinks = Array.from(linksBySource.keys()).find(filename =>
+    const linkedinBookmarks = Array.from(linksBySource.keys()).find(filename =>
         filename.includes('Cette architecture divise par 5 le temps de livraison')
     );
-    if (!linkedinEmailLinks) {
+    if (!linkedinBookmarks) {
         throw new Error('❌ FAILED: Expected LinkedIn email not found');
     }
     console.log(`   ✓ Found expected LinkedIn email`);
 
     // Assert: Links should be valid URLs
-    const hasValidUrls = emailLinks.some(link => link.url.startsWith('http'));
+    const hasValidUrls = Bookmarks.some(link => link.url.startsWith('http'));
     if (!hasValidUrls) {
         throw new Error('❌ FAILED: No valid HTTP URLs found');
     }
     console.log(`   ✓ Found valid HTTP URLs`);
 
     // Assert: Should contain expected domains
-    const hasLinkedIn = emailLinks.some(link => link.url.includes('linkedin.com'));
-    const hasTwitter = emailLinks.some(link => link.url.includes('x.com') || link.url.includes('twitter.com'));
+    const hasLinkedIn = Bookmarks.some(link => link.url.includes('linkedin.com'));
+    const hasTwitter = Bookmarks.some(link => link.url.includes('x.com') || link.url.includes('twitter.com'));
 
     if (!hasLinkedIn) {
         console.warn('   ⚠️  Warning: No LinkedIn links found (expected some)');
@@ -217,10 +217,10 @@ async function testWithUri(uri: string) {
     console.log('🎉 Workflow Pipeline E2E Test completed successfully!\n');
 
     return {
-        totalLinks: emailLinks.length,
-        totalSourceFiles: linksBySource.size,
+        totalLinks: Bookmarks.length,
+        totalsourceUris: linksBySource.size,
         errors: errorCount,
-        emailLinks
+        Bookmarks
     };
 }
 
@@ -236,7 +236,7 @@ async function testPartialExtraction(uri: string) {
     const producer = new SingleFolderProducer(uri);
     const stage = new EmailParserStage(linksExtractor);
     const pipeline = new Pipeline(stage);
-    const consumer = new EmailLinkCollector(logger);
+    const consumer = new BookmarkCollector(logger);
     const workflow = new WorkflowExecutor(producer, pipeline, consumer);
 
     await workflow.execute({
@@ -251,23 +251,23 @@ async function testPartialExtraction(uri: string) {
         }
     });
 
-    const emailLinks = consumer.getEmailLinks();
+    const Bookmarks = consumer.getBookmarks();
 
     console.log('\n📊 Results:');
-    console.log(`   Total links extracted: ${emailLinks.length}`);
+    console.log(`   Total links extracted: ${Bookmarks.length}`);
     console.log(`   Files processed: 2 (1 with links, 1 without)`);
 
     // Assertions
     console.log('\n🔍 Running Assertions:');
 
     // We expect at least 1 link (the email with links should contribute at least one)
-    if (emailLinks.length < 1) {
-        throw new Error(`❌ FAILED: Expected at least 1 link, got ${emailLinks.length}`);
+    if (Bookmarks.length < 1) {
+        throw new Error(`❌ FAILED: Expected at least 1 link, got ${Bookmarks.length}`);
     }
-    console.log(`   ✓ Extracted ${emailLinks.length} link(s) from file with links`);
+    console.log(`   ✓ Extracted ${Bookmarks.length} link(s) from file with links`);
 
     // Check that we found GitHub link (the primary link from the email)
-    const hasGitHub = emailLinks.some(link => link.url.includes('github.com'));
+    const hasGitHub = Bookmarks.some(link => link.url.includes('github.com'));
 
     if (!hasGitHub) {
         throw new Error('❌ FAILED: Did not find expected GitHub link');
@@ -275,17 +275,17 @@ async function testPartialExtraction(uri: string) {
     console.log(`   ✓ Found expected GitHub link`);
 
     // All links should be from the same source file
-    const sourceFiles = new Set(emailLinks.map(link => link.sourceFile));
-    if (sourceFiles.size !== 1) {
-        throw new Error(`❌ FAILED: Links should be from 1 file, but found ${sourceFiles.size} source files`);
+    const sourceUris = new Set(Bookmarks.map(link => link.sourceUri));
+    if (sourceUris.size !== 1) {
+        throw new Error(`❌ FAILED: Links should be from 1 file, but found ${sourceUris.size} source files`);
     }
     console.log(`   ✓ All links from single source file (as expected)`);
 
-    const sourceFile = Array.from(sourceFiles)[0];
-    if (!sourceFile.includes('email-with-links.eml')) {
-        throw new Error(`❌ FAILED: Expected source to be 'email-with-links.eml', got ${sourceFile}`);
+    const sourceUri = Array.from(sourceUris)[0];
+    if (!sourceUri.includes('email-with-links.eml')) {
+        throw new Error(`❌ FAILED: Expected source to be 'email-with-links.eml', got ${sourceUri}`);
     }
-    console.log(`   ✓ Source file is correct: ${sourceFile}`);
+    console.log(`   ✓ Source file is correct: ${sourceUri}`);
 
     console.log('\n✅ Part extraction test passed!');
 }
@@ -304,7 +304,7 @@ async function testErrorCase(uri: string, description: string) {
         const producer = new SingleFolderProducer(uri);
         const stage = new EmailParserStage(linksExtractor);
         const pipeline = new Pipeline(stage);
-        const consumer = new EmailLinkCollector(logger);
+        const consumer = new BookmarkCollector(logger);
         const workflow = new WorkflowExecutor(producer, pipeline, consumer);
 
         // Try to execute - this should throw an error

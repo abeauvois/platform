@@ -4,7 +4,7 @@
  */
 
 import { CsvLinkRepository } from '../../repositories/CsvLinkRepository.js';
-import { EmailLink } from '../../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../../domain/entities/Bookmark.js';
 import { unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 
@@ -26,7 +26,7 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            const link = new EmailLink('https://example.com/test', 'Tech', 'A test article', 'test.eml');
+            const link = new Bookmark('https://example.com/test', 'Tech', 'A test article', 'test.eml');
             await repo.save(link);
 
             const found = await repo.findByUrl('https://example.com/test');
@@ -52,7 +52,7 @@ async function runTests() {
                 throw new Error('❌ FAILED: Link should not exist in empty repository');
             }
 
-            await repo.save(new EmailLink('https://example.com/test', '', '', ''));
+            await repo.save(new Bookmark('https://example.com/test', '', '', ''));
 
             const exists2 = await repo.exists('https://example.com/test');
             if (!exists2) {
@@ -69,9 +69,9 @@ async function runTests() {
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
             const links = [
-                new EmailLink('https://example.com/1', 'Tech', 'First', 'email1.eml'),
-                new EmailLink('https://example.com/2', 'Business', 'Second', 'email2.eml'),
-                new EmailLink('https://example.com/3', 'Science', 'Third', 'email3.eml'),
+                new Bookmark('https://example.com/1', 'Tech', 'First', 'email1.eml'),
+                new Bookmark('https://example.com/2', 'Business', 'Second', 'email2.eml'),
+                new Bookmark('https://example.com/3', 'Science', 'Third', 'email3.eml'),
             ];
 
             await repo.saveMany(links);
@@ -90,8 +90,8 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            await repo.save(new EmailLink('https://a.com', 'A', 'Link A', 'a.eml'));
-            await repo.save(new EmailLink('https://b.com', 'B', 'Link B', 'b.eml'));
+            await repo.save(new Bookmark('https://a.com', 'A', 'Link A', 'a.eml'));
+            await repo.save(new Bookmark('https://b.com', 'B', 'Link B', 'b.eml'));
 
             const allLinks = await repo.findAll();
             if (allLinks.length !== 2) {
@@ -112,8 +112,8 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            await repo.save(new EmailLink('https://example.com', 'OldTag', 'Old description', 'old.eml'));
-            await repo.save(new EmailLink('https://example.com', 'NewTag', 'New description', 'new.eml'));
+            await repo.save(new Bookmark('https://example.com', 'OldTag', 'Old description', 'old.eml'));
+            await repo.save(new Bookmark('https://example.com', 'NewTag', 'New description', 'new.eml'));
 
             const found = await repo.findByUrl('https://example.com');
             if (!found || found.tag !== 'NewTag' || found.description !== 'New description') {
@@ -134,7 +134,7 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            const complexLink = new EmailLink(
+            const complexLink = new Bookmark(
                 'https://example.com/article?param=value&other=test',
                 'Tag, with, commas',
                 'Description with "quotes" and\nnewlines',
@@ -166,7 +166,7 @@ async function runTests() {
 
             // First instance
             const repo1 = new CsvLinkRepository(TEST_CSV_PATH);
-            await repo1.save(new EmailLink('https://persist.com', 'Persistent', 'Persisted data', 'test.eml'));
+            await repo1.save(new Bookmark('https://persist.com', 'Persistent', 'Persisted data', 'test.eml'));
 
             // Second instance (should read from file)
             const repo2 = new CsvLinkRepository(TEST_CSV_PATH);
@@ -185,8 +185,8 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            await repo.save(new EmailLink('https://a.com', '', '', ''));
-            await repo.save(new EmailLink('https://b.com', '', '', ''));
+            await repo.save(new Bookmark('https://a.com', '', '', ''));
+            await repo.save(new Bookmark('https://b.com', '', '', ''));
 
             let allLinks = await repo.findAll();
             if (allLinks.length !== 2) {

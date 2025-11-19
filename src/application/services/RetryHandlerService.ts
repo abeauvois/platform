@@ -1,5 +1,5 @@
-import { EmailLink } from '../../domain/entities/EmailLink';
-import { ILinkAnalyzer } from '../../domain/ports/ILinkAnalyzer';
+import { Bookmark } from '../../domain/entities/Bookmark';
+import { IContentAnalyser } from '../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../domain/ports/ILogger';
 import { ITweetScraper } from '../../domain/ports/ITweetScraper';
 
@@ -21,7 +21,7 @@ export interface RetryResult {
 export class RetryHandlerService {
     constructor(
         private readonly tweetScraper: ITweetScraper,
-        private readonly linkAnalyzer: ILinkAnalyzer,
+        private readonly linkAnalyzer: IContentAnalyser,
         private readonly logger: ILogger,
         private readonly maxAttempts: number = ExtractLinksConfig.RATE_LIMIT.MAX_RETRY_ATTEMPTS
     ) { }
@@ -34,7 +34,7 @@ export class RetryHandlerService {
      */
     async handleRetryQueue(
         retryQueue: QueuedLink[],
-        categorizedLinks: EmailLink[]
+        categorizedLinks: Bookmark[]
     ): Promise<RetryResult> {
         const waitSeconds = this.getRateLimitWaitTime();
 
@@ -54,7 +54,7 @@ export class RetryHandlerService {
      */
     private async retryQueuedLinks(
         retryQueue: QueuedLink[],
-        categorizedLinks: EmailLink[]
+        categorizedLinks: Bookmark[]
     ): Promise<RetryResult> {
         this.logger.info(`🔄 Retrying ${retryQueue.length} rate-limited links...`);
         const updatedUrls = new Set<string>();
@@ -103,7 +103,7 @@ export class RetryHandlerService {
      */
     private async retryLink(queuedLink: QueuedLink): Promise<{
         success: boolean;
-        enriched: EmailLink | null;
+        enriched: Bookmark | null;
         shouldRetryAgain: boolean;
     }> {
         try {

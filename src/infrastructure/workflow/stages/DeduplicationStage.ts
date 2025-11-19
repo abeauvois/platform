@@ -1,5 +1,5 @@
 import { IStage } from '../../../domain/workflow/IStage.js';
-import { EmailLink } from '../../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../../domain/entities/Bookmark.js';
 import { ILinkRepository } from '../../../domain/ports/ILinkRepository.js';
 import { ILogger } from '../../../domain/ports/ILogger.js';
 
@@ -7,7 +7,7 @@ import { ILogger } from '../../../domain/ports/ILogger.js';
  * Workflow Stage: Filters out duplicate links by checking against a repository
  * Returns empty array for duplicates, single-item array for unique links
  */
-export class DeduplicationStage implements IStage<EmailLink, EmailLink> {
+export class DeduplicationStage implements IStage<Bookmark, Bookmark> {
     private duplicateCount = 0;
 
     constructor(
@@ -15,7 +15,7 @@ export class DeduplicationStage implements IStage<EmailLink, EmailLink> {
         private readonly logger: ILogger
     ) { }
 
-    async *process(link: EmailLink): AsyncIterable<EmailLink> {
+    async *process(link: Bookmark): AsyncIterable<Bookmark> {
         const exists = await this.repository.exists(link.url);
 
         if (exists) {

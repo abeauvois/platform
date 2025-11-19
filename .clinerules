@@ -96,11 +96,11 @@ Examples:
 
 | Component Type | Location | Example |
 |----------------|----------|---------|
-| Domain Entity | `src/domain/entities/` | `EmailLink.ts` |
+| Domain Entity | `src/domain/entities/` | `Bookmark.ts` |
 | Domain Port | `src/domain/ports/` | `ILinkRepository.ts` |
 | Use Case | `src/application/` | `ExtractLinksUseCase.ts` |
 | Service | `src/application/services/` | `LinkAnalysisService.ts` |
-| Adapter | `src/infrastructure/adapters/` | `AnthropicAnalyzer.ts` |
+| Adapter | `src/infrastructure/adapters/` | `UrlAndContextAnthropicAnalyser.ts` |
 | Repository | `src/infrastructure/repositories/` | `NotionLinkRepository.ts` |
 | CLI Command | `src/cli/commands/` | `select.ts` |
 | Unit Test | `src/infrastructure/tests/unit/` | `test-*.ts` |
@@ -127,10 +127,10 @@ async function analyzeLink(url) {
 
 ```typescript
 // ✅ GOOD: Use .js extension for imports (required by Bun/ESM)
-import { EmailLink } from './domain/entities/EmailLink.js';
+import { Bookmark } from './domain/entities/Bookmark.js';
 
 // ❌ WRONG: Missing .js extension
-import { EmailLink } from './domain/entities/EmailLink';
+import { Bookmark } from './domain/entities/Bookmark';
 ```
 
 ### Dependency Injection
@@ -139,14 +139,14 @@ import { EmailLink } from './domain/entities/EmailLink';
 // ✅ GOOD: Constructor injection with interfaces
 export class LinkAnalysisService {
   constructor(
-    private readonly analyzer: ILinkAnalyzer,
+    private readonly analyzer: IContentAnalyser,
     private readonly logger: ILogger
   ) {}
 }
 
 // ❌ AVOID: Direct instantiation
 export class LinkAnalysisService {
-  private analyzer = new AnthropicAnalyzer();
+  private analyzer = new UrlAndContextAnthropicAnalyser();
 }
 ```
 
@@ -233,8 +233,8 @@ export class NewUseCase {
 ```typescript
 // 1. Define interface in src/domain/ports/
 export interface ILinkRepository {
-  save(link: EmailLink): Promise<void>;
-  findByUrl(url: string): Promise<EmailLink | null>;
+  save(link: Bookmark): Promise<void>;
+  findByUrl(url: string): Promise<Bookmark | null>;
 }
 
 // 2. Write tests for implementation
@@ -242,7 +242,7 @@ export interface ILinkRepository {
 
 // 3. Implement in src/infrastructure/repositories/
 export class NewRepository implements ILinkRepository {
-  async save(link: EmailLink): Promise<void> {
+  async save(link: Bookmark): Promise<void> {
     // Implementation
   }
 }
@@ -271,7 +271,7 @@ test("should do expected work", () => {
 
 ```typescript
 // WRONG: Domain importing from Infrastructure
-// src/domain/entities/EmailLink.ts
+// src/domain/entities/Bookmark.ts
 import { NotionClient } from '../../infrastructure/adapters/NotionClient.js';
 
 // RIGHT: Domain defines port, Infrastructure implements it

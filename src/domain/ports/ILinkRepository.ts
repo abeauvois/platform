@@ -1,7 +1,7 @@
-import { EmailLink } from '../entities/EmailLink.js';
+import { Bookmark } from '../entities/Bookmark.js';
 
 /**
- * Repository Port: Abstract storage interface for EmailLink entities
+ * Repository Port: Abstract storage interface for Bookmark entities
  * Enables duplicate detection and persistence across multiple storage backends
  */
 export interface ILinkRepository {
@@ -15,27 +15,27 @@ export interface ILinkRepository {
     /**
      * Find a link by its URL
      * @param url The URL to search for
-     * @returns The EmailLink if found, null otherwise
+     * @returns The Bookmark if found, null otherwise
      */
-    findByUrl(url: string): Promise<EmailLink | null>;
+    findByUrl(url: string): Promise<Bookmark | null>;
 
     /**
      * Save a single link
-     * @param link The EmailLink to save
+     * @param link The Bookmark to save
      */
-    save(link: EmailLink): Promise<void>;
+    save(link: Bookmark): Promise<void>;
 
     /**
      * Save multiple links at once
-     * @param links Array of EmailLinks to save
+     * @param links Array of Bookmarks to save
      */
-    saveMany(links: EmailLink[]): Promise<void>;
+    saveMany(links: Bookmark[]): Promise<void>;
 
     /**
      * Retrieve all stored links
-     * @returns Array of all EmailLinks
+     * @returns Array of all Bookmarks
      */
-    findAll(): Promise<EmailLink[]>;
+    findAll(): Promise<Bookmark[]>;
 
     /**
      * Clear all stored links (useful for testing)

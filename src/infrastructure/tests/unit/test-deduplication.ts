@@ -5,7 +5,7 @@
 
 import { DeduplicationStage } from '../../workflow/stages/DeduplicationStage.js';
 import { InMemoryLinkRepository } from '../../repositories/InMemoryLinkRepository.js';
-import { EmailLink } from '../../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../../domain/entities/Bookmark.js';
 import { ILogger } from '../../../domain/ports/ILogger.js';
 
 // Simple test logger
@@ -43,8 +43,8 @@ async function runTests() {
         const logger = new TestLogger();
         const stage = new DeduplicationStage(repo, logger);
 
-        const link1 = new EmailLink('https://example.com/1', '', '', 'email1.eml');
-        const link2 = new EmailLink('https://example.com/2', '', '', 'email2.eml');
+        const link1 = new Bookmark('https://example.com/1', '', '', 'email1.eml');
+        const link2 = new Bookmark('https://example.com/2', '', '', 'email2.eml');
 
         const results1 = [];
         for await (const result of stage.process(link1)) {
@@ -75,8 +75,8 @@ async function runTests() {
         const logger = new TestLogger();
         const stage = new DeduplicationStage(repo, logger);
 
-        const link1 = new EmailLink('https://example.com/same', 'tag1', 'desc1', 'email1.eml');
-        const link2 = new EmailLink('https://example.com/same', 'tag2', 'desc2', 'email2.eml'); // Same URL
+        const link1 = new Bookmark('https://example.com/same', 'tag1', 'desc1', 'email1.eml');
+        const link2 = new Bookmark('https://example.com/same', 'tag2', 'desc2', 'email2.eml'); // Same URL
 
         // Process first link
         const results1 = [];
@@ -114,7 +114,7 @@ async function runTests() {
         const logger = new TestLogger();
 
         // Pre-populate repository with existing links
-        const existingLink = new EmailLink('https://already-exists.com', 'Old', 'Old description', 'old.eml');
+        const existingLink = new Bookmark('https://already-exists.com', 'Old', 'Old description', 'old.eml');
         await repo.save(existingLink);
 
         console.log(`  ℹ️  Pre-populated repository with 1 existing link`);
@@ -122,7 +122,7 @@ async function runTests() {
         const stage = new DeduplicationStage(repo, logger);
 
         // Try to process the same URL
-        const newLink = new EmailLink('https://already-exists.com', 'New', 'New description', 'new.eml');
+        const newLink = new Bookmark('https://already-exists.com', 'New', 'New description', 'new.eml');
         const results = [];
         for await (const result of stage.process(newLink)) {
             results.push(result);
@@ -156,7 +156,7 @@ async function runTests() {
 
         let passedThrough = 0;
         for (const url of urls) {
-            const link = new EmailLink(url, '', '', 'test.eml');
+            const link = new Bookmark(url, '', '', 'test.eml');
             for await (const result of stage.process(link)) {
                 passedThrough++;
             }

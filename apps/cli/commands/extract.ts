@@ -1,6 +1,6 @@
 import { ZipExtractor } from '../../../src/infrastructure/adapters/ZipExtractor.js';
 import { HttpLinksParser } from '../../../src/infrastructure/adapters/HttpLinksParser.js';
-import { AnthropicAnalyzer } from '../../../src/infrastructure/adapters/AnthropicAnalyzer.js';
+import { UrlAndContextAnthropicAnalyser } from '../../../src/infrastructure/adapters/UrlAndContextAnthropicAnalyser.js';
 import { CsvFileWriter } from '../../../src/infrastructure/adapters/CsvFileWriter.js';
 import { NotionLinkRepository } from '../../../src/infrastructure/repositories/NotionLinkRepository.js';
 import { TwitterScraper } from '../../../src/infrastructure/adapters/TwitterScraper.js';
@@ -44,7 +44,7 @@ export async function extractCommand(inputPath?: string, outputCsvPath: string =
         const logger = new CliuiLogger();
         const zipExtractor = new ZipExtractor();
         const httpLinksParser = new HttpLinksParser();
-        const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
+        const linkAnalyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
         const csvWriter = new CsvFileWriter();
         const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
         const tweetScraper = new TwitterScraper(twitterBearerToken, logger);

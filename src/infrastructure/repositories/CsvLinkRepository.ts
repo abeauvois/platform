@@ -1,16 +1,16 @@
-import { EmailLink } from '../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { ILinkRepository } from '../../domain/ports/ILinkRepository.js';
 import { readFile, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 
 /**
  * CSV File Implementation of ILinkRepository
- * Stores and retrieves EmailLink entities from a CSV file
- * CSV Format: URL,Tag,Description,SourceFile,CreatedAt,UpdatedAt
+ * Stores and retrieves Bookmark entities from a CSV file
+ * CSV Format: URL,Tag,Description,sourceUri,CreatedAt,UpdatedAt
  */
 export class CsvLinkRepository implements ILinkRepository {
     private readonly filePath: string;
-    private cache: Map<string, EmailLink> | null = null;
+    private cache: Map<string, Bookmark> | null = null;
 
     constructor(filePath: string) {
         this.filePath = filePath;
@@ -21,18 +21,18 @@ export class CsvLinkRepository implements ILinkRepository {
         return this.cache!.has(url);
     }
 
-    async findByUrl(url: string): Promise<EmailLink | null> {
+    async findByUrl(url: string): Promise<Bookmark | null> {
         await this.ensureCache();
         return this.cache!.get(url) || null;
     }
 
-    async save(link: EmailLink): Promise<void> {
+    async save(link: Bookmark): Promise<void> {
         await this.ensureCache();
         this.cache!.set(link.url, link);
         await this.writeToFile();
     }
 
-    async saveMany(links: EmailLink[]): Promise<void> {
+    async saveMany(links: Bookmark[]): Promise<void> {
         await this.ensureCache();
         for (const link of links) {
             this.cache!.set(link.url, link);
@@ -40,7 +40,7 @@ export class CsvLinkRepository implements ILinkRepository {
         await this.writeToFile();
     }
 
-    async findAll(): Promise<EmailLink[]> {
+    async findAll(): Promise<Bookmark[]> {
         await this.ensureCache();
         return Array.from(this.cache!.values());
     }
@@ -77,11 +77,11 @@ export class CsvLinkRepository implements ILinkRepository {
             for (const line of dataLines) {
                 const parsed = this.parseCsvLine(line);
                 if (parsed && parsed.url) {
-                    const link = new EmailLink(
+                    const link = new Bookmark(
                         parsed.url,
                         parsed.tag || '',
                         parsed.description || '',
-                        parsed.sourceFile || '',
+                        parsed.sourceUri || '',
                         parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
                         parsed.updatedAt ? new Date(parsed.updatedAt) : new Date()
                     );
@@ -105,7 +105,7 @@ export class CsvLinkRepository implements ILinkRepository {
             const lines: string[] = [];
 
             // Header
-            lines.push('URL,Tag,Description,SourceFile,CreatedAt,UpdatedAt');
+            lines.push('URL,Tag,Description,sourceUri,CreatedAt,UpdatedAt');
 
             // Data rows
             for (const link of this.cache.values()) {
@@ -119,14 +119,14 @@ export class CsvLinkRepository implements ILinkRepository {
     }
 
     /**
-     * Convert EmailLink to CSV line
+     * Convert Bookmark to CSV line
      */
-    private toCsvLine(link: EmailLink): string {
+    private toCsvLine(link: Bookmark): string {
         return [
             this.escapeCsvField(link.url),
             this.escapeCsvField(link.tag),
             this.escapeCsvField(link.description),
-            this.escapeCsvField(link.sourceFile),
+            this.escapeCsvField(link.sourceUri),
             this.escapeCsvField(link.createdAt.toISOString()),
             this.escapeCsvField(link.updatedAt.toISOString()),
         ].join(',');
@@ -139,7 +139,7 @@ export class CsvLinkRepository implements ILinkRepository {
         url: string;
         tag: string;
         description: string;
-        sourceFile: string;
+        sourceUri: string;
         createdAt?: string;
         updatedAt?: string;
     } | null {
@@ -154,7 +154,7 @@ export class CsvLinkRepository implements ILinkRepository {
                 url: fields[0] || '',
                 tag: fields[1] || '',
                 description: fields[2] || '',
-                sourceFile: fields[3] || '',
+                sourceUri: fields[3] || '',
                 createdAt: fields[4] || undefined,
                 updatedAt: fields[5] || undefined,
             };

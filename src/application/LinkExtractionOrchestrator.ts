@@ -29,10 +29,10 @@ export class LinkExtractionOrchestrator {
         outputCsvPath: string
     ): Promise<void> {
         // 1. Extract and parse emails
-        const emailLinks = await this.extractionService.extractAndParseEmails(sourcePath);
+        const Bookmarks = await this.extractionService.extractAndParseEmails(sourcePath);
 
         // 2. Analyze links with AI
-        const { categorizedLinks, retryQueue } = await this.analysisService.analyzeLinks(emailLinks);
+        const { categorizedLinks, retryQueue } = await this.analysisService.analyzeLinks(Bookmarks);
 
         // 3. Handle retries with recursive logic for multiple attempts
         let allUpdatedUrls = new Set<string>();

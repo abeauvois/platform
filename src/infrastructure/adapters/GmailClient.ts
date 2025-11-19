@@ -1,13 +1,13 @@
 import { google } from 'googleapis';
-import { IGmailClient } from '../../domain/ports/IGmailClient.js';
-import { GmailMessage } from '../../domain/entities/GmailMessage.js';
+import { IEmailClient } from '../../domain/ports/IEmailClient.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
+import { GmailMessage } from '../../domain/entities/GmailMessage.js';
 
 /**
  * Infrastructure Adapter: GmailClient
  * 
  * Connects to Gmail API to fetch messages.
- * Implements IGmailClient port.
+ * Implements IEmailClient port.
  * 
  * Requires Gmail API credentials:
  * - GMAIL_CLIENT_ID
@@ -15,7 +15,7 @@ import { ILogger } from '../../domain/ports/ILogger.js';
  * - GMAIL_REFRESH_TOKEN
  */
 
-export class GmailClient implements IGmailClient {
+export class GmailClient implements IEmailClient {
     private gmail: any;
 
     constructor(
@@ -47,13 +47,7 @@ export class GmailClient implements IGmailClient {
 
             // Convert date to Gmail query format (timestamp in seconds)
             const timestamp = Math.floor(since.getTime() / 1000);
-            let query = `after:${timestamp}`;
-
-            // Add sender filter if provided
-            if (filterEmail) {
-                query += ` from:${filterEmail}`;
-                this.logger.info(`Filtering by sender: ${filterEmail}`);
-            }
+            let query = this.buildQuery(timestamp, filterEmail);
 
             this.logger.info(`gmail: ${query}`);
 
@@ -102,6 +96,17 @@ export class GmailClient implements IGmailClient {
         }
     }
 
+    private buildQuery(timestamp: number, filterEmail: string | undefined) {
+        let query = `after:${timestamp}`;
+
+        // Add sender filter if provided
+        if (filterEmail) {
+            query += ` from:${filterEmail}`;
+            this.logger.info(`Filtering by sender: ${filterEmail}`);
+        }
+        return query;
+    }
+
     private parseGmailMessage(messageData: any): GmailMessage | null {
         try {
             const headers = messageData.payload?.headers || [];
@@ -124,7 +129,7 @@ export class GmailClient implements IGmailClient {
             // Extract snippet (preview text)
             const snippet = messageData.snippet || '';
 
-            const content = messageData.payload.parts.map((part: any) => decodeBase64(part.body.data || '')).join('')
+            const content = messageData.payload.parts.map((part: any) => GmailClient.decodeBase64(part.body.data || '')).join('')
 
             return new GmailMessage(messageData.id, subject, from, receivedAt, snippet, content);
         } catch (error) {
@@ -134,25 +139,26 @@ export class GmailClient implements IGmailClient {
             return null;
         }
     }
-}
-function decodeBase64(input: any): string {
-    if (!input) return '';
 
-    let str = String(input);
+    private static decodeBase64(input: any): string {
+        if (!input) return '';
 
-    // Gmail returns base64url (URL-safe) encoded strings. Convert to regular base64.
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
+        let str = String(input);
 
-    // Pad with '=' to make length a multiple of 4
-    const pad = str.length % 4;
-    if (pad) {
-        str += '='.repeat(4 - pad);
-    }
+        // Gmail returns base64url (URL-safe) encoded strings. Convert to regular base64.
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
 
-    try {
-        return Buffer.from(str, 'base64').toString('utf8');
-    } catch {
-        return '';
+        // Pad with '=' to make length a multiple of 4
+        const pad = str.length % 4;
+        if (pad) {
+            str += '='.repeat(4 - pad);
+        }
+
+        try {
+            return Buffer.from(str, 'base64').toString('utf8');
+        } catch {
+            return '';
+        }
     }
 }
 

@@ -1,9 +1,6 @@
-import { ILinksExtractor } from '../../domain/ports/ILinksExtractor';
 
-/**
- * Adapter: Extracts HTTP/HTTPS links
- */
-export class HttpLinksParser implements ILinksExtractor {
+
+export class HtmlLinksParser {
     private readonly URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 
     extractLinks(emailContent: string): string[] {
@@ -29,7 +26,7 @@ export class HttpLinksParser implements ILinksExtractor {
             }
         }
 
-        return links;
+        return [...links];
     }
 
     private decodeHtmlEntities(text: string): string {

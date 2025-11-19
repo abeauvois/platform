@@ -1,49 +1,39 @@
+import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { GmailMessage } from '../../domain/entities/GmailMessage.js';
-import { IGmailClient } from '../../domain/ports/IGmailClient.js';
+import { IContentAnalyser } from '../../domain/ports/IContentAnalyser.js';
+import { IEmailClient } from '../../domain/ports/IEmailClient.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
 import { ITimestampRepository } from '../../domain/ports/ITimestampRepository.js';
 import { Pipeline, WorkflowExecutor } from '../../domain/workflow/index.js';
-import { GmailMessageProducer } from '../../infrastructure/workflow/producers/GmailMessageProducer.js';
 
-/**
- * Service responsible for fetching Gmail messages using workflow pipeline
- * 
- * This service orchestrates:
- * - Producer: Fetches messages from Gmail API
- * - Pipeline: Pass-through (no transformation needed)
- * - Consumer: Collects messages for output
- */
-export class GmailFetchWorkflowService {
+import { BookmarkCollector } from '../../infrastructure/workflow/consumers/BookmarkCollector.js';
+import { GmailMessageProducer } from '../../infrastructure/workflow/producers/GmailMessageProducer.js';
+import { GmailContentAnalyserStage } from '../../infrastructure/workflow/stages/GmailContentAnalyserStage.js';
+
+export class GmailBookmarksWorkflowService {
     constructor(
-        private readonly gmailClient: IGmailClient,
+        private readonly gmailClient: IEmailClient,
+        private readonly anthropicClient: IContentAnalyser,
         private readonly timestampRepository: ITimestampRepository,
+        private readonly filterEmail: string,
         private readonly logger: ILogger,
-        private readonly filterEmail?: string
     ) { }
 
     /**
      * Fetch Gmail messages received since last execution
-     * @returns Array of GmailMessage objects
+     * @returns Array of Bookmark objects
      */
-    async fetchRecentMessages(): Promise<GmailMessage[]> {
-        // Create producer, pipeline, and consumer
+    async fetchRecentMessages(): Promise<Bookmark[]> {
         const producer = new GmailMessageProducer(
             this.gmailClient,
             this.timestampRepository,
             this.filterEmail
         );
 
-        // Empty pipeline - no transformation needed for Gmail messages
-        const pipeline = new Pipeline<GmailMessage, GmailMessage>();
-
-        const consumer = new GmailMessageCollector(this.logger);
-
-        // Create and execute workflow
-        const workflow = new WorkflowExecutor<GmailMessage, GmailMessage>(
-            producer,
-            pipeline,
-            consumer
-        );
+        const stage2 = new GmailContentAnalyserStage(this.anthropicClient);
+        const pipeline = new Pipeline().addStage(stage2)//.addStage(stage2);
+        const consumer = new BookmarkCollector(this.logger)
+        const workflow = new WorkflowExecutor(producer, pipeline, consumer)
 
         // Execute with error handling
         await workflow.execute({
@@ -58,7 +48,6 @@ export class GmailFetchWorkflowService {
             }
         });
 
-        // Return collected messages
-        return consumer.getMessages();
+        return consumer.getBookmarks();
     }
 }

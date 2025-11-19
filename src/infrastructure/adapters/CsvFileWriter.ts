@@ -1,11 +1,11 @@
-import { EmailLink } from '../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { ICsvWriter } from '../../domain/ports/ICsvWriter.js';
 
 /**
  * Adapter: Implements CSV file writing using Bun's native file system
  */
 export class CsvFileWriter implements ICsvWriter {
-    async write(links: EmailLink[], outputPath: string): Promise<void> {
+    async write(links: Bookmark[], outputPath: string): Promise<void> {
         // CSV header
         const header = 'link,tag,description\n';
 

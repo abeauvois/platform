@@ -86,7 +86,7 @@ Architecture:
     // Import dependencies dynamically to avoid loading them for other commands
     const { ZipExtractor } = await import('../../src/infrastructure/adapters/ZipExtractor.js');
     const { HttpLinksParser } = await import('../../src/infrastructure/adapters/HttpLinksParser.js');
-    const { AnthropicAnalyzer } = await import('../../src/infrastructure/adapters/AnthropicAnalyzer.js');
+    const { UrlAndContextAnthropicAnalyser } = await import('../../src/infrastructure/adapters/UrlAndContextAnthropicAnalyser.js');
     const { CsvFileWriter } = await import('../../src/infrastructure/adapters/CsvFileWriter.js');
     const { NotionLinkRepository } = await import('../../src/infrastructure/repositories/NotionLinkRepository.js');
     const { TwitterScraper } = await import('../../src/infrastructure/adapters/TwitterScraper.js');
@@ -121,7 +121,7 @@ Architecture:
     const logger = new CliuiLogger();
     const zipExtractor = new ZipExtractor();
     const httpLinksParser = new HttpLinksParser();
-    const linkAnalyzer = new AnthropicAnalyzer(anthropicApiKey, logger);
+    const linkAnalyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
     const csvWriter = new CsvFileWriter();
     const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
     const tweetScraper = new TwitterScraper(twitterBearerToken, logger);

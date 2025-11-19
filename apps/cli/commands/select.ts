@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 import { CsvFileWriter } from '../../infrastructure/adapters/CsvFileWriter.js';
-import { EmailLink } from '../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 
@@ -30,7 +30,7 @@ export async function selectCommand(inputCsv?: string) {
         // Read and parse CSV
         p.log.info(`Reading links from ${csvPath}...`);
 
-        let links: EmailLink[];
+        let links: Bookmark[];
         try {
             const csvContent = readFileSync(csvPath, 'utf-8');
             const records = parse(csvContent, {
@@ -38,11 +38,11 @@ export async function selectCommand(inputCsv?: string) {
                 skip_empty_lines: true
             });
 
-            links = records.map((record: any) => new EmailLink(
+            links = records.map((record: any) => new Bookmark(
                 record.url || record.link, // Handle both 'url' and 'link' column names
                 record.tag || '',
                 record.description || '',
-                record.sourceFile || '',
+                record.sourceUri || '',
                 record.createdAt ? new Date(record.createdAt) : new Date(),
                 record.updatedAt ? new Date(record.updatedAt) : new Date()
             ));
@@ -68,7 +68,7 @@ export async function selectCommand(inputCsv?: string) {
             }
             acc[tag].push(link);
             return acc;
-        }, {} as Record<string, EmailLink[]>);
+        }, {} as Record<string, Bookmark[]>);
 
         // Show selection mode options
         const selectionMode = await p.select({
@@ -85,7 +85,7 @@ export async function selectCommand(inputCsv?: string) {
             process.exit(0);
         }
 
-        let selectedLinks: EmailLink[] = [];
+        let selectedLinks: Bookmark[] = [];
 
         if (selectionMode === 'all') {
             selectedLinks = links;

@@ -82,13 +82,12 @@ export class WorkflowExecutor<TInput, TOutput> {
                         stats.itemsProcessed++;
 
                         try {
-                            // Consume the result
                             await this.consumer.consume(result);
                             stats.itemsConsumed++;
                         } catch (error) {
                             stats.errors++;
                             if (options?.onError) {
-                                await options.onError(error as Error, item);
+                                await options.onError(error as Error, item as TInput);
                             } else {
                                 throw error;
                             }
@@ -97,7 +96,7 @@ export class WorkflowExecutor<TInput, TOutput> {
                 } catch (error) {
                     stats.errors++;
                     if (options?.onError) {
-                        await options.onError(error as Error, item);
+                        await options.onError(error as Error, item as TInput);
                     } else {
                         throw error;
                     }

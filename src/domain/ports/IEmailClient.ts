@@ -1,16 +1,16 @@
 import { GmailMessage } from '../entities/GmailMessage.js';
 
 /**
- * Port: IGmailClient
+ * Port: IEmailClient
  * 
- * Interface for fetching Gmail messages.
- * Implementations handle the interaction with Gmail API.
+ * Interface for fetching Email messages.
+ * Implementations handle the interaction with Email API.
  * 
  * Following Hexagonal Architecture - Domain defines the interface,
  * Infrastructure provides the implementation.
  */
 
-export interface IGmailClient {
+export interface IEmailClient {
     /**
      * Fetch messages received since a specific timestamp
      * @param since - Date to fetch messages from

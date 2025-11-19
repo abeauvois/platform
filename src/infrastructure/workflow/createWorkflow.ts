@@ -1,22 +1,16 @@
 import { Logger } from "@poppinss/cliui";
 import { EnvConfig } from "../config/EnvConfig";
-// import { IGmailClient } from "../../domain/ports/IGmailClient";
-import { ILogger } from "../../domain/ports/ILogger";
-import { Pipeline, WorkflowExecutor } from "../../domain/workflow";
 
+import { ILogger } from "../../domain/ports/ILogger";
 import { FileTimestampRepository } from "../repositories/FileTimestampRepository";
 import { GmailClient } from "../adapters/GmailClient";
+import { AnthropicClient } from "../adapters/AnthropicClient";
 
-import { GmailMessageProducer } from "./producers/GmailMessageProducer";
-import { GmailParserStage } from "./stages/GmailParserStage";
-import { HttpLinksParser } from "../adapters/HttpLinksParser";
-import { EmailLinkCollector } from "./consumers/EmailLinkCollector";
+import { GmailBookmarksWorkflowService } from "../../application/services/GmailBookmarksWorkflowService";
 
-// use const workflow = new WorkflowCreator("linksFromGmailToNotion").run()
 class WorkflowCreator {
     constructor(
         private useCaseName: string,
-        // private readonly gmailClient: IGmailClient,
         private readonly logger: ILogger,
     ) {
         this.useCaseName = useCaseName;
@@ -24,41 +18,38 @@ class WorkflowCreator {
     }
 
     async run() {
-        const { clientId, clientSecret, refreshToken, filterEmail } = await this.checkGmailClientConfig();
+        const { clientId, clientSecret, refreshToken, filterEmail, anthropicApiKey } = await this.checkConfig();
 
         const gmailClient = new GmailClient(clientId, clientSecret, refreshToken, this.logger);
+        const anthropicClient = new AnthropicClient(anthropicApiKey, '', this.logger);
 
         const timestampRepository = new FileTimestampRepository('.gmail-last-run');
 
         switch (this.useCaseName) {
-            case "linksFromGmailToNotion":
-                const producer = new GmailMessageProducer(gmailClient, timestampRepository, filterEmail)
-                // for await (const item of producer.produce()) {
-                //     this.logger.info(`Produced message: ${item.rawContent}`);
-                // }
-                // return producer;
-                const stage1 = new GmailParserStage(new HttpLinksParser())
-                const stage2 = new HttpLinksParser()
-                const pipeline = new Pipeline(stage1)
-                const consumer = new EmailLinkCollector(this.logger)
-                const workflow = new WorkflowExecutor(producer, pipeline, consumer)
-                workflow.execute();
+            case "bookmarksFromGmailToNotion":
+                const service = new GmailBookmarksWorkflowService(
+                    gmailClient,
+                    anthropicClient,
+                    timestampRepository,
+                    filterEmail,
+                    this.logger,
+                );
 
-                // const useCase = new UseCase(this.useCaseName, workflow)
-                // useCase.execute(...)
-                // return this.workflowExecutor;
+                service.fetchRecentMessages()
+
                 break;
 
             default:
                 throw new Error(`Unknown use case: ${this.useCaseName}`);
         }
     }
-    async checkGmailClientConfig() {
+    async checkConfig() {
         const config = new EnvConfig();
         await config.load();
         const clientId = config.get('GMAIL_CLIENT_ID');
         const clientSecret = config.get('GMAIL_CLIENT_SECRET');
         const refreshToken = config.get('GMAIL_REFRESH_TOKEN');
+        const anthropicApiKey = config.get('ANTHROPIC_API_KEY');
         // Get optional filter email from env
         const filterEmail = config.get('MY_EMAIL_ADDRESS');
 
@@ -81,13 +72,13 @@ class WorkflowCreator {
             //         );
             //         p.outro('❌ Configuration incomplete');
         }
-        return { clientId, clientSecret, refreshToken, filterEmail };
+        return { clientId, clientSecret, refreshToken, filterEmail, anthropicApiKey };
     }
 }
 
 function main() {
     const logger: ILogger = new Logger();
-    const workflow = new WorkflowCreator("linksFromGmailToNotion", logger);
+    const workflow = new WorkflowCreator("bookmarksFromGmailToNotion", logger);
     return workflow.run();
 }
 

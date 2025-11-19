@@ -1,4 +1,4 @@
-import { EmailLink } from '../../domain/entities/EmailLink';
+import { Bookmark } from '../../domain/entities/Bookmark';
 import { ICsvWriter } from '../../domain/ports/ICsvWriter';
 import { ILogger } from '../../domain/ports/ILogger';
 import { ILinkRepository } from '../../domain/ports/ILinkRepository';
@@ -20,7 +20,7 @@ export class ExportService {
      * @param updatedUrls Optional set of URLs that were updated (for Notion page updates)
      */
     async exportResults(
-        links: EmailLink[],
+        links: Bookmark[],
         outputCsvPath: string,
         updatedUrls?: Set<string>
     ): Promise<void> {
@@ -31,7 +31,7 @@ export class ExportService {
     /**
      * Export links to CSV file
      */
-    private async exportToCsv(links: EmailLink[], path: string): Promise<void> {
+    private async exportToCsv(links: Bookmark[], path: string): Promise<void> {
         this.logger.info('\n💾 Writing results to CSV...');
         await this.csvWriter.write(links, path);
         this.logger.info(`✅ CSV export complete! Output saved to: ${path}`);
@@ -42,7 +42,7 @@ export class ExportService {
      * Handles partial failures gracefully (CSV export can succeed even if Notion fails)
      */
     private async exportToNotion(
-        links: EmailLink[],
+        links: Bookmark[],
         updatedUrls?: Set<string>
     ): Promise<void> {
         this.logger.info('\n📝 Exporting to Notion...');

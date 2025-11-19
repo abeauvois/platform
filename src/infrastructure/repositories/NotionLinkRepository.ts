@@ -1,11 +1,11 @@
 import { Client } from '@notionhq/client';
 import type { DatabaseObjectResponse, QueryDataSourceResponse } from '@notionhq/client/build/src/api-endpoints.js';
-import { EmailLink } from '../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { ILinkRepository } from '../../domain/ports/ILinkRepository.js';
 
 /**
  * Notion Implementation of ILinkRepository
- * Stores and retrieves EmailLink entities from a Notion database
+ * Stores and retrieves Bookmark entities from a Notion database
  */
 export class NotionLinkRepository implements ILinkRepository {
     private readonly client: Client;
@@ -24,7 +24,7 @@ export class NotionLinkRepository implements ILinkRepository {
         return link !== null;
     }
 
-    async findByUrl(url: string): Promise<EmailLink | null> {
+    async findByUrl(url: string): Promise<Bookmark | null> {
         try {
             const pageId = await this.findPageIdByUrl(url);
             if (!pageId) {
@@ -73,14 +73,14 @@ export class NotionLinkRepository implements ILinkRepository {
                 updatedAt = new Date(properties.UpdatedAt.date.start);
             }
 
-            return new EmailLink(urlValue, tag, description, '', createdAt, updatedAt);
+            return new Bookmark(urlValue, tag, description, '', createdAt, updatedAt);
         } catch (error) {
             console.error(`Error finding link by URL: ${error instanceof Error ? error.message : error}`);
             return null;
         }
     }
 
-    async save(link: EmailLink): Promise<void> {
+    async save(link: Bookmark): Promise<void> {
         try {
             // Check if already exists
             const existing = await this.findPageIdByUrl(link.url);
@@ -97,15 +97,15 @@ export class NotionLinkRepository implements ILinkRepository {
         }
     }
 
-    async saveMany(links: EmailLink[]): Promise<void> {
+    async saveMany(links: Bookmark[]): Promise<void> {
         for (const link of links) {
             await this.save(link);
         }
     }
 
-    async findAll(): Promise<EmailLink[]> {
+    async findAll(): Promise<Bookmark[]> {
         try {
-            const links: EmailLink[] = [];
+            const links: Bookmark[] = [];
             let hasMore = true;
             let startCursor: string | undefined = undefined;
 
@@ -151,7 +151,7 @@ export class NotionLinkRepository implements ILinkRepository {
                     }
 
                     if (url) {
-                        links.push(new EmailLink(url, tag, description, '', createdAt, updatedAt));
+                        links.push(new Bookmark(url, tag, description, '', createdAt, updatedAt));
                     }
                 }
 
@@ -211,7 +211,7 @@ export class NotionLinkRepository implements ILinkRepository {
     /**
      * Create a new Notion page
      */
-    private async createPage(link: EmailLink): Promise<void> {
+    private async createPage(link: Bookmark): Promise<void> {
         await this.client.pages.create({
             parent: { database_id: this.databaseId },
             properties: {
@@ -253,7 +253,7 @@ export class NotionLinkRepository implements ILinkRepository {
     /**
      * Update an existing Notion page
      */
-    private async updatePage(pageId: string, link: EmailLink): Promise<void> {
+    private async updatePage(pageId: string, link: Bookmark): Promise<void> {
         await this.client.pages.update({
             page_id: pageId,
             properties: {

@@ -1,5 +1,5 @@
-import { EmailLink } from '../../domain/entities/EmailLink';
-import { ILinkAnalyzer } from '../../domain/ports/ILinkAnalyzer';
+import { Bookmark } from '../../domain/entities/Bookmark';
+import { IContentAnalyser } from '../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../domain/ports/ILogger';
 import { ITweetScraper } from '../../domain/ports/ITweetScraper';
 
@@ -10,7 +10,7 @@ import { QueuedLink } from '../QueuedLink.types';
  * Result of analyzing a collection of links
  */
 export interface AnalysisResult {
-    categorizedLinks: EmailLink[];
+    categorizedLinks: Bookmark[];
     retryQueue: QueuedLink[];
 }
 
@@ -19,19 +19,19 @@ export interface AnalysisResult {
  */
 export class LinkAnalysisService {
     constructor(
-        private readonly linkAnalyzer: ILinkAnalyzer,
+        private readonly linkAnalyzer: IContentAnalyser,
         private readonly tweetScraper: ITweetScraper,
         private readonly logger: ILogger
     ) { }
 
     /**
      * Analyze a collection of email links with AI
-     * @param links Array of EmailLink objects to analyze
+     * @param links Array of Bookmark objects to analyze
      * @returns Categorized links and retry queue for rate-limited links
      */
-    async analyzeLinks(links: EmailLink[]): Promise<AnalysisResult> {
+    async analyzeLinks(links: Bookmark[]): Promise<AnalysisResult> {
         this.logger.info('\n🤖 Analyzing links with AI...');
-        const categorizedLinks: EmailLink[] = [];
+        const categorizedLinks: Bookmark[] = [];
         const retryQueue: QueuedLink[] = [];
 
         for (let i = 0; i < links.length; i++) {
@@ -63,8 +63,8 @@ export class LinkAnalysisService {
     /**
      * Analyze a single link with optional Twitter content enrichment
      */
-    private async analyzeSingleLink(link: EmailLink): Promise<{
-        categorized: EmailLink;
+    private async analyzeSingleLink(link: Bookmark): Promise<{
+        categorized: Bookmark;
         shouldRetry: boolean;
     }> {
         const isTwitterUrl = this.isTwitterUrl(link.url);

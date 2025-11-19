@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { NotionLinkRepository } from '../../../repositories/NotionLinkRepository.js';
-import { EmailLink } from '../../../../domain/entities/EmailLink.js';
+import { Bookmark } from '../../../../domain/entities/Bookmark.js';
 import { EnvConfig } from '../../../config/EnvConfig.js';
 
 /**
@@ -26,7 +26,7 @@ async function testNotionLinkRepository() {
         // Generate a unique test URL to avoid conflicts with existing data
         const timestamp = Date.now();
         const testUrl = `https://test-notion-repo-${timestamp}.example.com`;
-        const testLink = new EmailLink(
+        const testLink = new Bookmark(
             testUrl,
             'Test Link for Repository',
             'Integration test link created to verify NotionLinkRepository functionality',
@@ -76,7 +76,7 @@ async function testNotionLinkRepository() {
 
         // Test 4: Update the page
         console.log('Test 4: Update existing page');
-        const updatedLink = new EmailLink(
+        const updatedLink = new Bookmark(
             testUrl,
             'updated-tag',
             'This description was updated by the integration test',
