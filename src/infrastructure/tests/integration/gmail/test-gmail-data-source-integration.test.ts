@@ -112,7 +112,7 @@ describe('GmailDataSource Integration Tests', () => {
 
         // Verify all results are properly normalized BaseContent
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.Gmail);
+            expect(content.sourceAdapter).toBe('Gmail');
             expect(content.rawContent).toBeDefined();
             expect(typeof content.rawContent).toBe('string');
             expect(content.createdAt).toBeInstanceOf(Date);
@@ -127,7 +127,7 @@ describe('GmailDataSource Integration Tests', () => {
         if (results.length > 0) {
             const firstResult = results[0];
 
-            expect(firstResult.sourceAdapter).toBe(SourceAdapter.Gmail);
+            expect(firstResult.sourceAdapter).toBe('Gmail');
             expect(firstResult.rawContent.length).toBeGreaterThan(0);
 
             console.log(`✅ Sample content validated: ${firstResult.rawContent.length} characters`);

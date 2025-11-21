@@ -1,10 +1,9 @@
 import { test, expect, describe, beforeEach } from 'bun:test';
-import { EmailFile } from '../../../domain/entities/EmailFile.js';
+import { DirectoryDataSource } from '../../adapters/DirectoryDataSource';
 import { BaseContent } from '../../../domain/entities/BaseContent.js';
-import { SourceAdapter } from '../../../domain/entities/SourceAdapter.js';
 import { FileIngestionConfig } from '../../../domain/entities/IngestionConfig.js';
 import { IDirectoryReader } from '../../../domain/ports/IDirectoryReader.js';
-import { ILogger } from '../../../domain/ports/ILogger.js';
+import { MockLogger } from './MockLogger';
 
 // Mock implementations
 class MockDirectoryReader implements IDirectoryReader {
@@ -23,37 +22,6 @@ class MockDirectoryReader implements IDirectoryReader {
     }
 }
 
-class MockLogger implements ILogger {
-    logs: string[] = [];
-
-    info(message: string, options?: { prefix?: string; suffix?: string }): void {
-        this.logs.push(`INFO: ${message}`);
-    }
-
-    error(message: string, options?: { prefix?: string; suffix?: string }): void {
-        this.logs.push(`ERROR: ${message}`);
-    }
-
-    warning(message: string, options?: { prefix?: string; suffix?: string }): void {
-        this.logs.push(`WARNING: ${message}`);
-    }
-
-    debug(message: string, options?: { prefix?: string; suffix?: string }): void {
-        this.logs.push(`DEBUG: ${message}`);
-    }
-
-    await(message: string, options?: { prefix?: string; suffix?: string }) {
-        return {
-            start: () => { },
-            update: (msg: string) => { },
-            stop: () => { },
-        };
-    }
-}
-
-// Import the class we're testing
-import { DirectoryDataSource } from '../../adapters/DirectoryDataSource.js';
-
 describe('DirectoryDataSource', () => {
     let mockDirectoryReader: MockDirectoryReader;
     let mockLogger: MockLogger;
@@ -69,7 +37,7 @@ describe('DirectoryDataSource', () => {
     });
 
     test('should have Directory source type', () => {
-        expect(dataSource.getSourceType()).toBe(SourceAdapter.Directory);
+        expect(dataSource.getSourceType()).toBe('Directory');
     });
 
     test('should throw error if path is missing', async () => {
@@ -96,7 +64,7 @@ describe('DirectoryDataSource', () => {
 
         expect(results).toHaveLength(2);
         expect(results[0]).toBeInstanceOf(BaseContent);
-        expect(results[0].sourceAdapter).toBe(SourceAdapter.Directory);
+        expect(results[0].sourceAdapter).toBe('Directory');
         expect(results[0].rawContent).toContain('https://example.com');
         expect(results[1].rawContent).toContain('https://test.com');
     });
@@ -128,7 +96,7 @@ describe('DirectoryDataSource', () => {
         const results = await dataSource.ingest(config);
 
         expect(results).toHaveLength(1);
-        expect(results[0].sourceAdapter).toBe(SourceAdapter.Directory);
+        expect(results[0].sourceAdapter).toBe('Directory');
         expect(results[0].rawContent).toBe('Single email content');
     });
 
@@ -149,7 +117,7 @@ describe('DirectoryDataSource', () => {
 
         expect(results).toHaveLength(3);
         results.forEach((result: BaseContent) => {
-            expect(result.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(result.sourceAdapter).toBe('Directory');
             expect(result.tags).toEqual([]);
             expect(result.summary).toBe('');
         });
@@ -230,7 +198,7 @@ describe('DirectoryDataSource', () => {
 
         expect(results).toHaveLength(2);
         results.forEach((result: BaseContent) => {
-            expect(result.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(result.sourceAdapter).toBe('Directory');
         });
     });
 

@@ -26,7 +26,7 @@ describe('DirectoryDataSource Integration Tests', () => {
 
         // Verify all results are BaseContent with correct source
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(content.sourceAdapter).toBe('Directory');
             expect(content.rawContent).toBeDefined();
             expect(content.rawContent.length).toBeGreaterThan(0);
             expect(content.createdAt).toBeInstanceOf(Date);
@@ -66,7 +66,7 @@ describe('DirectoryDataSource Integration Tests', () => {
 
         // Verify structure
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(content.sourceAdapter).toBe('Directory');
             expect(content.url).toBeDefined();
             expect(content.rawContent).toBeDefined();
         });
@@ -118,7 +118,7 @@ describe('DirectoryDataSource Integration Tests', () => {
         // All results should have consistent normalization
         results.forEach(content => {
             // Check BaseContent structure
-            expect(content.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(content.sourceAdapter).toBe('Directory');
             expect(content.tags).toEqual([]); // Initially empty
             expect(content.summary).toBe(''); // Initially empty
             expect(content.url).toBe(content.rawContent); // url field contains raw content
@@ -194,7 +194,7 @@ describe('DirectoryDataSource Integration Tests', () => {
 
         // Verify each item has complete structure
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(content.sourceAdapter).toBe('Directory');
             expect(content.url).toBe(content.rawContent);
             expect(content.rawContent).toBeDefined();
             expect(content.rawContent.length).toBeGreaterThan(0);
@@ -217,7 +217,7 @@ describe('DirectoryDataSource Integration Tests', () => {
 
         // All should be from directory source
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.Directory);
+            expect(content.sourceAdapter).toBe('Directory');
         });
     });
 });

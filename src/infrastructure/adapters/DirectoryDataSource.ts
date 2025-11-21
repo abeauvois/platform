@@ -16,7 +16,7 @@ export class DirectoryDataSource extends UnstructuredDataSource<EmailFile, BaseC
         private readonly directoryReader: IDirectoryReader,
         logger: ILogger
     ) {
-        super(SourceAdapter.Directory, logger);
+        super('Directory', logger);
     }
 
     /**
@@ -52,7 +52,7 @@ export class DirectoryDataSource extends UnstructuredDataSource<EmailFile, BaseC
 
         return emailFiles.map(file => new BaseContent(
             file.content,              // url field - contains the raw content
-            SourceAdapter.Directory,   // source adapter
+            'Directory',               // source adapter
             [],                        // tags - empty initially
             '',                        // summary - empty initially
             file.content,              // raw content

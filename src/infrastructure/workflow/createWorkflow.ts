@@ -9,7 +9,9 @@ import { AnthropicClient } from "../adapters/AnthropicClient";
 
 import { GmailBookmarksWorkflowService } from "../../application/services/GmailBookmarksWorkflowService";
 import { ZipEmlFilesBookmarksWorkflowService } from "../../application/services/ZipEmlFilesBookmarksWorkflowService";
+import { CsvFromZipBookmarksWorkflowService } from "../../application/services/CsvFromZipBookmarksWorkflowService";
 import { ZipExtractor } from "../adapters/ZipExtractor";
+import { SimpleCsvParser } from "../adapters/SimpleCsvParser";
 // import { TwitterClient } from "../adapters/TwitterClient";
 // import { UrlsBookmarksWorkflowService } from "../../application/services/UrlsBookmarksWorkflowService.wip";
 
@@ -54,6 +56,19 @@ class WorkflowCreator {
                 // const path = join(__dirname, '../../../data/fixtures/test_mylinks.zip');
                 const path = join(__dirname, '../../../data/fixtures/test_mylinks_no_twitter');
                 zipWorkflow.extractAndParseEmails(path);
+                break;
+            case "csvFromZip":
+                const csvZipExtractor = new ZipExtractor();
+                const csvParser = new SimpleCsvParser();
+                const csvWorkflow = new CsvFromZipBookmarksWorkflowService(
+                    csvZipExtractor,
+                    csvParser,
+                    this.logger,
+                    true // Enable deduplication
+                );
+                const csvPath = join(__dirname, '../../../data/fixtures/test_csv_bookmarks.zip');
+                const csvItems = await csvWorkflow.extractAndParseCsv(csvPath);
+                this.logger.info(`📊 Extracted ${csvItems.length} items from CSV`);
                 break;
             // case "bookmarksFromUrl":
 
@@ -114,4 +129,3 @@ main()
 
 
 // export { WorkflowCreator };
-

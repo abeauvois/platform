@@ -82,7 +82,7 @@ describe('CsvParserStage Integration Tests', () => {
         expect(firstRow.url).toBe('https://example.com/typescript-guide');
         expect(firstRow.tags).toEqual(['programming', 'typescript', 'web']);
         expect(firstRow.summary).toBe('Comprehensive guide to TypeScript best practices');
-        expect(firstRow.sourceAdapter).toBe(SourceAdapter.ZipFile);
+        expect(firstRow.sourceAdapter).toBe('ZipFile');
 
         // Verify second row
         const secondRow = parsedResults[1];
@@ -101,7 +101,7 @@ describe('CsvParserStage Integration Tests', () => {
         // ARRANGE: Create a BaseContent that is NOT CSV
         const nonCsvContent = new BaseContent(
             'https://example.com',
-            SourceAdapter.ZipFile,
+            'ZipFile',
             ['test'],
             'Test summary',
             'This is not CSV content, just plain text',
@@ -159,7 +159,7 @@ describe('CsvParserStage Integration Tests', () => {
         // For this test, we'll simulate by processing both types
         const csvContent = new BaseContent(
             'url,tags,summary\nhttps://example.com/test,tag1;tag2,Test summary',
-            SourceAdapter.ZipFile,
+            'ZipFile',
             [],
             '',
             'url,tags,summary\nhttps://example.com/test,tag1;tag2,Test summary',
@@ -169,7 +169,7 @@ describe('CsvParserStage Integration Tests', () => {
 
         const emlContent = new BaseContent(
             'From: test@example.com\nSubject: Test Email\n\nEmail body',
-            SourceAdapter.ZipFile,
+            'ZipFile',
             [],
             '',
             'From: test@example.com\nSubject: Test Email\n\nEmail body',

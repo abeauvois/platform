@@ -15,7 +15,7 @@ export class ZipFileDataSource extends UnstructuredDataSource<EmailFile, BaseCon
         private readonly zipExtractor: IZipExtractor,
         logger: ILogger
     ) {
-        super(SourceAdapter.ZipFile, logger);
+        super('ZipFile', logger);
     }
 
     /**
@@ -47,7 +47,7 @@ export class ZipFileDataSource extends UnstructuredDataSource<EmailFile, BaseCon
 
         return emailFiles.map(file => new BaseContent(
             file.content,              // url field - contains the raw content
-            SourceAdapter.ZipFile,     // source adapter
+            'ZipFile',                 // source adapter
             [],                        // tags - empty initially
             '',                        // summary - empty initially
             file.content,              // raw content

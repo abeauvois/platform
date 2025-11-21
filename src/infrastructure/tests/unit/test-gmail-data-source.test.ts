@@ -85,7 +85,7 @@ describe('GmailDataSource', () => {
     });
 
     test('should have Gmail source type', () => {
-        expect(dataSource.getSourceType()).toBe(SourceAdapter.Gmail);
+        expect(dataSource.getSourceType()).toBe('Gmail');
     });
 
     test('should throw error if credentials are missing', async () => {
@@ -122,7 +122,7 @@ describe('GmailDataSource', () => {
 
         expect(results).toHaveLength(1);
         expect(results[0]).toBeInstanceOf(BaseContent);
-        expect(results[0].sourceAdapter).toBe(SourceAdapter.Gmail);
+        expect(results[0].sourceAdapter).toBe('Gmail');
         expect(results[0].rawContent).toContain('https://example.com');
         expect(results[0].createdAt).toEqual(testDate);
     });
@@ -147,9 +147,9 @@ describe('GmailDataSource', () => {
         const results = await dataSource.ingest(config);
 
         expect(results).toHaveLength(3);
-        expect(results[0].sourceAdapter).toBe(SourceAdapter.Gmail);
-        expect(results[1].sourceAdapter).toBe(SourceAdapter.Gmail);
-        expect(results[2].sourceAdapter).toBe(SourceAdapter.Gmail);
+        expect(results[0].sourceAdapter).toBe('Gmail');
+        expect(results[1].sourceAdapter).toBe('Gmail');
+        expect(results[2].sourceAdapter).toBe('Gmail');
     });
 
     test('should use timestamp from config if provided', async () => {

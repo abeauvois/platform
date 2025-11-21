@@ -6,7 +6,7 @@ import { SourceAdapter } from "./SourceAdapter";
 export class BaseContent {
     constructor(
         public readonly url: string,
-        public readonly sourceAdapter: SourceAdapter = SourceAdapter.None,
+        public readonly sourceAdapter: SourceAdapter = 'None',
         public readonly tags: string[] = [],
         public readonly summary: string = '',
         public readonly rawContent: string = '',
@@ -45,7 +45,7 @@ export class BaseContent {
     }
 
     isValid(): boolean {
-        return this.url.length > 0 && this.sourceAdapter !== SourceAdapter.None;
+        return this.url.length > 0 && this.sourceAdapter !== 'None';
     }
     isEnriched(): boolean {
         return this.isValid() && this.tags.length > 0 && this.summary.length > 0;

@@ -16,7 +16,7 @@ export class EmlContentAnalyserStage implements IStage<EmailFile, Bookmark> {
         const tagsAndSummary = await this.contentAnalyser.analyze(emailFile.content);
 
         if (urls.length > 0 && tagsAndSummary.tags.length > 0 && tagsAndSummary.summary.length > 0) {
-            yield new Bookmark(urls[0], SourceAdapter.EmlFile, tagsAndSummary.tags, tagsAndSummary.summary, emailFile.content);
+            yield new Bookmark(urls[0], 'EmlFile', tagsAndSummary.tags, tagsAndSummary.summary, emailFile.content);
         }
     }
 }

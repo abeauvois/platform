@@ -16,7 +16,7 @@ export class GmailContentAnalyserStage implements IStage<GmailMessage, Bookmark>
         const tagsAndSummary = await this.contentAnalyser.analyze(gmailMessage.rawContent);
 
         if (urls.length > 0 && tagsAndSummary.tags.length > 0 && tagsAndSummary.summary.length > 0) {
-            yield new Bookmark(urls[0], SourceAdapter.Gmail, tagsAndSummary.tags, tagsAndSummary.summary, gmailMessage.rawContent);
+            yield new Bookmark(urls[0], 'Gmail', tagsAndSummary.tags, tagsAndSummary.summary, gmailMessage.rawContent);
         }
     }
 }

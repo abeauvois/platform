@@ -59,7 +59,7 @@ describe('ZipFileDataSource Integration Tests', () => {
 
         // Verify all results are BaseContent with correct source
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.ZipFile);
+            expect(content.sourceAdapter).toBe('ZipFile');
             expect(content.rawContent).toBeDefined();
             expect(content.rawContent.length).toBeGreaterThan(0);
             expect(content.createdAt).toBeInstanceOf(Date);
@@ -100,7 +100,7 @@ describe('ZipFileDataSource Integration Tests', () => {
 
         // Verify all have proper content structure
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.ZipFile);
+            expect(content.sourceAdapter).toBe('ZipFile');
             expect(content.rawContent).toBeDefined();
             expect(content.rawContent.length).toBeGreaterThan(0);
         });
@@ -184,7 +184,7 @@ describe('ZipFileDataSource Integration Tests', () => {
 
         // Verify each item has complete structure
         results.forEach(content => {
-            expect(content.sourceAdapter).toBe(SourceAdapter.ZipFile);
+            expect(content.sourceAdapter).toBe('ZipFile');
             expect(content.url).toBe(content.rawContent);
             expect(content.rawContent).toBeDefined();
             expect(content.rawContent.length).toBeGreaterThan(0);
@@ -203,7 +203,7 @@ describe('ZipFileDataSource Integration Tests', () => {
         // All results should have consistent normalization
         results.forEach(content => {
             // Check BaseContent structure
-            expect(content.sourceAdapter).toBe(SourceAdapter.ZipFile);
+            expect(content.sourceAdapter).toBe('ZipFile');
             expect(content.tags).toEqual([]); // Initially empty
             expect(content.summary).toBe(''); // Initially empty
             expect(content.url).toBe(content.rawContent); // url field contains raw content

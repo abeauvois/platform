@@ -17,7 +17,7 @@ export class GmailDataSource extends StructuredDataSource<GmailMessage, BaseCont
         private readonly timestampRepository: ITimestampRepository,
         logger: ILogger
     ) {
-        super(SourceAdapter.Gmail, logger);
+        super('Gmail', logger);
     }
 
     /**
@@ -61,7 +61,7 @@ export class GmailDataSource extends StructuredDataSource<GmailMessage, BaseCont
     protected async normalize(messages: GmailMessage[]): Promise<BaseContent[]> {
         return messages.map(message => new BaseContent(
             message.rawContent,           // url field - contains the raw content
-            SourceAdapter.Gmail,          // source adapter
+            'Gmail',                      // source adapter
             [],                           // tags - empty initially
             '',                           // summary - empty initially
             message.rawContent,           // raw content

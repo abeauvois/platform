@@ -64,7 +64,7 @@ describe('ZipFileDataSource', () => {
     });
 
     test('should have ZipFile source type', () => {
-        expect(dataSource.getSourceType()).toBe(SourceAdapter.ZipFile);
+        expect(dataSource.getSourceType()).toBe('ZipFile');
     });
 
     test('should throw error if path is missing', async () => {
@@ -91,7 +91,7 @@ describe('ZipFileDataSource', () => {
 
         expect(results).toHaveLength(2);
         expect(results[0]).toBeInstanceOf(BaseContent);
-        expect(results[0].sourceAdapter).toBe(SourceAdapter.ZipFile);
+        expect(results[0].sourceAdapter).toBe('ZipFile');
         expect(results[0].rawContent).toContain('https://example.com');
         expect(results[1].rawContent).toContain('https://test.com');
     });
@@ -123,7 +123,7 @@ describe('ZipFileDataSource', () => {
         const results = await dataSource.ingest(config);
 
         expect(results).toHaveLength(1);
-        expect(results[0].sourceAdapter).toBe(SourceAdapter.ZipFile);
+        expect(results[0].sourceAdapter).toBe('ZipFile');
         expect(results[0].rawContent).toBe('Single email content');
     });
 
@@ -144,7 +144,7 @@ describe('ZipFileDataSource', () => {
 
         expect(results).toHaveLength(3);
         results.forEach((result: BaseContent) => {
-            expect(result.sourceAdapter).toBe(SourceAdapter.ZipFile);
+            expect(result.sourceAdapter).toBe('ZipFile');
             expect(result.tags).toEqual([]);
             expect(result.summary).toBe('');
         });
