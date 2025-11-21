@@ -3,6 +3,7 @@ export enum SourceAdapter {
     Outlook = 'Outlook',
     EmlFile = 'EmlFile',
     ZipFile = 'ZipFile',
+    Directory = 'Directory',
     NotionDatabase = 'NotionDatabase',
     Other = 'Other',
     None = 'None'
