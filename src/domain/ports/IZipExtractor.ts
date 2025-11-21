@@ -3,7 +3,7 @@
  */
 export interface IZipExtractor {
     /**
-     * Extracts all .eml files from a zip archive
+     * Extracts files from a zip archive
      * @param zipFilePath Path to the zip file
      * @returns Map of filename to file content
      */

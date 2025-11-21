@@ -5,7 +5,7 @@ import { IZipExtractor } from '../../../domain/ports/IZipExtractor.js';
 /**
  * Producer: Extracts email files from a zip archive or directory
  */
-export class ZipFileProducer implements IProducer<EmailFile> {
+export class ZipFileEmailFileProducer implements IProducer<EmailFile> {
     constructor(
         private readonly filePath: string,
         private readonly zipExtractor: IZipExtractor

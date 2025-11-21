@@ -1,9 +1,9 @@
 // Test script to verify the Twitter rate limit logic
-import { TwitterScraper } from '../../../adapters/TwitterScraper.js';
+import { TwitterClient } from '../../../adapters/TwitterClient.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
 
 const logger = new CliuiLogger();
-const scraper = new TwitterScraper(process.env.TWITTER_BEARER_TOKEN || '', logger);
+const scraper = new TwitterClient(process.env.TWITTER_BEARER_TOKEN || '', logger);
 
 // Test URLs
 const tweetUrls = [

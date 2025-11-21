@@ -1,7 +1,7 @@
 /**
  * Port: Defines interface for scraping tweet content
  */
-export interface ITweetScraper {
+export interface ITwitterClient {
     /**
      * Fetches tweet content from a Twitter/X URL
      * @param url The tweet URL (twitter.com or x.com)

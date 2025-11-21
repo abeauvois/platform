@@ -89,10 +89,10 @@ Architecture:
     const { UrlAndContextAnthropicAnalyser } = await import('../../src/infrastructure/adapters/UrlAndContextAnthropicAnalyser.js');
     const { CsvFileWriter } = await import('../../src/infrastructure/adapters/CsvFileWriter.js');
     const { NotionLinkRepository } = await import('../../src/infrastructure/repositories/NotionLinkRepository.js');
-    const { TwitterScraper } = await import('../../src/infrastructure/adapters/TwitterScraper.js');
+    const { TwitterClient } = await import('../../src/infrastructure/adapters/TwitterClient.js');
     const { EnvConfig } = await import('../../src/infrastructure/config/EnvConfig.js');
     const { CliuiLogger } = await import('../../src/infrastructure/adapters/CliuiLogger.js');
-    const { EmailExtractionWorkflowService } = await import('../../src/application/services/EmailExtractionWorkflowService.js');
+    const { ZipEmlFilesBookmarksWorkflowService } = await import('../../src/application/services/ZipEmlFilesBookmarksWorkflowService.js');
     const { LinkAnalysisService } = await import('../../src/application/services/LinkAnalysisService.js');
     const { RetryHandlerService } = await import('../../src/application/services/RetryHandlerService.js');
     const { ExportService } = await import('../../src/application/services/ExportService.js');
@@ -124,10 +124,10 @@ Architecture:
     const linkAnalyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
     const csvWriter = new CsvFileWriter();
     const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
-    const tweetScraper = new TwitterScraper(twitterBearerToken, logger);
+    const tweetScraper = new TwitterClient(twitterBearerToken, logger);
 
     // Initialize services (application layer)
-    const extractionService = new EmailExtractionWorkflowService(zipExtractor, httpLinksParser, logger);
+    const extractionService = new ZipEmlFilesBookmarksWorkflowService(zipExtractor, httpLinksParser, logger);
     const analysisService = new LinkAnalysisService(linkAnalyzer, tweetScraper, logger);
     const retryHandler = new RetryHandlerService(tweetScraper, linkAnalyzer, logger);
     const exportService = new ExportService(csvWriter, notionRepository, logger);

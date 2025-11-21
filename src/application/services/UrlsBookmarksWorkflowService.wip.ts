@@ -1,18 +1,16 @@
 import { Bookmark } from '../../domain/entities/Bookmark.js';
 import { GmailMessage } from '../../domain/entities/GmailMessage.js';
 import { IContentAnalyser } from '../../domain/ports/IContentAnalyser.js';
-import { IEmailClient } from '../../domain/ports/IEmailClient.js';
+import { ITwitterClient } from '../../domain/ports/ITwitterClient.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
 import { ITimestampRepository } from '../../domain/ports/ITimestampRepository.js';
 import { Pipeline, WorkflowExecutor } from '../../domain/workflow/index.js';
 
 import { BookmarkCollector } from '../../infrastructure/workflow/consumers/BookmarkCollector.js';
-import { GmailMessageProducer } from '../../infrastructure/workflow/producers/GmailMessageProducer.js';
-import { GmailContentAnalyserStage } from '../../infrastructure/workflow/stages/GmailContentAnalyserStage.js';
 
-export class GmailBookmarksWorkflowService {
+export class UrlsBookmarksWorkflowService {
     constructor(
-        private readonly gmailClient: IEmailClient,
+        private readonly tweetClient: ITwitterClient,
         private readonly anthropicClient: IContentAnalyser,
         private readonly timestampRepository: ITimestampRepository,
         private readonly filterEmail: string,
@@ -20,17 +18,17 @@ export class GmailBookmarksWorkflowService {
     ) { }
 
     /**
-     * Fetch Gmail messages received since last execution
+     * Fetch Twitter messages received since last execution
      * @returns Array of Bookmark objects
      */
     async fetchRecentMessages(): Promise<Bookmark[]> {
-        const producer = new GmailMessageProducer(
-            this.gmailClient,
+        const producer = new UrlContentProducer(
+            this.tweetClient,
             this.timestampRepository,
             this.filterEmail
         );
 
-        const stage = new GmailContentAnalyserStage(this.anthropicClient);
+        const stage = new UrlContentAnalyserStage(this.anthropicClient);
         const pipeline = new Pipeline().addStage(stage);
         const consumer = new BookmarkCollector(this.logger)
         const workflow = new WorkflowExecutor(producer, pipeline, consumer)

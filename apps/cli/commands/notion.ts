@@ -1,14 +1,11 @@
 import { command } from 'cleye';
 import { ZipExtractor } from '../../../src/infrastructure/adapters/ZipExtractor.js';
-import { HttpLinksParser } from '../../../src/infrastructure/adapters/HttpLinksParser.js';
-import { UrlAndContextAnthropicAnalyser } from '../../../src/infrastructure/adapters/UrlAndContextAnthropicAnalyser.js';
 import { CsvFileWriter } from '../../../src/infrastructure/adapters/CsvFileWriter.js';
 import { NotionLinkRepository } from '../../../src/infrastructure/repositories/NotionLinkRepository.js';
-import { TwitterScraper } from '../../../src/infrastructure/adapters/TwitterScraper.js';
+import { TwitterClient } from '../../../src/infrastructure/adapters/TwitterClient.js';
 import { EnvConfig } from '../../../src/infrastructure/config/EnvConfig.js';
 import { CliuiLogger } from '../../../src/infrastructure/adapters/CliuiLogger.js';
-import { EmailExtractionWorkflowService } from '../../../src/application/services/EmailExtractionWorkflowService.js';
-import { LinkAnalysisService } from '../../../src/application/services/LinkAnalysisService.js';
+import { ZipEmlFilesBookmarksWorkflowService } from '../../../src/application/services/ZipEmlFilesBookmarksWorkflowService.js';
 import { RetryHandlerService } from '../../../src/application/services/RetryHandlerService.js';
 import { ExportService } from '../../../src/application/services/ExportService.js';
 import { LinkExtractionOrchestrator } from '../../../src/application/LinkExtractionOrchestrator.js';
@@ -82,14 +79,13 @@ export const notionCommand = command({
         // Initialize adapters (infrastructure layer)
         const logger = new CliuiLogger();
         const zipExtractor = new ZipExtractor();
-        const httpLinksParser = new HttpLinksParser();
         const linkAnalyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
         const csvWriter = new CsvFileWriter();
         const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
-        const tweetScraper = new TwitterScraper(twitterBearerToken, logger);
+        const tweetScraper = new TwitterClient(twitterBearerToken, logger);
 
         // Initialize services (application layer)
-        const extractionService = new EmailExtractionWorkflowService(zipExtractor, httpLinksParser, logger);
+        const extractionService = new ZipEmlFilesBookmarksWorkflowService(zipExtractor, httpLinksParser, logger);
         const analysisService = new LinkAnalysisService(linkAnalyzer, tweetScraper, logger);
         const retryHandler = new RetryHandlerService(tweetScraper, linkAnalyzer, logger);
         const exportService = new ExportService(csvWriter, notionRepository, logger);

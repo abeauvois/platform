@@ -8,13 +8,13 @@ const config = new EnvConfig();
 await config.load();
 
 // Import after env vars are loaded
-import { TwitterScraper } from '../../../adapters/TwitterScraper.js';
+import { TwitterClient } from '../../../adapters/TwitterClient.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
 
 async function testRateLimitFix() {
     const logger = new CliuiLogger();
     const bearerToken = config.get('TWITTER_BEARER_TOKEN');
-    const scraper = new TwitterScraper(bearerToken, logger);
+    const scraper = new TwitterClient(bearerToken, logger);
 
     console.log('Testing rate limit fix...\n');
 

@@ -1,8 +1,8 @@
 /**
- * End-to-End Test for Workflow Pipeline with ZipFileProducer
+ * End-to-End Test for Workflow Pipeline with ZipFileEmailFileProducer
  * 
  * Tests the complete workflow from actual zip file through to extracted links:
- * - ZipFileProducer (reads from test_mylinks.zip file)
+ * - ZipFileEmailFileProducer (reads from test_mylinks.zip file)
  * - EmailParserStage (parses email content)
  * - BookmarkCollector (collects links)
  * - WorkflowExecutor (orchestrates the pipeline)
@@ -12,7 +12,7 @@
 
 import { ZipExtractor } from '../../adapters/ZipExtractor.js';
 import { HttpLinksParser } from '../../adapters/HttpLinksParser.js';
-import { ZipFileProducer } from '../../workflow/producers/ZipFileProducer.js';
+import { ZipFileEmailFileProducer } from '../../workflow/producers/ZipFileEmailFileProducer.js';
 import { EmailParserStage } from '../../workflow/stages/EmailParserStage.js';
 import { BookmarkCollector } from '../../workflow/consumers/BookmarkCollector.js';
 import { Pipeline } from '../../../domain/workflow/Pipeline.js';
@@ -44,7 +44,7 @@ class TestLogger implements ILogger {
 }
 
 async function runWorkflowTest() {
-    console.log('🧪 Starting Workflow Pipeline E2E Test (ZipFileProducer)\n');
+    console.log('🧪 Starting Workflow Pipeline E2E Test (ZipFileEmailFileProducer)\n');
 
     // Setup: Get path to test zip file
     const testZipPath = join(process.cwd(), 'data', 'fixtures', 'test_mylinks.zip');
@@ -55,8 +55,8 @@ async function runWorkflowTest() {
     const linksExtractor = new HttpLinksParser();
     const logger = new TestLogger();
 
-    // Create workflow components using ZipFileProducer
-    const producer = new ZipFileProducer(testZipPath, zipExtractor);
+    // Create workflow components using ZipFileEmailFileProducer
+    const producer = new ZipFileEmailFileProducer(testZipPath, zipExtractor);
     const stage = new EmailParserStage(linksExtractor);
     const pipeline = new Pipeline(stage);
     const consumer = new BookmarkCollector(logger);
@@ -168,7 +168,7 @@ async function runWorkflowTest() {
     }
 
     console.log('\n✅ All assertions passed!');
-    console.log('🎉 Workflow Pipeline E2E Test (ZipFileProducer) completed successfully!\n');
+    console.log('🎉 Workflow Pipeline E2E Test (ZipFileEmailFileProducer) completed successfully!\n');
 
     return {
         totalLinks: Bookmarks.length,

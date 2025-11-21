@@ -9,7 +9,7 @@ import { join } from 'path';
  * - Local paths: file:///path/to/folder or /path/to/folder
  * - S3 paths: s3://bucket/prefix (future implementation)
  */
-export class SingleFolderProducer implements IProducer<EmailFile> {
+export class SingleFolderEmailFileProducer implements IProducer<EmailFile> {
     constructor(
         private readonly uri: string
     ) { }

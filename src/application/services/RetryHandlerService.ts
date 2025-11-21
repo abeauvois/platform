@@ -1,7 +1,7 @@
 import { Bookmark } from '../../domain/entities/Bookmark';
 import { IContentAnalyser } from '../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../domain/ports/ILogger';
-import { ITweetScraper } from '../../domain/ports/ITweetScraper';
+import { ITweetClient } from '../../domain/ports/ITweetClient';
 
 import { ExtractLinksConfig } from '../config/ExtractLinksConfig';
 import { QueuedLink } from '../QueuedLink.types';
@@ -20,7 +20,7 @@ export interface RetryResult {
  */
 export class RetryHandlerService {
     constructor(
-        private readonly tweetScraper: ITweetScraper,
+        private readonly tweetScraper: ITweetClient,
         private readonly linkAnalyzer: IContentAnalyser,
         private readonly logger: ILogger,
         private readonly maxAttempts: number = ExtractLinksConfig.RATE_LIMIT.MAX_RETRY_ATTEMPTS

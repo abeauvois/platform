@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { TwitterScraper } from '../../../adapters/TwitterScraper.js';
+import { TwitterClient } from '../../../adapters/TwitterClient.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
 
 /**
@@ -12,9 +12,9 @@ async function testResolveShortUrl() {
         console.log('🧪 Testing resolveShortUrl function - Integration Test\n');
         console.log('⚠️  This test makes real HTTP requests to resolve shortened URLs\n');
 
-        // Create a TwitterScraper instance (bearer token not needed for resolveShortUrl)
+        // Create a TwitterClient instance (bearer token not needed for resolveShortUrl)
         const logger = new CliuiLogger();
-        const scraper = new TwitterScraper('dummy-token', logger);
+        const scraper = new TwitterClient('dummy-token', logger);
 
         // Test URLs provided by the user
         const testUrls = [

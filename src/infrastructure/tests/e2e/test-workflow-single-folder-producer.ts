@@ -2,7 +2,7 @@
  * End-to-End Test for Workflow Pipeline
  * 
  * Tests the complete workflow from actual .eml files through to extracted links:
- * - SingleFolderProducer (reads from test_mylinks directory using URI)
+ * - SingleFolderEmailFileProducer (reads from test_mylinks directory using URI)
  * - EmailParserStage (parses email content)
  * - BookmarkCollector (collects links)
  * - WorkflowExecutor (orchestrates the pipeline)
@@ -11,7 +11,7 @@
  */
 
 import { HttpLinksParser } from '../../adapters/HttpLinksParser.js';
-import { SingleFolderProducer } from '../../workflow/producers/SingleFolderProducer.js';
+import { SingleFolderEmailFileProducer } from '../../workflow/producers/SingleFolderEmailFileProducer.js';
 import { EmailParserStage } from '../../workflow/stages/EmailParserStage.js';
 import { BookmarkCollector } from '../../workflow/consumers/BookmarkCollector.js';
 import { Pipeline } from '../../../domain/workflow/Pipeline.js';
@@ -43,7 +43,7 @@ class TestLogger implements ILogger {
 }
 
 async function runWorkflowTest() {
-    console.log('🧪 Starting Workflow Pipeline E2E Test (SingleFolderProducer)\n');
+    console.log('🧪 Starting Workflow Pipeline E2E Test (SingleFolderEmailFileProducer)\n');
 
     // Setup: Get path to test fixtures
     const testFixturesPath = join(process.cwd(), 'data', 'fixtures', 'test_mylinks');
@@ -101,8 +101,8 @@ async function testWithUri(uri: string) {
     const linksExtractor = new HttpLinksParser();
     const logger = new TestLogger();
 
-    // Create workflow components using SingleFolderProducer with URI
-    const producer = new SingleFolderProducer(uri);
+    // Create workflow components using SingleFolderEmailFileProducer with URI
+    const producer = new SingleFolderEmailFileProducer(uri);
     const stage = new EmailParserStage(linksExtractor);
     const pipeline = new Pipeline(stage);
     const consumer = new BookmarkCollector(logger);
@@ -233,7 +233,7 @@ async function testPartialExtraction(uri: string) {
     const linksExtractor = new HttpLinksParser();
     const logger = new TestLogger();
 
-    const producer = new SingleFolderProducer(uri);
+    const producer = new SingleFolderEmailFileProducer(uri);
     const stage = new EmailParserStage(linksExtractor);
     const pipeline = new Pipeline(stage);
     const consumer = new BookmarkCollector(logger);
@@ -301,7 +301,7 @@ async function testErrorCase(uri: string, description: string) {
     const logger = new TestLogger();
 
     try {
-        const producer = new SingleFolderProducer(uri);
+        const producer = new SingleFolderEmailFileProducer(uri);
         const stage = new EmailParserStage(linksExtractor);
         const pipeline = new Pipeline(stage);
         const consumer = new BookmarkCollector(logger);

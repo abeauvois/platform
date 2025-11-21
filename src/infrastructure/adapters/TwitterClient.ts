@@ -1,6 +1,6 @@
-import { ITweetScraper } from '../../domain/ports/ITweetScraper.js';
-import { ILogger } from '../../domain/ports/ILogger.js';
 import { CachedHttpClient } from '@myorg/cached-http-client';
+import { ITwitterClient } from '../../domain/ports/ITwitterClient.js';
+import { ILogger } from '../../domain/ports/ILogger.js';
 
 /**
  * Adapter: Implements tweet scraping using Twitter API v2 with Bearer Token
@@ -24,13 +24,13 @@ import { CachedHttpClient } from '@myorg/cached-http-client';
  * Example usage:
  * ```typescript
  * // For Basic tier (conservative)
- * const scraper = new TwitterScraper(bearerToken, logger, 4000);
+ * const scraper = new TwitterClient(bearerToken, logger, 4000);
  * 
  * // For Pro tier (default)
- * const scraper = new TwitterScraper(bearerToken, logger); // Uses 1000ms default
+ * const scraper = new TwitterClient(bearerToken, logger); // Uses 1000ms default
  * ```
  */
-export class TwitterScraper implements ITweetScraper {
+export class TwitterClient implements ITwitterClient {
     private readonly httpClient: CachedHttpClient<string>;
 
     constructor(

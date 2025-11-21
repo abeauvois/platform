@@ -5,19 +5,20 @@ import { IZipExtractor } from '../../domain/ports/IZipExtractor.js';
 import { Pipeline, WorkflowExecutor } from '../../domain/workflow/index.js';
 import { EmailFile } from '../../domain/entities/EmailFile.js';
 import { IProducer } from '../../domain/workflow/IProducer.js';
-import { ZipFileProducer } from '../../infrastructure/workflow/producers/ZipFileProducer.js';
-import { SingleFolderProducer } from '../../infrastructure/workflow/producers/SingleFolderProducer.js';
-import { EmailParserStage } from '../../infrastructure/workflow/stages/EmailParserStage.js';
+import { ZipFileEmailFileProducer } from '../../infrastructure/workflow/producers/ZipFileEmailFileProducer';
+import { SingleFolderEmailFileProducer } from '../../infrastructure/workflow/producers/SingleFolderEmailFileProducer';
 import { BookmarkCollector } from '../../infrastructure/workflow/consumers/BookmarkCollector.js';
 import { statSync } from 'fs';
+import { EmlContentAnalyserStage } from '../../infrastructure/workflow/stages/EmlContentAnalyserStage .js';
+import { IContentAnalyser } from '../../domain/ports/IContentAnalyser.js';
 
 /**
  * Service responsible for extracting and parsing email files using workflow pipeline
  */
-export class EmailExtractionWorkflowService {
+export class ZipEmlFilesBookmarksWorkflowService {
     constructor(
         private readonly zipExtractor: IZipExtractor,
-        private readonly linksExtractor: ILinksExtractor,
+        private readonly anthropicClient: IContentAnalyser,
         private readonly logger: ILogger
     ) { }
 
@@ -27,9 +28,10 @@ export class EmailExtractionWorkflowService {
      * @returns Array of Bookmark objects with extracted links
      */
     async extractAndParseEmails(sourcePath: string): Promise<Bookmark[]> {
-        // Determine source type and create appropriate producer
+
         const producer = this.createProducer(sourcePath);
-        const pipeline = this.createPipeline();
+        const stage = new EmlContentAnalyserStage(this.anthropicClient);
+        const pipeline = new Pipeline().addStage(stage);
         const consumer = new BookmarkCollector(this.logger);
 
         // Create and execute workflow
@@ -42,7 +44,7 @@ export class EmailExtractionWorkflowService {
         // Execute with error handling
         await workflow.execute({
             onStart: async () => {
-                this.logger.info('📦 Extracting .eml files...');
+                this.logger.info('📦 Reading .eml files...');
             },
             onError: async (error: Error, item: EmailFile) => {
                 this.logger.warning(`  ⚠️  ${item.filename}: ${error.message}`);
@@ -67,10 +69,10 @@ export class EmailExtractionWorkflowService {
 
             if (stats.isDirectory()) {
                 this.logger.debug(`Source is a directory: ${sourcePath}`);
-                return new SingleFolderProducer(sourcePath);
+                return new SingleFolderEmailFileProducer(sourcePath);
             } else if (stats.isFile()) {
                 this.logger.debug(`Source is a file: ${sourcePath}`);
-                return new ZipFileProducer(sourcePath, this.zipExtractor);
+                return new ZipFileEmailFileProducer(sourcePath, this.zipExtractor);
             } else {
                 throw new Error(`Source path is neither a file nor a directory: ${sourcePath}`);
             }
@@ -82,12 +84,4 @@ export class EmailExtractionWorkflowService {
         }
     }
 
-    /**
-     * Create the pipeline for email processing
-     * This can be customized or extended with additional stages
-     */
-    private createPipeline(): Pipeline<EmailFile, Bookmark> {
-        const emailParserStage = new EmailParserStage(this.linksExtractor);
-        return new Pipeline<EmailFile, Bookmark>(emailParserStage);
-    }
 }

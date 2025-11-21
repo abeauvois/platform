@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { TwitterScraper } from '../../../adapters/TwitterScraper.js';
+import { TwitterClient } from '../../../adapters/TwitterClient.js';
 import { UrlAndContextAnthropicAnalyser } from '../../../adapters/UrlAndContextAnthropicAnalyser.js';
 import { EnvConfig } from '../../../config/EnvConfig.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
@@ -18,7 +18,7 @@ async function testTwitterEnrichment() {
 
         // Initialize logger and adapters
         const logger = new CliuiLogger();
-        const twitterScraper = new TwitterScraper(twitterBearerToken, logger);
+        const twitterClient = new TwitterClient(twitterBearerToken, logger);
         const analyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
 
         // Read test CSV
@@ -48,7 +48,7 @@ async function testTwitterEnrichment() {
             if (url.includes('twitter.com/') || url.includes('x.com/')) {
                 console.log(`\n🐦 This is a Twitter/X link - fetching tweet content...`);
 
-                const tweetContent = await twitterScraper.fetchTweetContent(url);
+                const tweetContent = await TwitterClient.fetchTweetContent(url);
 
                 if (tweetContent) {
                     console.log(`\n✅ Tweet Content Retrieved:`);

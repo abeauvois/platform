@@ -1,7 +1,7 @@
 import { ILogger } from '../domain/ports/ILogger';
 import { QueuedLink } from './QueuedLink.types';
 
-import { EmailExtractionWorkflowService } from './services/EmailExtractionWorkflowService';
+import { ZipEmlFilesBookmarksWorkflowService } from './services/ZipEmlFilesBookmarksWorkflowService';
 import { ExportService } from './services/ExportService';
 import { LinkAnalysisService } from './services/LinkAnalysisService';
 import { RetryHandlerService } from './services/RetryHandlerService';
@@ -12,7 +12,7 @@ import { RetryHandlerService } from './services/RetryHandlerService';
  */
 export class LinkExtractionOrchestrator {
     constructor(
-        private readonly extractionService: EmailExtractionWorkflowService,
+        private readonly extractionService: ZipEmlFilesBookmarksWorkflowService,
         private readonly analysisService: LinkAnalysisService,
         private readonly retryHandler: RetryHandlerService,
         private readonly exportService: ExportService,

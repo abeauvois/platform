@@ -1,10 +1,9 @@
-import { BaseContent } from "./BaseContent";
 import { SourceAdapter } from "./SourceAdapter";
 
 /**
  * Domain Entity: Represents an extracted email link with metadata
  */
-export class Bookmark implements BaseContent {
+export class BaseContent {
     constructor(
         public readonly url: string,
         public readonly sourceAdapter: SourceAdapter = SourceAdapter.None,
@@ -16,10 +15,10 @@ export class Bookmark implements BaseContent {
     ) { }
 
     /**
-     * Creates a new Bookmark with updated categorization
+     * Creates a new BaseContent with updated categorization
      */
-    withCategorization(tags: string[], summary: string): Bookmark {
-        return new Bookmark(
+    withCategorization(tags: string[], summary: string): BaseContent {
+        return new BaseContent(
             this.url,
             this.sourceAdapter,
             tags,
@@ -31,10 +30,10 @@ export class Bookmark implements BaseContent {
     }
 
     /**
-     * Creates a new Bookmark with updated timestamp
+     * Creates a new BaseContent with updated timestamp
      */
-    withUpdatedTimestamp(): Bookmark {
-        return new Bookmark(
+    withUpdatedTimestamp(): BaseContent {
+        return new BaseContent(
             this.url,
             this.sourceAdapter,
             this.tags,
