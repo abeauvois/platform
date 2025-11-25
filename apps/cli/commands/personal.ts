@@ -1,6 +1,7 @@
 import { command, cli } from 'cleye';
 import { bookmarkCommand } from './bookmark.js';
 import { ingestCommand } from './ingest.js';
+import { listCommand } from './list.js';
 
 /**
  * Personal command - Personal data management
@@ -21,6 +22,7 @@ export const personalCommand = command({
     // If we land here, it means subcommands were not matched automatically.
     // We manually check for 'bookmark' subcommand and dispatch to a new CLI instance.
 
+    console.log("🚀 ~ argv:", argv)
     if (argv._[0] === 'bookmark') {
         // If ingest is the next command, dispatch directly to ingest
         if (argv._[1] === 'ingest') {
@@ -31,6 +33,19 @@ export const personalCommand = command({
 
                 cli({
                     commands: [ingestCommand]
+                }, undefined, args);
+                return;
+            }
+        }
+        // If list is the next command, dispatch directly to list
+        if (argv._[1] === 'list') {
+            // Find where 'bookmark' is in process.argv to slice correctly
+            const bookmarkIndex = process.argv.indexOf('bookmark');
+            if (bookmarkIndex !== -1) {
+                const args = process.argv.slice(bookmarkIndex + 1); // ['list', ...]
+
+                cli({
+                    commands: [listCommand]
                 }, undefined, args);
                 return;
             }
