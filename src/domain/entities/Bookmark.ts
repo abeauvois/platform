@@ -12,7 +12,8 @@ export class Bookmark implements BaseContent {
         public readonly summary: string = '',
         public readonly rawContent: string = '',
         public readonly createdAt: Date = new Date(),
-        public readonly updatedAt: Date = new Date()
+        public readonly updatedAt: Date = new Date(),
+        public readonly userId?: string
     ) { }
 
     /**

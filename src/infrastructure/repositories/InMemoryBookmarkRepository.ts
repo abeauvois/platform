@@ -30,6 +30,12 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         return Array.from(this.links.values());
     }
 
+    async findByUserId(userId: string): Promise<Bookmark[]> {
+        return Array.from(this.links.values()).filter(
+            bookmark => bookmark.userId === userId
+        );
+    }
+
     async clear(): Promise<void> {
         this.links.clear();
     }

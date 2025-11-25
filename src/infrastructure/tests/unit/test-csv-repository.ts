@@ -26,7 +26,7 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            const link = new Bookmark('https://example.com/test', 'Tech', 'A test article', 'test.eml');
+            const link = new Bookmark('https://example.com/test', 'EmlFile', ['Tech'], 'A test article', 'test.eml');
             await repo.save(link);
 
             const found = await repo.findByUrl('https://example.com/test');
@@ -34,7 +34,7 @@ async function runTests() {
                 throw new Error('❌ FAILED: Link not found after saving');
             }
 
-            if (found.url !== link.url || found.tag !== link.tag || found.description !== link.description) {
+            if (found.url !== link.url || found.tags[0] !== link.tags[0] || found.summary !== link.summary) {
                 throw new Error('❌ FAILED: Retrieved link does not match saved link');
             }
 
@@ -52,7 +52,7 @@ async function runTests() {
                 throw new Error('❌ FAILED: Link should not exist in empty repository');
             }
 
-            await repo.save(new Bookmark('https://example.com/test', '', '', ''));
+            await repo.save(new Bookmark('https://example.com/test', 'EmlFile', [], ''));
 
             const exists2 = await repo.exists('https://example.com/test');
             if (!exists2) {
@@ -69,9 +69,9 @@ async function runTests() {
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
             const links = [
-                new Bookmark('https://example.com/1', 'Tech', 'First', 'email1.eml'),
-                new Bookmark('https://example.com/2', 'Business', 'Second', 'email2.eml'),
-                new Bookmark('https://example.com/3', 'Science', 'Third', 'email3.eml'),
+                new Bookmark('https://example.com/1', 'EmlFile', ['Tech'], 'First', 'email1.eml'),
+                new Bookmark('https://example.com/2', 'EmlFile', ['Business'], 'Second', 'email2.eml'),
+                new Bookmark('https://example.com/3', 'EmlFile', ['Science'], 'Third', 'email3.eml'),
             ];
 
             await repo.saveMany(links);
@@ -90,8 +90,8 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            await repo.save(new Bookmark('https://a.com', 'A', 'Link A', 'a.eml'));
-            await repo.save(new Bookmark('https://b.com', 'B', 'Link B', 'b.eml'));
+            await repo.save(new Bookmark('https://a.com', 'EmlFile', ['A'], 'Link A', 'a.eml'));
+            await repo.save(new Bookmark('https://b.com', 'EmlFile', ['B'], 'Link B', 'b.eml'));
 
             const allLinks = await repo.findAll();
             if (allLinks.length !== 2) {
@@ -112,11 +112,11 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            await repo.save(new Bookmark('https://example.com', 'OldTag', 'Old description', 'old.eml'));
-            await repo.save(new Bookmark('https://example.com', 'NewTag', 'New description', 'new.eml'));
+            await repo.save(new Bookmark('https://example.com', 'EmlFile', ['OldTag'], 'Old description', 'old.eml'));
+            await repo.save(new Bookmark('https://example.com', 'EmlFile', ['NewTag'], 'New description', 'new.eml'));
 
             const found = await repo.findByUrl('https://example.com');
-            if (!found || found.tag !== 'NewTag' || found.description !== 'New description') {
+            if (!found || found.tags[0] !== 'NewTag' || found.summary !== 'New description') {
                 throw new Error('❌ FAILED: Link was not updated correctly');
             }
 
@@ -136,7 +136,8 @@ async function runTests() {
 
             const complexLink = new Bookmark(
                 'https://example.com/article?param=value&other=test',
-                'Tag, with, commas',
+                'EmlFile',
+                ['Tag, with, commas'],
                 'Description with "quotes" and\nnewlines',
                 'file.eml'
             );
@@ -148,11 +149,11 @@ async function runTests() {
                 throw new Error('❌ FAILED: Link with special characters not found');
             }
 
-            if (found.tag !== complexLink.tag) {
-                throw new Error(`❌ FAILED: Tag not preserved. Expected: "${complexLink.tag}", Got: "${found.tag}"`);
+            if (found.tags[0] !== complexLink.tags[0]) {
+                throw new Error(`❌ FAILED: Tag not preserved. Expected: "${complexLink.tags[0]}", Got: "${found.tags[0]}"`);
             }
 
-            if (found.description !== complexLink.description) {
+            if (found.summary !== complexLink.summary) {
                 throw new Error(`❌ FAILED: Description not preserved`);
             }
 
@@ -166,13 +167,13 @@ async function runTests() {
 
             // First instance
             const repo1 = new CsvLinkRepository(TEST_CSV_PATH);
-            await repo1.save(new Bookmark('https://persist.com', 'Persistent', 'Persisted data', 'test.eml'));
+            await repo1.save(new Bookmark('https://persist.com', 'EmlFile', ['Persistent'], 'Persisted data', 'test.eml'));
 
             // Second instance (should read from file)
             const repo2 = new CsvLinkRepository(TEST_CSV_PATH);
             const found = await repo2.findByUrl('https://persist.com');
 
-            if (!found || found.tag !== 'Persistent') {
+            if (!found || found.tags[0] !== 'Persistent') {
                 throw new Error('❌ FAILED: Data not persisted to file');
             }
 
@@ -185,8 +186,8 @@ async function runTests() {
             await cleanupTestFile();
             const repo = new CsvLinkRepository(TEST_CSV_PATH);
 
-            await repo.save(new Bookmark('https://a.com', '', '', ''));
-            await repo.save(new Bookmark('https://b.com', '', '', ''));
+            await repo.save(new Bookmark('https://a.com', 'EmlFile', [], ''));
+            await repo.save(new Bookmark('https://b.com', 'EmlFile', [], ''));
 
             let allLinks = await repo.findAll();
             if (allLinks.length !== 2) {

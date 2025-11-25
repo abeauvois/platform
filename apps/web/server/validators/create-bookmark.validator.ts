@@ -2,16 +2,18 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 
 import { SOURCE_ADAPTERS } from '@platform/domain';
+import { raw } from 'hono/html';
 
-export const createBookmarkSchema = z
-  .object({
+export const createBookmarkSchema =
+  // z.strictObject(z.
+  z.object({
     url: z.string().min(10, 'URL is required'),
-    sourceAdapter: z.enum(SOURCE_ADAPTERS).default('None'),
+    sourceAdapter: z.enum(SOURCE_ADAPTERS).default('Other'),
     tags: z.array(z.string()).optional(),
     summary: z.string().optional(),
-    completed: z.boolean().default(false),
+    rawContent: z.string().optional()
   })
-  .strict();
+// );
 
 export const createBookmarkValidator = zValidator(
   'json',

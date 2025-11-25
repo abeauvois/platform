@@ -38,6 +38,13 @@ export interface ILinkRepository {
     findAll(): Promise<Bookmark[]>;
 
     /**
+     * Retrieve bookmarks for a specific user
+     * @param userId The user ID to filter by
+     * @returns Array of Bookmarks belonging to the user
+     */
+    findByUserId(userId: string): Promise<Bookmark[]>;
+
+    /**
      * Clear all stored links (useful for testing)
      */
     clear(): Promise<void>;

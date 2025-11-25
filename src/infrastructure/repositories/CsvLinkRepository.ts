@@ -6,7 +6,7 @@ import { existsSync } from 'fs';
 /**
  * CSV File Implementation of ILinkRepository
  * Stores and retrieves Bookmark entities from a CSV file
- * CSV Format: URL,Tag,Description,sourceUri,CreatedAt,UpdatedAt
+ * CSV Format: URL,SourceAdapter,Tags,Summary,RawContent,CreatedAt,UpdatedAt,UserId
  */
 export class CsvLinkRepository implements ILinkRepository {
     private readonly filePath: string;
@@ -45,6 +45,13 @@ export class CsvLinkRepository implements ILinkRepository {
         return Array.from(this.cache!.values());
     }
 
+    async findByUserId(userId: string): Promise<Bookmark[]> {
+        await this.ensureCache();
+        return Array.from(this.cache!.values()).filter(
+            bookmark => bookmark.userId === userId
+        );
+    }
+
     async clear(): Promise<void> {
         this.cache = new Map();
         await this.writeToFile();
@@ -77,13 +84,16 @@ export class CsvLinkRepository implements ILinkRepository {
             for (const line of dataLines) {
                 const parsed = this.parseCsvLine(line);
                 if (parsed && parsed.url) {
+                    const sourceAdapter = parsed.sourceAdapter as any || 'EmlFile';
                     const link = new Bookmark(
                         parsed.url,
-                        parsed.tag || '',
-                        parsed.description || '',
-                        parsed.sourceUri || '',
+                        sourceAdapter,
+                        parsed.tags ? JSON.parse(parsed.tags) : [],
+                        parsed.summary || '',
+                        parsed.rawContent || '',
                         parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
-                        parsed.updatedAt ? new Date(parsed.updatedAt) : new Date()
+                        parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
+                        parsed.userId || undefined
                     );
                     this.cache.set(link.url, link);
                 }
@@ -105,7 +115,7 @@ export class CsvLinkRepository implements ILinkRepository {
             const lines: string[] = [];
 
             // Header
-            lines.push('URL,Tag,Description,sourceUri,CreatedAt,UpdatedAt');
+            lines.push('URL,SourceAdapter,Tags,Summary,RawContent,CreatedAt,UpdatedAt,UserId');
 
             // Data rows
             for (const link of this.cache.values()) {
@@ -124,11 +134,13 @@ export class CsvLinkRepository implements ILinkRepository {
     private toCsvLine(link: Bookmark): string {
         return [
             this.escapeCsvField(link.url),
-            this.escapeCsvField(link.tag),
-            this.escapeCsvField(link.description),
-            this.escapeCsvField(link.sourceUri),
+            this.escapeCsvField(link.sourceAdapter),
+            this.escapeCsvField(JSON.stringify(link.tags)),
+            this.escapeCsvField(link.summary),
+            this.escapeCsvField(link.rawContent),
             this.escapeCsvField(link.createdAt.toISOString()),
             this.escapeCsvField(link.updatedAt.toISOString()),
+            this.escapeCsvField(link.userId || ''),
         ].join(',');
     }
 
@@ -137,11 +149,13 @@ export class CsvLinkRepository implements ILinkRepository {
      */
     private parseCsvLine(line: string): {
         url: string;
-        tag: string;
-        description: string;
-        sourceUri: string;
+        sourceAdapter: string;
+        tags: string;
+        summary: string;
+        rawContent: string;
         createdAt?: string;
         updatedAt?: string;
+        userId?: string;
     } | null {
         try {
             const fields = this.splitCsvLine(line);
@@ -152,11 +166,13 @@ export class CsvLinkRepository implements ILinkRepository {
 
             return {
                 url: fields[0] || '',
-                tag: fields[1] || '',
-                description: fields[2] || '',
-                sourceUri: fields[3] || '',
-                createdAt: fields[4] || undefined,
-                updatedAt: fields[5] || undefined,
+                sourceAdapter: fields[1] || 'EmlFile',
+                tags: fields[2] || '[]',
+                summary: fields[3] || '',
+                rawContent: fields[4] || '',
+                createdAt: fields[5] || undefined,
+                updatedAt: fields[6] || undefined,
+                userId: fields[7] || undefined,
             };
         } catch {
             return null;
