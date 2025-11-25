@@ -62,6 +62,12 @@ export default function Header() {
               >
                 Todos
               </Link>
+              <Link
+                to="/bookmarks"
+                activeProps={{ className: 'font-bold text-primary' }}
+              >
+                Bookmarks
+              </Link>
               {!session && (
                 <div
                   className="tooltip tooltip-bottom"
