@@ -1,4 +1,4 @@
-# Platform - Personal Bookmark Management System
+# Platform - Build real world apps quicker
 
 A modern, modular platform for managing personal bookmarks with AI-powered categorization and multi-source ingestion. Built with Bun, TypeScript, and hexagonal architecture principles.
 

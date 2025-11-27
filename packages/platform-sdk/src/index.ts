@@ -1,16 +1,15 @@
 /**
  * Platform SDK
- * Client SDK for interacting with the platform API
+ * Generic client SDK for interacting with the platform API
  */
 
-// Auth
-export { Auth } from './auth/Auth.js';
-export type { IAuth, AuthCredentials } from './ports/IAuth.js';
+// API Client
+export { PlatformApiClient } from './PlatformApiClient.js';
 
-// Fetcher
-export { Fetcher } from './fetcher/Fetcher.js';
-export type { IFetcher } from './ports/IFetcher.js';
-
-// Logger
-export { CliuiLogger } from './logger/CliuiLogger.js';
-export type { ILogger } from './ports/ILogger.js';
+// Types
+export type {
+    SignUpData,
+    SignInData,
+    AuthResponse,
+    BookmarkData,
+} from './types.js';

@@ -1,74 +1,48 @@
 import { command } from 'cleye';
-import { loadCliConfig, validateCliConfig } from '../../../config.cli.js';
+import { AuthManager } from '../lib/AuthManager.js';
+import { CliuiLogger } from '../lib/CliuiLogger.js';
+import { PlatformApiClient } from '@platform/sdk';
 
 /**
- * List command - Fetch bookmarks from various sources
+ * List command - Fetch bookmarks from the platform API
  * 
  * Usage:
- *   cli personal bookmark list -f gmail
- *   cli personal bookmark list --from gmail
+ *   cli personal bookmark list
  */
 export const listCommand = command({
     name: 'list',
-    flags: {
-        from: {
-            type: String,
-            description: 'Source to get bookmarks from (gmail, notion, repository, etc.)',
-            alias: 'f',
-        },
-
-    },
     help: {
-        description: 'Ingest bookmarks from various sources',
+        description: 'List bookmarks from the platform API',
     },
 }, async (argv) => {
     try {
-        const source = argv.flags.from;
-
-        if (!source) {
-            console.error('❌ Error: --from flag is required');
-            console.error('Usage: cli personal bookmark ingest -f gmail -t csv\n');
-            process.exit(1);
-        }
-
-        // Currently only support gmail -> csv
-        if (source !== 'gmail') {
-            console.error(`❌ Error: Source '${source}' is not supported yet`);
-            console.error('Supported sources: gmail\n');
-            process.exit(1);
-        }
-
         console.log('🚀 Personal Bookmark Listing\n');
-        console.log(`📥 Source: ${source}`);
-        console.log(`\n`);
 
-        // Import dependencies
-        const { CliuiLogger, Auth, Fetcher } = await import('@platform/sdk');
-
-        // initialize platform sdk
+        const baseUrl = process.env.PLATFORM_API_URL || 'http://localhost:3000';
         const logger = new CliuiLogger();
-        const auth = new Auth({
-            baseUrl: process.env.PLATFORM_API_URL || 'http://localhost:3000',
-            logger
-        });
-        const credentials = await auth.login();
+
+        // Authenticate
+        const authManager = new AuthManager({ baseUrl, logger });
+        const credentials = await authManager.login();
 
         if (!credentials) {
-            logger.error('❌ Error: Authentication failed. Please check your credentials and try again.');
+            logger.error('Authentication failed. Please check your credentials and try again.');
             process.exit(1);
         }
 
-        // Execute workflow
-        logger.info('🔄 Fetching bookmarks from API...\n');
-        const fetcher = new Fetcher({
-            baseUrl: process.env.PLATFORM_API_URL || 'http://localhost:3000',
-            credentials,
-            logger
+        // Create authenticated API client
+        const apiClient = new PlatformApiClient({
+            baseUrl,
+            sessionToken: credentials.sessionToken,
+            logger,
         });
-        const bookmarks = await fetcher.fetchBookmarks();
+
+        // Fetch bookmarks
+        logger.info('Fetching bookmarks from API...\n');
+        const bookmarks = await apiClient.fetchBookmarks();
 
         if (bookmarks.length === 0) {
-            logger.info('ℹ️  No bookmarks found.');
+            logger.info('No bookmarks found.');
             logger.info('✨ All done!\n');
             return;
         }

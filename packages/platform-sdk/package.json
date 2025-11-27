@@ -18,8 +18,7 @@
         "test:integration": "bun test ./tests/integration"
     },
     "dependencies": {
-        "@platform/domain": "workspace:*",
-        "@poppinss/cliui": "^6.5.0"
+        "@platform/domain": "workspace:*"
     },
     "devDependencies": {
         "@types/bun": "latest",
