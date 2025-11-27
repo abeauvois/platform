@@ -1,255 +1,355 @@
-# Email Link Extractor
+# Platform - Personal Bookmark Management System
 
-A Bun.js application that extracts HTTP links from Gmail email files (.eml) in a zip archive, categorizes them using AI, and exports to CSV.
+A modern, modular platform for managing personal bookmarks with AI-powered categorization and multi-source ingestion. Built with Bun, TypeScript, and hexagonal architecture principles.
 
-## Architecture
+## 🎯 Overview
 
-This project uses **Hexagonal Architecture** (Ports and Adapters pattern) for maximum flexibility and testability:
+This monorepo contains multiple applications and packages that work together to provide a complete bookmark management solution:
+
+- **Web Application** - Full-stack app with React frontend and Hono backend
+- **CLI Application** - Command-line interface for bookmark operations
+- **Platform SDK** - Reusable SDK for authentication and API communication
+- **Domain Package** - Shared domain entities and business logic
+
+## 📁 Project Structure
 
 ```
-src/
-├── domain/              # Core business logic (framework-agnostic)
-│   ├── entities/        # Domain models
-│   └── ports/           # Interfaces defining contracts
-├── application/         # Use cases / business workflows
-├── infrastructure/      # External adapters
-│   ├── adapters/        # Implementations (Bun, Anthropic, etc.)
-│   └── config/          # Configuration management
-└── cli/                 # Command-line interface
+platform/
+├── apps/                          # Applications
+│   ├── cli/                       # Command-line interface
+│   │   ├── index.ts              # CLI entry point
+│   │   ├── commands/             # CLI commands
+│   │   ├── package.json          # Independent package
+│   │   └── README.md             # CLI documentation
+│   └── web/                       # Web application
+│       ├── server/               # Hono API server
+│       │   ├── index.ts          # Server entry
+│       │   ├── routes/           # API routes
+│       │   ├── db/               # Database (Drizzle ORM)
+│       │   └── lib/              # Better-auth setup
+│       └── client/               # React frontend
+│           ├── src/              # React components
+│           └── vite.config.ts    # Vite configuration
+│
+├── packages/                      # Shared packages
+│   ├── platform-sdk/             # Platform SDK (NEW)
+│   │   ├── src/
+│   │   │   ├── auth/Auth.ts      # Authentication client
+│   │   │   ├── fetcher/Fetcher.ts # API client
+│   │   │   ├── logger/           # Logging adapter
+│   │   │   └── ports/            # Interfaces
+│   │   └── tests/
+│   │       ├── unit/             # Unit tests
+│   │       └── integration/      # Integration tests
+│   ├── domain/                   # Shared domain entities
+│   │   └── src/
+│   │       └── entities/
+│   │           └── Bookmark.ts   # Core domain model
+│   └── cached-http-client/       # HTTP client library
+│
+├── src/                          # Legacy email extraction (to be migrated)
+│   ├── domain/
+│   ├── application/
+│   └── infrastructure/
+│
+└── docs/                         # Documentation
+    └── ai/                       # AI assistant guides
 ```
 
-### Benefits
+## 🏗️ Architecture Principles
 
-- **Testable**: Domain logic is isolated and easy to unit test
-- **Flexible**: Swap implementations without changing core logic
-- **SDK-ready**: Can be packaged as a library
-- **Future-proof**: Easy to extend with new features
+### Hexagonal Architecture (Ports & Adapters)
 
-## Prerequisites
+All applications follow hexagonal architecture for maximum flexibility and testability:
 
-- [Bun](https://bun.sh) installed
-- Anthropic API key
+```
+┌─────────────────────────────────────────┐
+│           User Interfaces               │
+│  (CLI, Web UI, REST API)                │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│         Application Layer               │
+│  (Use Cases, Services, Orchestration)   │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│          Domain Layer                   │
+│  (Entities, Ports/Interfaces)          │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│      Infrastructure Layer               │
+│  (Adapters: DB, API, File System)      │
+└─────────────────────────────────────────┘
+```
 
-## Setup
+**Key Principles:**
 
-1. Install dependencies:
+- **Domain First**: Business logic is independent of frameworks
+- **Dependency Inversion**: Dependencies point inward toward domain
+- **Ports & Adapters**: Interfaces define contracts, implementations are swappable
+- **Test-Driven Development**: Write tests first, implementation second
+
+### Monorepo Benefits
+
+- **Code Sharing**: Common domain logic across apps
+- **Independent Deployment**: Each app can be built/deployed separately
+- **Type Safety**: TypeScript across the entire stack
+- **Unified Testing**: Consistent testing patterns
+
+## 🚀 Applications
+
+### 1. CLI Application (`apps/cli`)
+
+Command-line interface for bookmark management.
+
+**Features:**
+
+- List bookmarks from API
+- Ingest bookmarks from Gmail, CSV, etc.
+- Interactive authentication
+- Session persistence
+
+**Usage:**
 
 ```bash
+# List bookmarks
+bun run platform personal bookmark list
+
+# Ingest from Gmail
+bun run platform personal bookmark ingest -f gmail
+
+# With custom API URL
+PLATFORM_API_URL=http://localhost:5000 bun run platform personal bookmark list
+```
+
+**Architecture:**
+
+- Uses `@platform/sdk` for API communication
+- Independent package with own `package.json`
+- Can be built and deployed separately
+
+### 2. Web Application (`apps/web`)
+
+Full-stack web application with React frontend and Hono backend.
+
+**Frontend (React + TanStack Router):**
+
+- Modern React with TypeScript
+- TanStack Router for routing
+- Vite for building
+
+**Backend (Hono API):**
+
+- REST API at `http://localhost:5000/api`
+- Better-auth for authentication
+- Drizzle ORM for database
+- PostgreSQL database
+
+**API Endpoints:**
+
+- `POST /api/auth/sign-up/email` - User registration
+- `POST /api/auth/sign-in/email` - User login
+- `GET /api/bookmarks` - List bookmarks (authenticated)
+- `POST /api/bookmarks` - Create bookmark (authenticated)
+
+**Start the web app:**
+
+```bash
+cd apps/web
+bun run dev
+```
+
+### 3. Platform SDK (`packages/platform-sdk`)
+
+Reusable SDK for API communication used by CLI and other apps.
+
+**Components:**
+
+- **Auth** - Email/password authentication with session management
+- **Fetcher** - HTTP client for bookmark operations
+- **Logger** - Terminal logging adapter
+
+**Example Usage:**
+
+```typescript
+import { Auth, Fetcher, CliuiLogger } from "@platform/sdk";
+
+const logger = new CliuiLogger();
+const auth = new Auth({ baseUrl: "http://localhost:5000", logger });
+const credentials = await auth.login();
+
+const fetcher = new Fetcher({
+  baseUrl: "http://localhost:5000",
+  credentials,
+  logger,
+});
+const bookmarks = await fetcher.fetchBookmarks();
+```
+
+**Testing:**
+
+- Unit tests: 8/8 passing
+- Integration tests: 4/4 passing
+- TDD approach throughout
+
+## 🔧 Development
+
+### Prerequisites
+
+- [Bun](https://bun.sh) v1.0+
+- PostgreSQL (for web app)
+- Node.js 18+ (optional, for compatibility)
+
+### Installation
+
+```bash
+# Install all dependencies
 bun install
+
+# Build all packages
+bun run build
 ```
 
-2. Create a `.env` file with your Anthropic API key:
+### Running Applications
 
 ```bash
-echo "ANTHROPIC_API_KEY=your-api-key-here" > .env
+# Web application (frontend + backend)
+cd apps/web && bun run dev
+
+# CLI application
+bun run platform personal bookmark list
+
+# Build SDK
+bun run build:sdk
 ```
-
-## Usage
-
-### CLI (Powered by Cleye)
-
-The CLI now uses [Cleye](https://github.com/privatenumber/cleye) - a modern, lightweight, and type-safe CLI framework.
-
-#### Basic Usage
-
-The CLI accepts both **zip files** and **folders** containing `.eml` files:
-
-```bash
-# From a zip file
-bun run cli mylinks.zip
-# or
-bun run src/cli/index.ts mylinks.zip
-
-# From a folder
-bun run cli data/fixtures/test_mylinks
-# or
-bun run src/cli/index.ts data/fixtures/test_mylinks
-```
-
-This will:
-
-1. Extract all `.eml` files from the zip or folder
-2. Parse each email and extract the main HTTP link
-3. Use Claude 3.5 Haiku to categorize and describe each link
-4. Generate `output.csv` with columns: `link`, `tag`, `description`
-
-#### Custom Output File
-
-```bash
-bun run cli mylinks.zip results.csv
-# or with folder
-bun run cli data/fixtures/test_mylinks results.csv
-```
-
-#### Verbose Mode
-
-Enable detailed logging with stack traces:
-
-```bash
-bun run cli mylinks.zip --verbose
-# or short form
-bun run cli mylinks.zip -v
-```
-
-#### Help & Version
-
-```bash
-# Show help
-bun run cli:help
-# or
-bun run src/cli/index.ts --help
-
-# Show version
-bun run cli:version
-# or
-bun run src/cli/index.ts --version
-```
-
-### Gmail Command
-
-Fetch recent Gmail messages received since the last execution:
-
-```bash
-bun run cli gmail
-```
-
-**Features:**
-
-- Incremental fetching - only shows new emails since last run
-- Persistent tracking via `.gmail-last-run` timestamp file
-- Rich display with sender, subject, date, and preview
-- OAuth 2.0 authentication
-
-**Setup:**
-
-1. Create a Google Cloud project and enable Gmail API
-2. Create OAuth 2.0 credentials (Desktop app)
-3. Generate a refresh token
-4. Add credentials to `.env`:
-
-```bash
-GMAIL_CLIENT_ID=your_client_id
-GMAIL_CLIENT_SECRET=your_client_secret
-GMAIL_REFRESH_TOKEN=your_refresh_token
-```
-
-📖 **Full documentation**: See [docs/GMAIL_COMMAND.md](./docs/GMAIL_COMMAND.md) for detailed setup instructions, troubleshooting, and examples.
-
-### Select Command
-
-Interactively select and filter links from a CSV file:
-
-```bash
-bun run cli select output.csv
-```
-
-**Features:**
-
-- Interactive UI powered by @clack/prompts
-- Multiple selection modes (by link, by tag, all)
-- Export selected links to new CSV
-- Display in terminal or copy to clipboard
-
-📖 **Full documentation**: See [docs/SELECT_COMMAND.md](./docs/SELECT_COMMAND.md)
-
-## Output Format
-
-The CSV file contains three columns:
-
-- **link**: The extracted HTTP/HTTPS URL
-- **tag**: AI-generated category (2-4 words, e.g., "AI/Machine Learning")
-- **description**: AI-generated description (max 200 words)
-
-## AI Model
-
-Uses **Claude 3.5 Haiku** (`claude-3-5-haiku-20241022`) from Anthropic - their fastest and most cost-effective model, perfect for this use case.
-
-## Extending the Application
-
-### As an SDK
-
-The hexagonal architecture makes it easy to use as a library:
-
-```typescript
-import { ExtractLinksUseCase } from "./application/ExtractLinksUseCase.js";
-import { BunZipExtractor } from "./infrastructure/adapters/BunZipExtractor.js";
-// ... import other adapters
-
-const useCase = new ExtractLinksUseCase(
-  new BunZipExtractor(),
-  new EmailLinksExtractor(),
-  new AnthropicAnalyzer(apiKey),
-  new CsvFileWriter()
-);
-
-await useCase.execute("input.zip", "output.csv");
-```
-
-### Swapping Implementations
-
-Want to use OpenAI instead of Anthropic? Just create a new adapter:
-
-```typescript
-class OpenAIAnalyzer implements ILinkAnalyzer {
-  async analyze(url: string): Promise<LinkAnalysis> {
-    // Your OpenAI implementation
-  }
-}
-```
-
-Then plug it into the use case - no other changes needed!
-
-## Development
-
-### Project Scripts
-
-- `bun run start`: Run the CLI
-- `bun run dev`: Run with auto-reload on changes
 
 ### Testing
 
-This project follows **Test-Driven Development (TDD)** principles. Run tests with:
-
 ```bash
-# Unit tests (fast, no external dependencies)
+# SDK unit tests
+cd packages/platform-sdk && bun test tests/unit/
+
+# SDK integration tests (requires server running)
+cd packages/platform-sdk && bun test tests/integration/
+
+# Legacy tests
 bun run test:unit
-
-# Integration tests (requires API credentials)
 bun run it
-
-# E2E tests (complete workflows)
 bun run test:e2e
-
-# All tests
-bun run test:unit && bun run it && bun run test:e2e
 ```
 
-### Adding Features
+## 🔑 Configuration
 
-We follow a **TDD-first approach**. When adding new features:
+### Environment Variables
 
-1. **Write tests first** - Define expected behavior through tests
+Create `.env` files in respective directories:
+
+**Root `.env`** (for legacy CLI):
+
+```bash
+ANTHROPIC_API_KEY=your-key
+NOTION_INTEGRATION_TOKEN=your-token
+NOTION_DATABASE_ID=your-db-id
+TWITTER_BEARER_TOKEN=your-token
+```
+
+**`apps/web/.env`**:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/bookmarks
+CLIENT_URL=http://localhost:3001
+```
+
+### CLI Configuration
+
+The CLI stores session in `~/.platform-cli/session.json` for persistent authentication.
+
+## 📚 Documentation
+
+### Application Docs
+
+- **[apps/cli/README.md](./apps/cli/README.md)** - CLI usage and testing
+- **[apps/cli/IMPLEMENTATION_SUMMARY.md](./apps/cli/IMPLEMENTATION_SUMMARY.md)** - CLI implementation details
+- **[apps/web/README.md](./apps/web/README.md)** - Web app setup and deployment
+
+### Architecture & Testing
+
+- **[docs/ai/TDD.md](./docs/ai/TDD.md)** - Test-Driven Development guide
+- **[docs/ai/TESTING_GUIDE.md](./docs/ai/TESTING_GUIDE.md)** - Testing strategies
+- **[docs/ai/ARCHITECTURE_TESTING.md](./docs/ai/ARCHITECTURE_TESTING.md)** - Testing hexagonal architecture
+- **[docs/ai/AI_TDD_PROMPTS.md](./docs/ai/AI_TDD_PROMPTS.md)** - AI assistant prompts
+- **[.clinerules](./.clinerules)** - Project rules for AI assistants
+
+### Legacy Features (Email Extraction)
+
+- **[docs/GMAIL_COMMAND.md](./docs/GMAIL_COMMAND.md)** - Gmail integration
+- **[docs/SELECT_COMMAND.md](./docs/SELECT_COMMAND.md)** - Interactive selection
+
+## 🎯 Key Features
+
+### Bookmark Management
+
+- ✅ Create, read bookmarks via REST API
+- ✅ Tag-based organization
+- ✅ AI-powered categorization (legacy)
+- ✅ Multi-source ingestion (Gmail, CSV)
+
+### Authentication & Security
+
+- ✅ Email/password authentication (Better-auth)
+- ✅ Session management with cookies
+- ✅ JWT tokens for API access
+- ✅ Secure password hashing
+
+### Developer Experience
+
+- ✅ TypeScript throughout
+- ✅ Hot reload in development
+- ✅ Comprehensive testing (unit + integration)
+- ✅ Type-safe API client (SDK)
+- ✅ Independent app deployment
+
+## 🚢 Deployment
+
+### CLI
+
+```bash
+cd apps/cli
+bun run build
+# Deploy dist/index.js as standalone executable
+```
+
+### Web Application
+
+```bash
+cd apps/web
+bun run build
+# Deploys to Fly.io or similar
+```
+
+### Platform SDK
+
+```bash
+cd packages/platform-sdk
+bun run build
+# Can be published to npm as @platform/sdk
+```
+
+## 🤝 Contributing
+
+This project follows TDD and hexagonal architecture principles:
+
+1. **Write tests first** - Define expected behavior
 2. **Implement minimal code** - Make tests pass
-3. **Refactor** - Improve code quality while keeping tests green
+3. **Refactor** - Improve code quality
+4. **Respect layer boundaries** - Domain never imports from infrastructure
 
-**Guidelines**:
-
-- **New domain logic**: Add to `src/domain/` (pure business logic, no dependencies)
-- **New use case**: Add to `src/application/` (orchestrate domain logic)
-- **New adapter**: Implement a port interface in `src/infrastructure/adapters/` (external integrations)
-
-### Architecture & Testing Documentation
-
-📚 **Comprehensive guides for TDD and architecture**:
-
-- **[TDD.md](./TDD.md)** - Test-Driven Development guide with Red-Green-Refactor cycle
-- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Testing strategies, patterns, and best practices
-- **[ARCHITECTURE_TESTING.md](./ARCHITECTURE_TESTING.md)** - How to test each layer of hexagonal architecture
-- **[AI_TDD_PROMPTS.md](./AI_TDD_PROMPTS.md)** - Ready-to-use prompts for AI assistants (Cline, Copilot, etc.)
-- **[.clinerules](./.clinerules)** - AI assistant rules for this project
-
-These guides help ensure consistent development practices, especially when working with AI coding assistants.
-
-## License
+## 📄 License
 
 MIT
+
+---
+
+Built with ❤️ using Bun, TypeScript, and modern web technologies.
