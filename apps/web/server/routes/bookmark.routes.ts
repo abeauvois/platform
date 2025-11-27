@@ -61,11 +61,44 @@ export const bookmarks = new Hono<HonoEnv>()
         }, 400)
       }
 
-      await repository.save(bookmark)
+      const savedBookmark = await repository.save(bookmark)
 
-      return c.json(bookmark, 201)
+      return c.json(savedBookmark, 201)
     },
   )
+
+  .patch('/:id', async (c) => {
+    const user = c.get('user');
+    const bookmarkId = c.req.param('id');
+    const updates = await c.req.json();
+
+    try {
+      const updatedBookmark = await repository.update(bookmarkId, user.id, updates);
+      if (!updatedBookmark) {
+        return c.json({ error: 'Bookmark not found' }, 404);
+      }
+      return c.json(updatedBookmark);
+    } catch (error) {
+      console.error('Error updating bookmark: ', error);
+      return c.json({ error: 'Failed to update bookmark' }, 500);
+    }
+  })
+
+  .delete('/:id', async (c) => {
+    const user = c.get('user');
+    const bookmarkId = c.req.param('id');
+
+    try {
+      const deleted = await repository.delete(bookmarkId, user.id);
+      if (!deleted) {
+        return c.json({ error: 'Bookmark not found' }, 404);
+      }
+      return c.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting bookmark: ', error);
+      return c.json({ error: 'Failed to delete bookmark' }, 500);
+    }
+  })
 
   .get('/', async (c) => {
     const user = c.get('user');

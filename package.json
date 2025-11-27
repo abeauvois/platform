@@ -14,7 +14,7 @@
     "build:domain": "cd packages/domain && bun run build",
     "build:sdk": "cd packages/platform-sdk && bun run build",
     "cli": "bun run apps/cli/index.ts",
-    "platform": "bun run apps/cli/index.ts",
+    "platform:web": "cd apps/web && bun run dev",
     "cli:help": "bun run src/cli/index.ts --help",
     "cli:version": "bun run src/cli/index.ts --version",
     "cli:select": "bun run src/cli/index.ts select",

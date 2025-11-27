@@ -7,6 +7,7 @@ import { ILinkRepository } from '../../domain/ports/ILinkRepository.js';
  */
 export class InMemoryBookmarkRepository implements ILinkRepository {
     private links: Map<string, Bookmark> = new Map();
+    private idCounter: number = 0;
 
     async exists(url: string): Promise<boolean> {
         return this.links.has(url);
@@ -16,14 +17,66 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         return this.links.get(url) || null;
     }
 
-    async save(link: Bookmark): Promise<void> {
-        this.links.set(link.url, link);
+    async findById(id: string): Promise<Bookmark | null> {
+        return Array.from(this.links.values()).find(bookmark => bookmark.id === id) || null;
     }
 
-    async saveMany(links: Bookmark[]): Promise<void> {
+    async save(link: Bookmark): Promise<Bookmark> {
+        // Generate ID if not present
+        const id = link.id || `bookmark-${++this.idCounter}`;
+        const bookmarkWithId = new Bookmark(
+            link.url,
+            link.sourceAdapter,
+            link.tags,
+            link.summary,
+            link.rawContent,
+            link.createdAt,
+            link.updatedAt,
+            link.userId,
+            id
+        );
+        this.links.set(bookmarkWithId.url, bookmarkWithId);
+        return bookmarkWithId;
+    }
+
+    async saveMany(links: Bookmark[]): Promise<Bookmark[]> {
+        const saved: Bookmark[] = [];
         for (const link of links) {
-            await this.save(link);
+            const savedLink = await this.save(link);
+            saved.push(savedLink);
         }
+        return saved;
+    }
+
+    async update(id: string, userId: string, updates: Partial<Bookmark>): Promise<Bookmark | null> {
+        const bookmark = await this.findById(id);
+        if (!bookmark || bookmark.userId !== userId) {
+            return null;
+        }
+
+        const updated = new Bookmark(
+            updates.url ?? bookmark.url,
+            updates.sourceAdapter ?? bookmark.sourceAdapter,
+            updates.tags ?? bookmark.tags,
+            updates.summary ?? bookmark.summary,
+            updates.rawContent ?? bookmark.rawContent,
+            bookmark.createdAt,
+            new Date(),
+            bookmark.userId,
+            bookmark.id
+        );
+
+        this.links.set(updated.url, updated);
+        return updated;
+    }
+
+    async delete(id: string, userId: string): Promise<boolean> {
+        const bookmark = await this.findById(id);
+        if (!bookmark || bookmark.userId !== userId) {
+            return false;
+        }
+        this.links.delete(bookmark.url);
+        return true;
     }
 
     async findAll(): Promise<Bookmark[]> {

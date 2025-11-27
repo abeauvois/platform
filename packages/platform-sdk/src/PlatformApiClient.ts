@@ -19,9 +19,9 @@ interface PlatformApiClientConfig {
  * Can be used with or without authentication (sessionToken)
  */
 export class PlatformApiClient {
-    private baseUrl: string;
-    private sessionToken?: string;
-    private logger: ILogger;
+    protected baseUrl: string;
+    protected sessionToken?: string;
+    protected logger: ILogger;
 
     constructor(config: PlatformApiClientConfig) {
         this.baseUrl = config.baseUrl;
@@ -81,6 +81,9 @@ export class PlatformApiClient {
                 email: responseData.user.email,
             };
 
+            // Set session token on the client instance
+            this.sessionToken = sessionToken;
+
             this.logger.info('Sign up successful');
             return authResponse;
 
@@ -124,6 +127,9 @@ export class PlatformApiClient {
                 userId: responseData.user.id,
                 email: responseData.user.email,
             };
+
+            // Set session token on the client instance
+            this.sessionToken = sessionToken;
 
             this.logger.info('Sign in successful');
             return authResponse;
@@ -258,7 +264,7 @@ export class PlatformApiClient {
      * Make an authenticated request
      * Requires sessionToken to be set
      */
-    private async authenticatedRequest<T>(endpoint: string, options: RequestInit): Promise<T> {
+    protected async authenticatedRequest<T>(endpoint: string, options: RequestInit): Promise<T> {
         if (!this.sessionToken) {
             throw new Error('Authentication required. Please sign in first.');
         }
