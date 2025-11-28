@@ -1,24 +1,19 @@
 import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
+import { BinanceClient } from '../adapters/BinanceClient.js';
+import type { IExchangeClient } from '@platform/trading-domain';
+
+// Create exchange client instance (can be swapped for different exchanges)
+const exchangeClient: IExchangeClient = new BinanceClient();
 
 export const ticker = new Hono<HonoEnv>()
     .get('/', async (c) => {
         try {
-            // Mock ticker data - in production this would fetch from a real API
-            const ticker = {
-                symbol: 'BTC/USD',
-                lastPrice: 45000,
-                bidPrice: 44995,
-                askPrice: 45005,
-                volume24h: 1234.56,
-                high24h: 46000,
-                low24h: 44000,
-                priceChange24h: 1000,
-                priceChangePercent24h: 2.27,
-                timestamp: new Date(),
-            };
+            // Fetch real ticker data from Binance
+            const symbol = c.req.query('symbol') || 'BTC/USD';
+            const ticker = await exchangeClient.getTicker(symbol);
 
-            return c.json(ticker)
+            return c.json(ticker);
         } catch (error) {
             console.error('Failed to fetch ticker: ', error);
             return c.json({ error: 'Failed to fetch ticker' }, 500);

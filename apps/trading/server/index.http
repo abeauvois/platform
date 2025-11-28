@@ -1,7 +1,41 @@
-http://localhost:3000/api/todos
+### ==========================================
+### API DOCUMENTATION
+### ==========================================
 
-### Get Ticker
-GET http://localhost:3000/ticker
+### Open Scalar API Documentation UI
+# Open this URL in browser: http://localhost:3001/api/docs
+
+### Get OpenAPI JSON spec
+GET http://localhost:3001/api/docs/openapi.json
+
+### ==========================================
+### TRADING API - PUBLIC ENDPOINTS
+### ==========================================
+
+### Get Ticker (BTC/USD - default)
+GET http://localhost:3001/api/trading/ticker
+
+### Get Ticker (ETH/USD)
+GET http://localhost:3001/api/trading/ticker?symbol=ETH/USD
+
+### Get Ticker (using Binance native symbol)
+GET http://localhost:3001/api/trading/ticker?symbol=BTCUSDT
+
+### ==========================================
+### TRADING API - PROTECTED ENDPOINTS (requires BINANCE_API_KEY & BINANCE_API_SECRET)
+### ==========================================
+
+### Get All Balances (non-zero only)
+GET http://localhost:3001/api/trading/balance
+
+### Get BTC Balance
+GET http://localhost:3001/api/trading/balance/BTC
+
+### Get USDT Balance
+GET http://localhost:3001/api/trading/balance/USDT
+
+### Get ETH Balance
+GET http://localhost:3001/api/trading/balance/ETH
 
 ### Sign up
 POST http://localhost:3000/api/auth/sign-up/email
