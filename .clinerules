@@ -52,6 +52,10 @@ CLI → Application → Domain ← Infrastructure
 
 ## 🧪 Test-Driven Development (TDD) Requirements
 
+this apply to all new features and bug fixes on the backend codebase. 
+Do not use TDD for frontend, documentation or configuration files except 
+when explicitly instructed.
+
 ### MANDATORY: Always Follow Red-Green-Refactor
 
 When creating new features:

@@ -116,3 +116,64 @@ export interface Trade {
     commissionAsset: string;
     timestamp: Date;
 }
+
+/**
+ * Candlestick/Kline data for charting
+ */
+export interface Candlestick {
+    openTime: number;      // Unix timestamp in milliseconds
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+    closeTime: number;     // Unix timestamp in milliseconds
+}
+
+/**
+ * Maximum order value in USD without additional confirmation
+ */
+export const MAX_ORDER_VALUE_USD = 500;
+
+/**
+ * Validation result for order operations
+ */
+export interface OrderValidationResult {
+    valid: boolean;
+    error?: string;
+}
+
+/**
+ * Validate order value against the maximum limit
+ * @param quantity - Order quantity
+ * @param price - Price per unit
+ * @returns Validation result with error message if invalid
+ */
+export function validateOrderValue(
+    quantity: number,
+    price: number
+): OrderValidationResult {
+    if (quantity <= 0) {
+        return {
+            valid: false,
+            error: 'Quantity must be greater than 0'
+        };
+    }
+
+    if (price <= 0) {
+        return {
+            valid: false,
+            error: 'Price must be greater than 0'
+        };
+    }
+
+    const totalValue = quantity * price;
+    if (totalValue > MAX_ORDER_VALUE_USD) {
+        return {
+            valid: false,
+            error: `Order value $${totalValue.toFixed(2)} exceeds limit of $${MAX_ORDER_VALUE_USD}`
+        };
+    }
+
+    return { valid: true };
+}

@@ -12,6 +12,8 @@
         "csv-parse": "^6.1.0",
         "googleapis": "^166.0.0",
         "jszip": "^3.10.1",
+        "lightweight-charts": "^5.0.9",
+        "trading-client": "^1.0.3",
       },
       "devDependencies": {
         "@tanstack/react-form": "^1.26.0",
@@ -451,6 +453,8 @@
 
     "extend": ["extend@3.0.2", "", {}, "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g=="],
 
+    "fancy-canvas": ["fancy-canvas@2.1.0", "", {}, "sha512-nifxXJ95JNLFR2NgRV4/MxVP45G9909wJTEKz5fg/TZS20JJZA6hfgRVh/bC9bwl2zBtBNcYPjiBE4njQHVBwQ=="],
+
     "fetch-blob": ["fetch-blob@3.2.0", "", { "dependencies": { "node-domexception": "^1.0.0", "web-streams-polyfill": "^3.0.3" } }, "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ=="],
 
     "file-type": ["file-type@18.7.0", "", { "dependencies": { "readable-web-to-node-stream": "^3.0.2", "strtok3": "^7.0.0", "token-types": "^5.0.1" } }, "sha512-ihHtXRzXEziMrQ56VSgU7wkxh55iNchFkosu7Y9/S+tXHdKyrGjVK0ujbqNnsxzea+78MaLhN6PGmfYSAv1ACw=="],
@@ -552,6 +556,8 @@
     "kysely": ["kysely@0.28.8", "", {}, "sha512-QUOgl5ZrS9IRuhq5FvOKFSsD/3+IA6MLE81/bOOTRA/YQpKDza2sFdN5g6JCB9BOpqMJDGefLCQ9F12hRS13TA=="],
 
     "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
+
+    "lightweight-charts": ["lightweight-charts@5.0.9", "", { "dependencies": { "fancy-canvas": "2.1.0" } }, "sha512-8oQIis8jfZVfSwz8j9Z5x3O79dIRTkEYI9UY7DKtE4O3ZxlHjMK3L0+4nOVOOFq4FHI/oSIzz1RHeNImCk6/Jg=="],
 
     "log-update": ["log-update@7.0.1", "", { "dependencies": { "ansi-escapes": "^7.1.0", "cli-cursor": "^5.0.0", "slice-ansi": "^7.1.2", "strip-ansi": "^7.1.2", "wrap-ansi": "^9.0.2" } }, "sha512-yEfdCegcxi/DrzkaAb82dMYvZpMOHAOYxUB45US+VrWQB2GnxyIucxG1otp3T1d6KzXXeB6TOHOF06viksSuug=="],
 
@@ -734,6 +740,8 @@
     "tr46": ["tr46@0.0.3", "", {}, "sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw=="],
 
     "trading": ["trading@workspace:apps/trading"],
+
+    "trading-client": ["trading-client@1.0.3", "", {}, "sha512-RowGLLulKsOsTHZZaa9aFPf5l2Dh54zXkyzLD5+P24VsP3xM8K2QpLRuhg9VwBpNnElIqyxT0dOOySzrEfRrAg=="],
 
     "tree-kill": ["tree-kill@1.2.2", "", { "bin": { "tree-kill": "cli.js" } }, "sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A=="],
 

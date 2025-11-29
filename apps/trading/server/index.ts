@@ -6,6 +6,7 @@ import { logger } from 'hono/logger';
 import { auth } from './lib/auth';
 import { tickerOpenApi } from './routes/ticker.openapi.routes';
 import { balanceOpenApi } from './routes/balance.openapi.routes';
+import { klinesOpenApi } from './routes/klines.openapi.routes';
 
 const app = new OpenAPIHono();
 
@@ -19,6 +20,7 @@ app.on(['POST', 'GET'], '/api/auth/**', (c) => auth.handler(c.req.raw));
 // Trading API routes with OpenAPI documentation
 app.route('/api/trading/ticker', tickerOpenApi);
 app.route('/api/trading/balance', balanceOpenApi);
+app.route('/api/trading/klines', klinesOpenApi);
 
 // OpenAPI JSON spec endpoint
 app.doc('/api/docs/openapi.json', {
@@ -38,6 +40,10 @@ app.doc('/api/docs/openapi.json', {
     {
       name: 'Ticker',
       description: 'Public market data endpoints - no authentication required',
+    },
+    {
+      name: 'Market Data',
+      description: 'Historical candlestick data endpoints - no authentication required',
     },
     {
       name: 'Balance',

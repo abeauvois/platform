@@ -1,12 +1,21 @@
 /**
- * Binance Exchange Client Adapter
- * Implements IExchangeClient interface for Binance API
+ * Binance Testnet Client Adapter
+ * Implements IExchangeClient interface for Binance Spot Testnet API
  * 
- * Infrastructure layer adapter for fetching market data from Binance
- * Supports both public (unauthenticated) and private (authenticated) endpoints
+ * Infrastructure layer adapter for testing with Binance testnet
+ * Base URL: https://testnet.binance.vision
+ * 
+ * Note: Testnet provides a safe environment for development without real funds
  */
 
-import type { IExchangeClient, MarketTicker, AccountBalance, Candlestick, Order, CreateOrderData } from '@platform/trading-domain';
+import type {
+    IExchangeClient,
+    MarketTicker,
+    AccountBalance,
+    Candlestick,
+    Order,
+    CreateOrderData
+} from '@platform/trading-domain';
 
 /**
  * Binance API response type for 24hr ticker
@@ -24,6 +33,25 @@ interface BinanceTickerResponse {
 }
 
 /**
+ * Binance API response type for klines/candlesticks
+ * Format: [openTime, open, high, low, close, volume, closeTime, ...]
+ */
+type BinanceKlineResponse = [
+    number,  // Open time
+    string,  // Open
+    string,  // High
+    string,  // Low
+    string,  // Close
+    string,  // Volume
+    number,  // Close time
+    string,  // Quote asset volume
+    number,  // Number of trades
+    string,  // Taker buy base asset volume
+    string,  // Taker buy quote asset volume
+    string   // Ignore
+];
+
+/**
  * Binance account response type
  */
 interface BinanceAccountResponse {
@@ -35,7 +63,7 @@ interface BinanceAccountResponse {
 }
 
 /**
- * Configuration options for BinanceClient
+ * Configuration options for BinanceTestnetClient
  */
 export interface BinanceClientConfig {
     apiKey?: string;
@@ -43,12 +71,20 @@ export interface BinanceClientConfig {
 }
 
 /**
- * Binance Exchange Client
- * Fetches real-time market data from Binance public API
- * Supports authenticated requests for account data (balances, orders, etc.)
+ * Valid Binance kline intervals
  */
-export class BinanceClient implements IExchangeClient {
-    private readonly baseUrl = 'https://api.binance.com/api/v3';
+const VALID_INTERVALS = [
+    '1s', '1m', '3m', '5m', '15m', '30m',
+    '1h', '2h', '4h', '6h', '8h', '12h',
+    '1d', '3d', '1w', '1M'
+];
+
+/**
+ * Binance Testnet Client
+ * Uses Binance Spot Testnet for safe development/testing
+ */
+export class BinanceTestnetClient implements IExchangeClient {
+    private readonly baseUrl = 'https://testnet.binance.vision/api/v3';
     private readonly apiKey?: string;
     private readonly apiSecret?: string;
 
@@ -61,7 +97,7 @@ export class BinanceClient implements IExchangeClient {
      * Get the exchange name
      */
     getExchangeName(): string {
-        return 'Binance';
+        return 'Binance Testnet';
     }
 
     /**
@@ -86,12 +122,51 @@ export class BinanceClient implements IExchangeClient {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+            throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
         }
 
         const data: BinanceTickerResponse = await response.json();
 
         return this.mapToMarketTicker(data);
+    }
+
+    /**
+     * Get historical candlestick/kline data (public endpoint)
+     * @param symbol - Trading pair (e.g., 'BTCUSDT')
+     * @param interval - Time interval ('1m', '5m', '1h', '1d', etc.)
+     * @param limit - Number of candles to fetch (default 100, max 1000)
+     * @returns Array of candlestick data
+     */
+    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Candlestick[]> {
+        // Validate interval
+        if (!VALID_INTERVALS.includes(interval)) {
+            throw new Error(`Invalid interval: ${interval}. Must be one of: ${VALID_INTERVALS.join(', ')}`);
+        }
+
+        // Validate limit
+        if (limit <= 0) {
+            throw new Error('Limit must be greater than 0');
+        }
+
+        if (limit > 1000) {
+            throw new Error('Limit cannot exceed 1000');
+        }
+
+        const binanceSymbol = this.convertSymbol(symbol);
+        const url = `${this.baseUrl}/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: BinanceKlineResponse[] = await response.json();
+
+        return data.map((kline) => this.mapToCandlestick(kline));
     }
 
     /**
@@ -117,7 +192,7 @@ export class BinanceClient implements IExchangeClient {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+            throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
         }
 
         const data: BinanceAccountResponse = await response.json();
@@ -137,25 +212,17 @@ export class BinanceClient implements IExchangeClient {
     }
 
     /**
-     * Get historical candlestick/kline data (public endpoint)
-     * @param symbol - Trading pair (e.g., 'BTCUSDT')
-     * @param interval - Time interval ('1m', '5m', '1h', '1d', etc.)
-     * @param limit - Number of candles to fetch (default 100, max 1000)
-     * @returns Array of candlestick data
-     */
-    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Candlestick[]> {
-        // TODO: Implement klines for production Binance
-        throw new Error('getKlines not yet implemented for production Binance');
-    }
-
-    /**
      * Create a new order (requires authentication)
      * @param data - Order details
      * @returns Created order with ID and status
      */
     async createOrder(data: CreateOrderData): Promise<Order> {
-        // TODO: Implement order creation for production Binance
-        throw new Error('createOrder not yet implemented for production Binance');
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        // TODO: Implement in next phase
+        throw new Error('createOrder not yet implemented');
     }
 
     /**
@@ -164,8 +231,12 @@ export class BinanceClient implements IExchangeClient {
      * @returns Array of orders
      */
     async getOrders(symbol?: string): Promise<Order[]> {
-        // TODO: Implement order fetching for production Binance
-        throw new Error('getOrders not yet implemented for production Binance');
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        // TODO: Implement in next phase
+        throw new Error('getOrders not yet implemented');
     }
 
     /**
@@ -175,8 +246,12 @@ export class BinanceClient implements IExchangeClient {
      * @returns void
      */
     async cancelOrder(orderId: string, symbol: string): Promise<void> {
-        // TODO: Implement order cancellation for production Binance
-        throw new Error('cancelOrder not yet implemented for production Binance');
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        // TODO: Implement in next phase
+        throw new Error('cancelOrder not yet implemented');
     }
 
     /**
@@ -216,6 +291,21 @@ export class BinanceClient implements IExchangeClient {
             priceChange24h: parseFloat(data.priceChange),
             priceChangePercent24h: parseFloat(data.priceChangePercent),
             timestamp: new Date(),
+        };
+    }
+
+    /**
+     * Map Binance kline response to Candlestick domain model
+     */
+    private mapToCandlestick(data: BinanceKlineResponse): Candlestick {
+        return {
+            openTime: data[0],
+            open: parseFloat(data[1]),
+            high: parseFloat(data[2]),
+            low: parseFloat(data[3]),
+            close: parseFloat(data[4]),
+            volume: parseFloat(data[5]),
+            closeTime: data[6],
         };
     }
 

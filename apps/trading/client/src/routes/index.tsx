@@ -1,87 +1,292 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { Calendar, CheckCircle2, Plus, User } from 'lucide-react'
-import { authClient } from '../lib/auth-client'
+import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { AlertCircle, RefreshCw, TrendingUp, Wallet } from 'lucide-react'
+import { tradingClient } from '../lib/trading-client'
+import { TradingChart } from '../components/TradingChart'
 
 export const Route = createFileRoute('/')({
-  component: App,
+  component: HomePage,
 })
 
-function App() {
-  const { data: session } = authClient.useSession()
+// Balance response type based on the API
+interface BalanceResponse {
+  exchange: string
+  balances: Array<{
+    asset: string
+    free: number
+    locked: number
+    total: number
+  }>
+  count: number
+}
+
+function HomePage() {
+  // Fetch BTC/USD ticker data
+  const {
+    data: ticker,
+    isLoading: tickerLoading,
+    error: tickerError,
+    refetch: refetchTicker,
+  } = useQuery({
+    queryKey: ['ticker'],
+    queryFn: () => tradingClient.getTicker(),
+    refetchInterval: 5000, // Refresh every 5 seconds
+  })
+
+  // Fetch account balances
+  const {
+    data: balances,
+    isLoading: balancesLoading,
+    error: balancesError,
+    refetch: refetchBalances,
+  } = useQuery<BalanceResponse>({
+    queryKey: ['balances'],
+    queryFn: async () => {
+      const response = await fetch('/api/trading/balance')
+      if (!response.ok) {
+        throw new Error('Failed to fetch balances')
+      }
+      return response.json()
+    },
+    // refetchInterval: 10000, // Refresh every 10 seconds
+  })
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price)
+  }
+
+  const formatBalance = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 8,
+    }).format(amount)
+  }
 
   return (
-    <div className="flex-grow">
-      {/* Hero Section */}
-      <div className="hero min-h-[80vh]">
-        <div className="hero-content text-center max-w-4xl">
-          <div>
-            <div className="mb-8">
-              <CheckCircle2 className="w-20 h-20 mx-auto text-primary mb-4" />
-              <h1 className="text-6xl font-bold text-base-content mb-6">
-                Todo<span className="text-primary">Master</span>
-              </h1>
-              <p className="text-xl text-base-content/80 mb-8 max-w-2xl mx-auto leading-relaxed">
-                Organize your life with our simple, elegant todo app. Stay
-                productive, track your progress, and accomplish your goals with
-                ease.
-              </p>
-            </div>
+    <div className="min-h-screen bg-base-200">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-base-content mb-2">
+            Trading Dashboard
+          </h1>
+          <p className="text-base-content/70">
+            Monitor your BTC/USD positions and account balance
+          </p>
+        </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              {session ? (
-                <Link to="/" className="btn btn-primary btn-lg px-8">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Go to My Todos
-                </Link>
-              ) : (
-                <>
-                  <Link to="/signup" className="btn btn-primary btn-lg px-8">
-                    <User className="w-5 h-5 mr-2" />
-                    Get Started
-                  </Link>
-                  <Link to="/signin" className="btn btn-outline btn-lg px-8">
-                    Sign In
-                  </Link>
-                </>
+        {/* Trading Chart - Full Width */}
+        <div className="mb-6">
+          <TradingChart symbol="BTCUSDT" interval="1h" limit={100} />
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* BTC/USD Ticker Card */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="card-title flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                  BTC/USD Ticker
+                </h2>
+                <button
+                  onClick={() => refetchTicker()}
+                  className="btn btn-ghost btn-sm btn-circle"
+                  disabled={tickerLoading}
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${tickerLoading ? 'animate-spin' : ''}`}
+                  />
+                </button>
+              </div>
+
+              {tickerLoading && !ticker && (
+                <div className="flex items-center justify-center py-12">
+                  <span className="loading loading-spinner loading-lg text-primary"></span>
+                </div>
+              )}
+
+              {tickerError && (
+                <div className="alert alert-error">
+                  <AlertCircle className="w-5 h-5" />
+                  <span>
+                    Failed to load ticker: {(tickerError as Error).message}
+                  </span>
+                </div>
+              )}
+
+              {ticker && (
+                <div className="space-y-4">
+                  {/* Current Price */}
+                  <div className="text-center py-4">
+                    <div className="text-5xl font-bold text-primary">
+                      {formatPrice(ticker.lastPrice)}
+                    </div>
+                    <div className="text-sm text-base-content/60 mt-2">
+                      {ticker.symbol}
+                    </div>
+                  </div>
+
+                  {/* Price Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="stat bg-base-200 rounded-lg p-4">
+                      <div className="stat-title text-xs">24h High</div>
+                      <div className="stat-value text-lg text-success">
+                        {formatPrice(ticker.highPrice)}
+                      </div>
+                    </div>
+                    <div className="stat bg-base-200 rounded-lg p-4">
+                      <div className="stat-title text-xs">24h Low</div>
+                      <div className="stat-value text-lg text-error">
+                        {formatPrice(ticker.lowPrice)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Volume & Change */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="stat bg-base-200 rounded-lg p-4">
+                      <div className="stat-title text-xs">24h Volume</div>
+                      <div className="stat-value text-sm">
+                        {formatBalance(ticker.volume ?? 0)} BTC
+                      </div>
+                    </div>
+                    <div className="stat bg-base-200 rounded-lg p-4">
+                      <div className="stat-title text-xs">24h Change</div>
+                      <div
+                        className={`stat-value text-sm ${(ticker.priceChangePercent ?? 0) >= 0
+                          ? 'text-success'
+                          : 'text-error'
+                          }`}
+                      >
+                        {(ticker.priceChangePercent ?? 0) >= 0 ? '+' : ''}
+                        {(ticker.priceChangePercent ?? 0).toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Last Update */}
+                  <div className="text-xs text-base-content/50 text-center">
+                    Last updated: {ticker.timestamp.toLocaleTimeString()}
+                  </div>
+                </div>
               )}
             </div>
+          </div>
 
-            {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-8 mt-16">
-              <div className="text-center">
-                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Plus className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Simple Creation</h3>
-                <p className="text-base-content/70">
-                  Add todos instantly with our intuitive interface. No
-                  complicated setup required.
-                </p>
+          {/* Account Balance Card */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="card-title flex items-center gap-2">
+                  <Wallet className="w-6 h-6 text-secondary" />
+                  Account Balance
+                </h2>
+                <button
+                  onClick={() => refetchBalances()}
+                  className="btn btn-ghost btn-sm btn-circle"
+                  disabled={balancesLoading}
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${balancesLoading ? 'animate-spin' : ''}`}
+                  />
+                </button>
               </div>
 
-              <div className="text-center">
-                <div className="bg-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-secondary" />
+              {balancesLoading && !balances && (
+                <div className="flex items-center justify-center py-12">
+                  <span className="loading loading-spinner loading-lg text-secondary"></span>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Track Progress</h3>
-                <p className="text-base-content/70">
-                  Mark tasks as complete and watch your productivity soar. Stay
-                  motivated daily.
-                </p>
-              </div>
+              )}
 
-              <div className="text-center">
-                <div className="bg-accent/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-8 h-8 text-accent" />
+              {balancesError && (
+                <div className="alert alert-error">
+                  <AlertCircle className="w-5 h-5" />
+                  <span>
+                    Failed to load balances:{' '}
+                    {(balancesError as Error).message}
+                  </span>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Stay Organized</h3>
-                <p className="text-base-content/70">
-                  Keep your tasks organized and accessible from anywhere. Never
-                  forget important tasks.
-                </p>
-              </div>
+              )}
+
+              {balances && (
+                <div className="space-y-4">
+                  {/* Exchange Info */}
+                  <div className="badge badge-outline badge-lg">
+                    {balances.exchange}
+                  </div>
+
+                  {/* Balance List */}
+                  {balances.count === 0 ? (
+                    <div className="text-center py-8 text-base-content/60">
+                      No balances available
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {balances.balances.map((balance) => (
+                        <div
+                          key={balance.asset}
+                          className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+                        >
+                          <div>
+                            <div className="font-bold text-lg">
+                              {balance.asset}
+                            </div>
+                            <div className="text-xs text-base-content/60">
+                              Free: {formatBalance(balance.free)} •
+                              Locked: {formatBalance(balance.locked)}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-xl">
+                              {formatBalance(balance.total)}
+                            </div>
+                            <div className="text-xs text-base-content/60">
+                              Total
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div className="divider"></div>
+                  <div className="text-sm text-base-content/70 text-center">
+                    Showing {balances.count} asset{balances.count !== 1 ? 's' : ''}{' '}
+                    with balance
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+
+        {/* Info Banner */}
+        <div className="alert alert-info shadow-lg mt-8">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              className="stroke-current flex-shrink-0 w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <span>
+              Data refreshes automatically. Ticker updates every 5 seconds, balances
+              every 10 seconds.
+            </span>
           </div>
         </div>
       </div>
