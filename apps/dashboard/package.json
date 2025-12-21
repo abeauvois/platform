@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "dashboard",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,7 +21,9 @@
     "@tanstack/react-router": "^1.130.2",
     "@tanstack/react-router-devtools": "^1.130.2",
     "@tanstack/router-plugin": "^1.121.2",
+    "better-auth": "^1.2.8",
     "daisyui": "^5.0.50",
+    "hono": "^4.8.12",
     "lucide-react": "^0.536.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -38,7 +40,6 @@
     "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^6.3.5",
-    "vitest": "^3.0.5",
-    "web-vitals": "^4.2.4"
+    "vitest": "^3.0.5"
   }
 }

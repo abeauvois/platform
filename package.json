@@ -14,12 +14,17 @@
     "build:domain": "cd packages/domain && bun run build",
     "build:sdk": "cd packages/platform-sdk && bun run build",
     "cli": "bun run apps/cli/index.ts",
-    "platform:web": "cd apps/web && bun run dev",
+    "api": "cd apps/api && bun run dev",
+    "dashboard": "cd apps/dashboard && bun run dev",
+    "trading:server": "cd apps/trading && bun run server",
+    "trading:client": "cd apps/trading && bun run client",
+    "dev": "concurrently \"bun run api\" \"bun run dashboard\"",
+    "dev:all": "concurrently \"bun run api\" \"bun run dashboard\" \"bun run trading:server\" \"bun run trading:client\"",
     "cli:help": "bun run src/cli/index.ts --help",
     "cli:version": "bun run src/cli/index.ts --version",
     "cli:select": "bun run src/cli/index.ts select",
     "start": "bun run src/cli/index.ts",
-    "dev": "bun run --watch src/cli/index.ts",
+    "cli:dev": "bun run --watch src/cli/index.ts",
     "it": "bun run test:integration:notion && bun run test:integration:twitter",
     "it:notion": "bun run src/infrastructure/tests/integration/notion/test-notion.ts",
     "it:notion:findpage": "bun run src/infrastructure/tests/integration/notion/test-findPageByUrl.ts",
@@ -46,6 +51,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/bun": "latest",
+    "concurrently": "^9.2.0",
     "typescript": "^5.0.0"
   }
 }

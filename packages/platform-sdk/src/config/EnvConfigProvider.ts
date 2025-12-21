@@ -1,14 +1,17 @@
+import type { IConfigProvider } from '@platform/domain';
+
 /**
- * Configuration loader from .env file
+ * Configuration provider that loads from .env files
+ * Implements IConfigProvider port from domain layer
  */
-export class EnvConfig {
+export class EnvConfigProvider implements IConfigProvider {
     private config: Map<string, string> = new Map();
 
     async load(envPath: string = '.env'): Promise<void> {
         try {
             const file = Bun.file(envPath);
 
-            if (!await file.exists()) {
+            if (!(await file.exists())) {
                 throw new Error(`.env file not found at: ${envPath}`);
             }
 
@@ -29,25 +32,33 @@ export class EnvConfig {
                 }
 
                 const key = trimmed.substring(0, equalsIndex).trim();
-                const value = trimmed.substring(equalsIndex + 1).trim()
+                const value = trimmed
+                    .substring(equalsIndex + 1)
+                    .trim()
                     .replace(/^["']|["']$/g, ''); // Remove surrounding quotes
 
                 this.config.set(key, value);
             }
         } catch (error) {
-            throw new Error(`Failed to load .env file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new Error(
+                `Failed to load .env file: ${error instanceof Error ? error.message : 'Unknown error'}`
+            );
         }
     }
 
     get(key: string): string {
         const value = this.config.get(key);
-        if (!value) {
+        if (value === undefined) {
             throw new Error(`Configuration key not found: ${key}`);
         }
         return value;
     }
 
     getOptional(key: string, defaultValue: string = ''): string {
-        return this.config.get(key) || defaultValue;
+        return this.config.get(key) ?? defaultValue;
+    }
+
+    has(key: string): boolean {
+        return this.config.has(key);
     }
 }

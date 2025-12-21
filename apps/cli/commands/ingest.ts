@@ -1,5 +1,5 @@
 import { command } from 'cleye';
-import { loadCliConfig, validateCliConfig } from '../../../config.cli.js';
+import { loadConfig } from '../lib/ConfigLoader';
 
 /**
  * Ingest command - Fetch bookmarks from various sources
@@ -59,38 +59,38 @@ export const ingestCommand = command({
         console.log(`📥 Source: ${source}`);
         console.log(`📤 Target: ${target}\n`);
 
-        // Load configuration
-        console.log('⚙️  Loading configuration from config.cli.ts...');
-        const config = await loadCliConfig();
-        validateCliConfig(config);
+        // Load configuration from API
+        console.log('⚙️  Loading configuration from API...');
+        const config = await loadConfig();
         console.log('✅ Configuration loaded\n');
 
         // Import dependencies
-        const { GmailClient } = await import('../../../src/infrastructure/adapters/GmailClient.js');
-        const { AnthropicClient } = await import('../../../src/infrastructure/adapters/AnthropicClient.js');
-        const { FileTimestampRepository } = await import('../../../src/infrastructure/repositories/FileTimestampRepository.js');
-        const { CliuiLogger } = await import('../../../src/infrastructure/adapters/CliuiLogger.js');
-        const { CsvFileWriter } = await import('../../../src/infrastructure/adapters/CsvFileWriter.js');
-        const { GmailBookmarksWorkflowService } = await import('../../../src/application/services/GmailBookmarksWorkflowService.js');
+        const { GmailClient } = await import('../../../src/infrastructure/adapters/GmailClient');
+        const { AnthropicClient } = await import('../../../src/infrastructure/adapters/AnthropicClient');
+        const { FileTimestampRepository } = await import('../../../src/infrastructure/repositories/FileTimestampRepository');
+        const { CliuiLogger } = await import('../../../src/infrastructure/adapters/CliuiLogger');
+        const { CsvFileWriter } = await import('../../../src/infrastructure/adapters/CsvFileWriter');
+        const { GmailBookmarksWorkflowService } = await import('../../../src/application/services/GmailBookmarksWorkflowService');
 
         // Initialize dependencies
         const logger = new CliuiLogger();
         const gmailClient = new GmailClient(
-            config.gmail.clientId,
-            config.gmail.clientSecret,
-            config.gmail.refreshToken,
+            config.get('GMAIL_CLIENT_ID'),
+            config.get('GMAIL_CLIENT_SECRET'),
+            config.get('GMAIL_REFRESH_TOKEN'),
             logger
         );
         const anthropicClient = new AnthropicClient(
-            config.anthropic.apiKey,
-            config.anthropic.model,
+            config.get('ANTHROPIC_API_KEY'),
+            'claude-3-5-haiku-20241022',
             logger
         );
 
-        // Set default timestamp to N days ago based on config
-        const defaultTimestamp = new Date(Date.now() - 1000 * 60 * 60 * 24 * config.lastRun.daysAgo);
+        // Set default timestamp to 4 days ago
+        const daysAgo = 4;
+        const defaultTimestamp = new Date(Date.now() - 1000 * 60 * 60 * 24 * daysAgo);
         const timestampRepository = new FileTimestampRepository(
-            config.output.timestampFile,
+            '.gmail-cli-last-run',
             defaultTimestamp
         );
 
@@ -99,7 +99,7 @@ export const ingestCommand = command({
             gmailClient,
             anthropicClient,
             timestampRepository,
-            config.gmail.filterEmail || '',
+            config.getOptional('MY_EMAIL_ADDRESS'),
             logger
         );
 
@@ -114,10 +114,11 @@ export const ingestCommand = command({
         }
 
         // Export to CSV
+        const csvPath = './data/gmail-bookmarks.csv';
         logger.info(`\n📝 Exporting ${bookmarks.length} bookmark(s) to CSV...`);
         const csvWriter = new CsvFileWriter();
-        await csvWriter.write(bookmarks, config.output.csvPath);
-        logger.info(`✅ Exported to ${config.output.csvPath}\n`);
+        await csvWriter.write(bookmarks, csvPath);
+        logger.info(`✅ Exported to ${csvPath}\n`);
 
         logger.info('✨ Success! Your bookmarks have been ingested and saved.\n');
     } catch (error) {

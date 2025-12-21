@@ -1,9 +1,8 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { apiReference } from '@scalar/hono-api-reference';
-import { serveStatic } from 'hono/bun';
+import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
-import { auth } from './lib/auth';
 import { tickerOpenApi } from './routes/ticker.openapi.routes';
 import { balanceOpenApi } from './routes/balance.openapi.routes';
 import { klinesOpenApi } from './routes/klines.openapi.routes';
@@ -12,10 +11,23 @@ const app = new OpenAPIHono();
 
 // Middleware
 app.use(logger());
-app.use('/*', serveStatic({ root: './client/dist' }));
-
-// Auth routes (non-OpenAPI)
-app.on(['POST', 'GET'], '/api/auth/**', (c) => auth.handler(c.req.raw));
+app.use(
+  '/*',
+  cors({
+    origin: (origin) => {
+      const allowedOrigins = [
+        'http://localhost:5001', // trading client
+        'http://localhost:3000', // platform API
+        ...(process.env.CLIENT_URLS?.split(',') || []),
+      ];
+      if (allowedOrigins.includes(origin)) {
+        return origin;
+      }
+      return null;
+    },
+    credentials: true,
+  })
+);
 
 // Trading API routes with OpenAPI documentation
 app.route('/api/trading/ticker', tickerOpenApi);
@@ -28,12 +40,13 @@ app.doc('/api/docs/openapi.json', {
   info: {
     title: 'Trading API',
     version: '1.0.0',
-    description: 'API for trading operations with Binance exchange integration',
+    description:
+      'Trading-specific API for Binance exchange integration. For authentication and shared features, see the Platform API at http://localhost:3000.',
   },
   servers: [
     {
       url: 'http://localhost:3001',
-      description: 'Development server',
+      description: 'Trading API (Development)',
     },
   ],
   tags: [
@@ -43,7 +56,8 @@ app.doc('/api/docs/openapi.json', {
     },
     {
       name: 'Market Data',
-      description: 'Historical candlestick data endpoints - no authentication required',
+      description:
+        'Historical candlestick data endpoints - no authentication required',
     },
     {
       name: 'Balance',

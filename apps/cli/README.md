@@ -42,6 +42,9 @@ bun run build
 Fetch and display bookmarks from the platform API:
 
 ```bash
+# from apps/cli
+bun dev personal bookmark ingest -f gmail -t csv
+
 # From root
 bun run platform personal bookmark list
 

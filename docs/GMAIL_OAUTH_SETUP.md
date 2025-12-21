@@ -204,16 +204,37 @@ bun test src/infrastructure/tests/integration/gmail/test-gmail-credentials.test.
 
 **Causes:**
 
-- Refresh token expired or revoked
-- OAuth consent screen not properly configured
+- Refresh token expired (tokens can expire if unused for 6 months)
+- Refresh token revoked (you changed your Google password or revoked access)
+- OAuth app in "Testing" mode (tokens expire after 7 days in testing mode)
 - App is in "Testing" mode but you're not added as a test user
 
-**Solution:**
+**Solution - Regenerate the Refresh Token:**
 
-1. Go to Google Cloud Console → OAuth consent screen
-2. Add yourself as a test user under "Test users"
-3. Or publish the app (requires verification for sensitive scopes)
-4. Regenerate the refresh token using OAuth Playground
+1. **Check your OAuth consent screen status:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → OAuth consent screen
+   - If in "Testing" mode, either:
+     - Add your email as a test user, or
+     - Publish the app to "Production" (safe for personal use)
+
+2. **Regenerate the refresh token using OAuth Playground:**
+   - Go to https://developers.google.com/oauthplayground/
+   - Click the gear icon (⚙️) → Check "Use your own OAuth credentials"
+   - Enter your Client ID and Client Secret
+   - In Step 1, select Gmail API scope: `https://www.googleapis.com/auth/gmail.readonly`
+   - Click "Authorize APIs" and sign in with your Google account
+   - In Step 2, click "Exchange authorization code for tokens"
+   - Copy the new **refresh_token**
+
+3. **Update your `.env` file:**
+   ```bash
+   GMAIL_REFRESH_TOKEN=<your_new_refresh_token>
+   ```
+
+4. **Verify the fix:**
+   ```bash
+   bun run test:integration gmail
+   ```
 
 ### Error: "invalid_client"
 

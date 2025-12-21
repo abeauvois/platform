@@ -1,0 +1,31 @@
+{
+  "name": "api",
+  "scripts": {
+    "dev": "bun --bun run --hot server/index.ts",
+    "build": "bun build ./server/index.ts --outdir ./dist --target bun",
+    "start": "bun run ./dist/index.js",
+    "db:up": "docker compose up -d",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "bun run ./scripts/seed-local-db.script.ts"
+  },
+  "dependencies": {
+    "@platform/auth": "workspace:*",
+    "@platform/db": "workspace:*",
+    "@platform/domain": "workspace:*",
+    "@hono/zod-validator": "^0.7.2",
+    "@neondatabase/serverless": "^1.0.1",
+    "drizzle-orm": "^0.44.4",
+    "hono": "^4.8.12",
+    "pg": "^8.16.3",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/pg": "^8.15.5",
+    "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-seed": "^0.3.1"
+  }
+}

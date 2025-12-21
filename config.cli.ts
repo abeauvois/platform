@@ -34,20 +34,22 @@ export interface CliConfig {
  * This allows tests to use either .env or explicit config
  */
 export async function loadCliConfig(): Promise<CliConfig> {
-    // Import EnvConfig to read from .env
-    const { EnvConfig } = await import('./src/infrastructure/config/EnvConfig.js');
-    const envConfig = new EnvConfig();
-    await envConfig.load();
+    const { EnvConfigProvider } = await import('@platform/sdk');
+    const configProvider = new EnvConfigProvider();
+
+    // Resolve .env path relative to this config file (project root)
+    const envPath = new URL('.env', import.meta.url).pathname;
+    await configProvider.load(envPath);
 
     return {
         gmail: {
-            clientId: envConfig.get('GMAIL_CLIENT_ID') || '',
-            clientSecret: envConfig.get('GMAIL_CLIENT_SECRET') || '',
-            refreshToken: envConfig.get('GMAIL_REFRESH_TOKEN') || '',
-            filterEmail: envConfig.get('MY_EMAIL_ADDRESS') || '',
+            clientId: configProvider.getOptional('GMAIL_CLIENT_ID'),
+            clientSecret: configProvider.getOptional('GMAIL_CLIENT_SECRET'),
+            refreshToken: configProvider.getOptional('GMAIL_REFRESH_TOKEN'),
+            filterEmail: configProvider.getOptional('MY_EMAIL_ADDRESS'),
         },
         anthropic: {
-            apiKey: envConfig.get('ANTHROPIC_API_KEY') || '',
+            apiKey: configProvider.getOptional('ANTHROPIC_API_KEY'),
             model: 'claude-3-5-haiku-20241022',
         },
         output: {

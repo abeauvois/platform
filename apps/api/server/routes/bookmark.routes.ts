@@ -1,10 +1,12 @@
 import { Hono } from 'hono'
 import type { HonoEnv } from '../types'
 import { createBookmarkValidator } from '../validators/create-bookmark.validator'
-import { InMemoryBookmarkRepository } from '../../../../src/infrastructure/repositories/InMemoryBookmarkRepository.js'
-import { Bookmark } from '../../../../src/domain/entities/Bookmark'
 import { authMiddleware } from '@/middlewares/auth.middleware'
-import { GetBookmarksByUserIdService } from '../../../../src/application/services/GetBookmarksByUserIdService.js'
+import {
+  InMemoryBookmarkRepository,
+  Bookmark,
+  GetBookmarksByUserIdService,
+} from '@platform/domain'
 
 const repository = new InMemoryBookmarkRepository()
 const getBookmarksByUserIdService = new GetBookmarksByUserIdService(repository)

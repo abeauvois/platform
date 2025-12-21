@@ -4,7 +4,7 @@ import { UrlAndContextAnthropicAnalyser } from '../../../src/infrastructure/adap
 import { CsvFileWriter } from '../../../src/infrastructure/adapters/CsvFileWriter.js';
 import { NotionLinkRepository } from '../../../src/infrastructure/repositories/NotionLinkRepository.js';
 import { TwitterClient } from '../../../src/infrastructure/adapters/TwitterClient.js';
-import { EnvConfig } from '../../../src/infrastructure/config/EnvConfig.js';
+import { loadConfig } from '../lib/ConfigLoader';
 import { CliuiLogger } from '../../../src/infrastructure/adapters/CliuiLogger.js';
 import { ZipEmlFilesBookmarksWorkflowService } from '../../../src/application/services/ZipEmlFilesBookmarksWorkflowService.js';
 import { LinkAnalysisService } from '../../../src/application/services/LinkAnalysisService.js';
@@ -29,10 +29,9 @@ export async function extractCommand(inputPath?: string, outputCsvPath: string =
         }
         console.log();
 
-        // Load configuration from .env
-        console.log('⚙️  Loading configuration...');
-        const config = new EnvConfig();
-        await config.load();
+        // Load configuration from API
+        console.log('⚙️  Loading configuration from API...');
+        const config = await loadConfig();
         const anthropicApiKey = config.get('ANTHROPIC_API_KEY');
         const notionToken = config.get('NOTION_INTEGRATION_TOKEN');
         const notionDatabaseId = config.get('NOTION_DATABASE_ID');

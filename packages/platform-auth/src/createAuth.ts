@@ -18,6 +18,7 @@ interface CreateAuthConfig {
  */
 export function createAuth(config: CreateAuthConfig) {
     return betterAuth({
+        basePath: '/api/auth',
         database: drizzleAdapter(config.db, {
             provider: config.provider,
             schema: config.schema,
