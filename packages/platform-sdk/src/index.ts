@@ -9,6 +9,9 @@ export { PlatformApiClient } from './PlatformApiClient.js';
 // Config Providers
 export { EnvConfigProvider, ApiConfigProvider } from './config/index.js';
 
+// Workflow
+export { IngestWorkflow } from './IngestWorkflow.js';
+
 // Types
 export type {
     SignUpData,
@@ -20,4 +23,12 @@ export type {
     ConfigBatchRequest,
     ConfigBatchResponse,
     ConfigKeysResponse,
+    // Ingest/Workflow types
+    WorkflowPreset,
+    IngestFilter,
+    IngestOptions,
+    WorkflowHookInfo,
+    WorkflowExecuteOptions,
+    IIngestWorkflow,
+    ILogger,
 } from './types.js';

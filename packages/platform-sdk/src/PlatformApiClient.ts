@@ -1,4 +1,3 @@
-import type { ILogger, Bookmark } from '@platform/domain';
 import type {
     SignUpData,
     SignInData,
@@ -8,7 +7,28 @@ import type {
     ConfigValueResponse,
     ConfigBatchResponse,
     ConfigKeysResponse,
+    WorkflowPreset,
+    IngestOptions,
+    IIngestWorkflow,
+    ILogger,
 } from './types.js';
+import { IngestWorkflow } from './IngestWorkflow.js';
+
+/**
+ * Bookmark type for API responses
+ */
+interface Bookmark {
+    url: string;
+    sourceAdapter: string;
+    tags: string[];
+    summary?: string;
+    rawContent?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    contentType?: string;
+    userId?: string;
+    id?: string;
+}
 
 interface PlatformApiClientConfig {
     baseUrl: string;
@@ -257,6 +277,42 @@ export class PlatformApiClient {
             this.logger.error(`Error deleting bookmark: ${errorMessage}`);
             throw error;
         }
+    }
+
+    // ============================================
+    // Ingestion Methods
+    // ============================================
+
+    /**
+     * Create an ingestion workflow for processing data from a source
+     *
+     * @param preset - Workflow preset (e.g., 'gmail', 'full', 'quick')
+     * @param options - Ingestion options including filters and step toggles
+     * @returns An IngestWorkflow that can be executed with lifecycle hooks
+     *
+     * @example
+     * ```typescript
+     * const workflow = client.ingest('gmail', {
+     *     filter: { email: 'user@example.com' },
+     *     skipAnalysis: false,
+     *     skipTwitter: true
+     * });
+     *
+     * await workflow.execute({
+     *     onStart: ({ logger }) => logger.info('Starting...'),
+     *     onComplete: ({ logger }) => logger.info('Done!'),
+     *     onError: ({ logger }) => logger.error('Failed!')
+     * });
+     * ```
+     */
+    ingest(preset: WorkflowPreset, options: IngestOptions = {}): IIngestWorkflow {
+        return new IngestWorkflow({
+            preset,
+            options,
+            logger: this.logger,
+            baseUrl: this.baseUrl,
+            sessionToken: this.sessionToken,
+        });
     }
 
     // ============================================

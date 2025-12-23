@@ -5,6 +5,7 @@ import { auth } from './lib/auth';
 import { todos } from './routes/todo.routes';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
+import { ingest } from './routes/ingest.routes';
 
 const app = new Hono();
 
@@ -30,7 +31,8 @@ const router = app
   .on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
   .route('/api/todos', todos)
   .route('/api/bookmarks', bookmarks)
-  .route('/api/config', config);
+  .route('/api/config', config)
+  .route('/api/ingest', ingest);
 
 export type AppType = typeof router;
 

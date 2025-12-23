@@ -7,21 +7,18 @@
  */
 
 // Entities
-export * from '../../../src/domain/entities/Bookmark.js'
-export * from '../../../src/domain/entities/EmailFile.js'
-export * from '../../../src/domain/entities/GmailMessage.js'
-export * from '../../../src/domain/entities/SourceAdapter.js'
+export * from '../../../src/domain/entities/Bookmark'
+export * from '../../../src/domain/entities/EmailFile'
+export * from '../../../src/domain/entities/GmailMessage'
+export * from '../../../src/domain/entities/SourceAdapter'
 
 // Core ports commonly needed across apps
-export * from '../../../src/domain/ports/IConfigProvider.js'
-export * from '../../../src/domain/ports/ILinkRepository.js'
-export * from '../../../src/domain/ports/ILogger.js'
-
-// Workflow abstractions
-export * from '../../../src/application/workflows/index.js'
+export * from '../../../src/domain/ports/IConfigProvider'
+export * from '../../../src/domain/ports/ILinkRepository'
+export * from '../../../src/domain/ports/ILogger'
 
 // Repositories
-export * from '../../../src/infrastructure/repositories/InMemoryBookmarkRepository.js'
+export * from '../../../src/infrastructure/repositories/InMemoryBookmarkRepository'
 
 // Application Services
-export * from '../../../src/application/services/GetBookmarksByUserIdService.js'
+export * from '../../../src/application/services/GetBookmarksByUserIdService'

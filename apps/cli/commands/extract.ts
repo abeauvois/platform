@@ -1,5 +1,5 @@
-import { LinkExtractionFactory } from '../../../src/infrastructure/factories/LinkExtractionFactory.js';
-import { loadConfig, createLogger } from '../lib/ConfigLoader';
+import { PlatformApiClient } from '@platform/sdk';
+import { createLogger } from '../lib/ConfigLoader';
 
 export interface ExtractCommandOptions {
     verbose?: boolean;
@@ -42,27 +42,25 @@ export async function extractCommand(
         }
         console.log();
 
-        // Load configuration from API
-        console.log('⚙️  Loading configuration from API...');
-        const config = await loadConfig();
-        console.log('✅ Configuration loaded\n');
+        const platformClient = new PlatformApiClient({
+            baseUrl: "http://localhost:3000/api",
+            logger
+        })
 
-        // Create factory and build workflow
-        const factory = new LinkExtractionFactory(config, logger);
+        const workflow = platformClient.ingest(workflowPreset: preset, {
+            filter: {
+                email: "abeauvois@gmail.com"
+            },
+            skipAnalysis,
+            skipTwitter
+        })
 
-        const workflow = preset
-            ? factory.createPreset(preset)
-            : factory.builder()
-                .extract()
-                .when(!skipAnalysis, b => b.analyze())
-                .when(!skipTwitter && !skipAnalysis, b => b.enrichTwitter().withRetry())
-                .exportTo({ csv: true, notion: !csvOnly })
-                .build();
+        workflow.execute({
+            onStart: ({ logger }) => logger.info('started'),
+            onError: ({ logger }) => logger.error('an error occured'),
+            onComplete: ({ logger }) => logger.info('\n✨ Success! Your links have been extracted and categorized.\n'),
+        })
 
-        // Execute workflow
-        await workflow.execute(inputPath, outputCsvPath);
-
-        console.log('\n✨ Success! Your links have been extracted and categorized.\n');
         process.exit(0);
     } catch (error) {
         console.error('\n❌ Error:', error instanceof Error ? error.message : 'Unknown error');

@@ -52,7 +52,7 @@ class TestLogger implements ILogger {
 }
 
 describe('PlatformApiClient Integration Tests', () => {
-    const API_BASE_URL = 'http://localhost:5000';
+    const API_BASE_URL = 'http://localhost:3000';
     let client: PlatformApiClient;
     let logger: ILogger;
 
@@ -68,6 +68,40 @@ describe('PlatformApiClient Integration Tests', () => {
         expect(client).toBeDefined();
         expect(client).toBeInstanceOf(PlatformApiClient);
     });
+
+    test('should ingest gmail with options', async () => {
+        const platformClient = new PlatformApiClient({
+            baseUrl: "http://localhost:3000",
+            logger
+        });
+
+        // Sign in to get authentication
+        try {
+            await platformClient.signIn({
+                email: 'test@example.com',
+                password: 'password123',
+            });
+        } catch (error) {
+            console.log('⚠️  Skipping: Test user does not exist or server not running');
+            return;
+        }
+
+        const preset = "gmail";
+
+        const workflow = platformClient.ingest(preset, {
+            filter: {
+                email: "abeauvois@gmail.com"
+            },
+            // skipAnalysis,
+            // skipTwitter
+        });
+
+        await workflow.execute({
+            onStart: ({ logger }) => logger.info('started'),
+            onError: ({ logger }) => logger.error('an error occured'),
+            onComplete: ({ logger }) => logger.info('\n✨ Success! Your links have been extracted and categorized.\n'),
+        });
+    }, { timeout: 15000 })
 
     test('should sign in with valid credentials', async () => {
         try {
