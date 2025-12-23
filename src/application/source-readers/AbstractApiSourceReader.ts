@@ -1,20 +1,20 @@
-import { AbstractDataSource } from './AbstractDataSource.js';
-import { BaseContent } from './BaseContent.js';
-import { SourceAdapter } from './SourceAdapter.js';
-import { ApiIngestionConfig, IngestionConfig } from './IngestionConfig.js';
-import { ILogger } from '../ports/ILogger.js';
+import { AbstractSourceReader } from './AbstractSourceReader.js';
+import { BaseContent } from '../../domain/entities/BaseContent.js';
+import { SourceAdapter } from '../../domain/entities/SourceAdapter.js';
+import { ApiIngestionConfig, IngestionConfig } from '../../domain/entities/IngestionConfig.js';
+import { ILogger } from '../../domain/ports/ILogger.js';
 
 /**
- * Base class for structured data sources (APIs)
+ * Base class for API-based source readers
  * Examples: Gmail, Twitter, Notion, etc.
- * 
+ *
  * These sources typically:
  * - Require authentication
  * - Have pagination
  * - Return structured data with known schemas
  * - Support filtering and querying
  */
-export abstract class StructuredDataSource<TRaw, TNormalized extends BaseContent> extends AbstractDataSource<TRaw, TNormalized> {
+export abstract class AbstractApiSourceReader<TRaw, TNormalized extends BaseContent> extends AbstractSourceReader<TRaw, TNormalized> {
     constructor(
         sourceType: SourceAdapter,
         logger: ILogger
@@ -30,10 +30,9 @@ export abstract class StructuredDataSource<TRaw, TNormalized extends BaseContent
         const apiConfig = config as ApiIngestionConfig;
 
         if (!apiConfig.credentials) {
-            throw new Error(`${this.sourceType}: credentials are required for API data sources`);
+            throw new Error(`${this.sourceType}: credentials are required for API source readers`);
         }
 
-        // Call subclass-specific validation
         await this.validateApiConfig(apiConfig);
     }
 

@@ -1,22 +1,33 @@
-import { ZipExtractor } from '../../../src/infrastructure/adapters/ZipExtractor.js';
-import { HttpLinksParser } from '../../../src/infrastructure/adapters/HttpLinksParser.js';
-import { UrlAndContextAnthropicAnalyser } from '../../../src/infrastructure/adapters/UrlAndContextAnthropicAnalyser.js';
-import { CsvFileWriter } from '../../../src/infrastructure/adapters/CsvFileWriter.js';
-import { NotionLinkRepository } from '../../../src/infrastructure/repositories/NotionLinkRepository.js';
-import { TwitterClient } from '../../../src/infrastructure/adapters/TwitterClient.js';
-import { loadConfig } from '../lib/ConfigLoader';
-import { CliuiLogger } from '../../../src/infrastructure/adapters/CliuiLogger.js';
-import { ZipEmlFilesBookmarksWorkflowService } from '../../../src/application/services/ZipEmlFilesBookmarksWorkflowService.js';
-import { LinkAnalysisService } from '../../../src/application/services/LinkAnalysisService.js';
-import { RetryHandlerService } from '../../../src/application/services/RetryHandlerService.js';
-import { ExportService } from '../../../src/application/services/ExportService.js';
-import { LinkExtractionOrchestrator } from '../../../src/application/LinkExtractionOrchestrator.js';
+import { LinkExtractionFactory } from '../../../src/infrastructure/factories/LinkExtractionFactory.js';
+import { WorkflowPresetName } from '../../../src/application/workflows/index.js';
+import { loadConfig, createLogger } from '../lib/ConfigLoader';
 
-export async function extractCommand(inputPath?: string, outputCsvPath: string = 'output.csv', verbose: boolean = false) {
+export interface ExtractCommandOptions {
+    verbose?: boolean;
+    preset?: WorkflowPresetName;
+    skipAnalysis?: boolean;
+    skipTwitter?: boolean;
+    csvOnly?: boolean;
+}
+
+export async function extractCommand(
+    inputPath?: string,
+    outputCsvPath: string = 'output.csv',
+    options: ExtractCommandOptions = {}
+) {
+    const { verbose = false, preset, skipAnalysis, skipTwitter, csvOnly } = options;
+    const logger = createLogger();
+
     try {
         if (!inputPath) {
             console.error('❌ Error: input-path is required');
-            console.error('\nUsage: bun run src/cli/index.ts <input-path> [output-csv]\n');
+            console.error('\nUsage: bun run cli extract <input-path> [output-csv] [options]\n');
+            console.error('Options:');
+            console.error('  --preset <name>     Use a preset workflow (full|quick|analyzeOnly|twitterFocus|csvOnly)');
+            console.error('  --skip-analysis     Skip AI analysis step');
+            console.error('  --skip-twitter      Skip Twitter enrichment');
+            console.error('  --csv-only          Export to CSV only (no Notion)');
+            console.error('  --verbose           Show detailed output\n');
             process.exit(1);
         }
 
@@ -24,6 +35,9 @@ export async function extractCommand(inputPath?: string, outputCsvPath: string =
         console.log(`📥 Input:  ${inputPath}`);
         console.log(`📤 Output: ${outputCsvPath}`);
 
+        if (preset) {
+            console.log(`📋 Preset: ${preset}`);
+        }
         if (verbose) {
             console.log(`🔊 Verbose: enabled`);
         }
@@ -32,39 +46,22 @@ export async function extractCommand(inputPath?: string, outputCsvPath: string =
         // Load configuration from API
         console.log('⚙️  Loading configuration from API...');
         const config = await loadConfig();
-        const anthropicApiKey = config.get('ANTHROPIC_API_KEY');
-        const notionToken = config.get('NOTION_INTEGRATION_TOKEN');
-        const notionDatabaseId = config.get('NOTION_DATABASE_ID');
-        const twitterBearerToken = config.get('TWITTER_BEARER_TOKEN');
         console.log('✅ Configuration loaded\n');
 
+        // Create factory and build workflow
+        const factory = new LinkExtractionFactory(config, logger);
 
-        // Initialize adapters (infrastructure layer)
-        const logger = new CliuiLogger();
-        const zipExtractor = new ZipExtractor();
-        const httpLinksParser = new HttpLinksParser();
-        const linkAnalyzer = new UrlAndContextAnthropicAnalyser(anthropicApiKey, logger);
-        const csvWriter = new CsvFileWriter();
-        const notionRepository = new NotionLinkRepository(notionToken, notionDatabaseId);
-        const tweetScraper = new TwitterClient(twitterBearerToken, logger);
+        const workflow = preset
+            ? factory.createPreset(preset)
+            : factory.builder()
+                .extract()
+                .when(!skipAnalysis, b => b.analyze())
+                .when(!skipTwitter && !skipAnalysis, b => b.enrichTwitter().withRetry())
+                .exportTo({ csv: true, notion: !csvOnly })
+                .build();
 
-        // Initialize services (application layer)
-        const extractionService = new ZipEmlFilesBookmarksWorkflowService(zipExtractor, httpLinksParser, logger);
-        const analysisService = new LinkAnalysisService(linkAnalyzer, tweetScraper, logger);
-        const retryHandler = new RetryHandlerService(tweetScraper, linkAnalyzer, logger);
-        const exportService = new ExportService(csvWriter, notionRepository, logger);
-
-        // Initialize use case (application layer)
-        const useCase = new LinkExtractionOrchestrator(
-            extractionService,
-            analysisService,
-            retryHandler,
-            exportService,
-            logger
-        );
-
-        // Execute the workflow
-        await useCase.execute(inputPath, outputCsvPath);
+        // Execute workflow
+        await workflow.execute(inputPath, outputCsvPath);
 
         console.log('\n✨ Success! Your links have been extracted and categorized.\n');
         process.exit(0);
@@ -74,7 +71,7 @@ export async function extractCommand(inputPath?: string, outputCsvPath: string =
             console.error('\nStack trace:');
             console.error(error.stack);
         }
-        console.error('\nFor help, run: bun run src/cli/index.ts --help\n');
+        console.error('\nFor help, run: bun run cli --help\n');
         process.exit(1);
     }
 }

@@ -1,27 +1,84 @@
+import JSZip from 'jszip';
 import { readdirSync, readFileSync, statSync } from 'fs';
-import { join } from 'path';
+import { join, extname } from 'node:path';
 import { IDirectoryReader } from '../../domain/ports/IDirectoryReader.js';
+import { RawFile, createRawFile } from '../../domain/entities/RawFile.js';
 
 /**
  * Directory Reader Adapter
- * Implements file system operations for reading directory contents
+ * Implements file system operations for reading files from directories or zip archives
  */
 export class DirectoryReader implements IDirectoryReader {
+    private readonly ALLOWED_ZIP_EXTENSIONS = ['eml', 'md', 'text', 'csv', 'txt', 'json'];
+
     /**
-     * Read all files from a directory
-     * @param directoryPath - Path to the directory
-     * @param recursive - Whether to scan recursively (default: false)
+     * Read all files from a directory or zip archive
+     * @param sourcePath - Path to the directory or zip file
+     * @param recursive - Whether to scan recursively (default: false, only applies to directories)
      * @param filePattern - Optional glob pattern to filter files (e.g., "*.eml")
-     * @returns Map of filename to file content
+     * @returns Array of RawFile objects with file metadata and content
      */
     async readFiles(
-        directoryPath: string,
+        sourcePath: string,
         recursive: boolean = false,
         filePattern?: string
-    ): Promise<Map<string, string>> {
-        const files = new Map<string, string>();
+    ): Promise<RawFile[]> {
+        if (this.isZipFile(sourcePath)) {
+            return this.readFilesFromZip(sourcePath, filePattern);
+        }
+        return this.readFilesFromDirectory(sourcePath, recursive, filePattern);
+    }
 
-        // Validate directory exists and is a directory
+    private isZipFile(path: string): boolean {
+        try {
+            const stats = statSync(path);
+            return stats.isFile() && path.toLowerCase().endsWith('.zip');
+        } catch {
+            return false;
+        }
+    }
+
+    private async readFilesFromZip(zipPath: string, filePattern?: string): Promise<RawFile[]> {
+        try {
+            const stats = statSync(zipPath);
+            if (!stats.isFile()) {
+                throw new Error(`Path is not a file: ${zipPath}`);
+            }
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+                throw new Error(`File not found: ${zipPath}`);
+            }
+            throw error;
+        }
+
+        const buffer = readFileSync(zipPath);
+        const zip = await JSZip.loadAsync(buffer);
+        const files: RawFile[] = [];
+
+        for (const [filename, zipEntry] of Object.entries(zip.files)) {
+            if (zipEntry.dir) continue;
+            if (!this.hasAllowedZipExtension(filename)) continue;
+            if (filePattern && !this.matchesPattern(filename, filePattern)) continue;
+
+            const content = await zipEntry.async('text');
+            files.push(createRawFile(filename, content));
+        }
+
+        return files;
+    }
+
+    private hasAllowedZipExtension(filename: string): boolean {
+        const ext = extname(filename).slice(1).toLowerCase();
+        return this.ALLOWED_ZIP_EXTENSIONS.includes(ext);
+    }
+
+    private async readFilesFromDirectory(
+        directoryPath: string,
+        recursive: boolean,
+        filePattern?: string
+    ): Promise<RawFile[]> {
+        const files: RawFile[] = [];
+
         try {
             const stats = statSync(directoryPath);
             if (!stats.isDirectory()) {
@@ -34,9 +91,7 @@ export class DirectoryReader implements IDirectoryReader {
             throw error;
         }
 
-        // Read files
         this.readFilesRecursive(directoryPath, directoryPath, files, recursive, filePattern);
-
         return files;
     }
 
@@ -46,7 +101,7 @@ export class DirectoryReader implements IDirectoryReader {
     private readFilesRecursive(
         basePath: string,
         currentPath: string,
-        files: Map<string, string>,
+        files: RawFile[],
         recursive: boolean,
         filePattern?: string
     ): void {
@@ -72,7 +127,7 @@ export class DirectoryReader implements IDirectoryReader {
 
                 // Store with relative path from base directory
                 const relativePath = fullPath.replace(basePath + '/', '');
-                files.set(relativePath, content);
+                files.push(createRawFile(relativePath, content));
             }
         }
     }

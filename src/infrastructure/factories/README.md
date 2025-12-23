@@ -1,38 +1,38 @@
 # Infrastructure Factories
 
-This directory contains factory classes for creating infrastructure components like data sources.
+This directory contains factory classes for creating infrastructure components like source readers.
 
-## DataSourceFactory
+## SourceReaderFactory
 
-The `DataSourceFactory` provides a centralized, type-safe way to create data source instances based on `SourceAdapter` types.
+The `SourceReaderFactory` provides a centralized, type-safe way to create source reader instances based on `SourceAdapter` types.
 
 ### Why Use the Factory?
 
-✅ **Centralized Creation** - All data source instantiation logic in one place  
-✅ **Type Safety** - Compile-time checking ensures correct source types  
-✅ **Dependency Validation** - Runtime validation of required dependencies  
-✅ **Easy Testing** - Simple to mock and test  
+✅ **Centralized Creation** - All source reader instantiation logic in one place
+✅ **Type Safety** - Compile-time checking ensures correct source types
+✅ **Dependency Validation** - Runtime validation of required dependencies
+✅ **Easy Testing** - Simple to mock and test
 ✅ **Extensibility** - Add new sources by updating one switch statement
 
 ### Basic Usage
 
 ```typescript
-import { DataSourceFactory } from "./infrastructure/factories/DataSourceFactory.js";
+import { SourceReaderFactory } from "./infrastructure/factories/SourceReaderFactory.js";
 import { SourceAdapter } from "./domain/entities/SourceAdapter.js";
 
-// Create a Gmail data source
-const gmailSource = DataSourceFactory.create("Gmail", logger, {
+// Create a Gmail source reader
+const gmailSource = SourceReaderFactory.create("Gmail", logger, {
   emailClient: gmailClient,
   timestampRepository: timestampRepo,
 });
 
-// Create a ZipFile data source
-const zipSource = DataSourceFactory.create("ZipFile", logger, {
-  zipExtractor: zipExtractor,
+// Create a ZipFile source reader
+const zipSource = SourceReaderFactory.create("ZipFile", logger, {
+  directoryReader: directoryReader,
 });
 
-// Create a Directory data source
-const dirSource = DataSourceFactory.create("Directory", logger, {
+// Create a Directory source reader
+const dirSource = SourceReaderFactory.create("Directory", logger, {
   directoryReader: directoryReader,
 });
 ```
@@ -43,14 +43,14 @@ const dirSource = DataSourceFactory.create("Directory", logger, {
 // Runtime source type selection
 const sourceType: SourceAdapter = getUserSelectedSource(); // 'Gmail' | 'ZipFile' | 'Directory'
 
-const dataSource = DataSourceFactory.create(
+const sourceReader = SourceReaderFactory.create(
   sourceType,
   logger,
   getDependenciesForSource(sourceType)
 );
 
-// Use the data source
-const results = await dataSource.ingest(config);
+// Use the source reader
+const results = await sourceReader.ingest(config);
 ```
 
 ### Error Handling
@@ -60,14 +60,14 @@ The factory validates dependencies and throws descriptive errors:
 ```typescript
 try {
   // Missing required dependency
-  const source = DataSourceFactory.create("Gmail", logger, {});
+  const source = SourceReaderFactory.create("Gmail", logger, {});
 } catch (error) {
-  // Error: Gmail data source requires emailClient and timestampRepository
+  // Error: Gmail source reader requires emailClient and timestampRepository
 }
 
 try {
   // Unsupported source type
-  const source = DataSourceFactory.create("Outlook", logger, {});
+  const source = SourceReaderFactory.create("Outlook", logger, {});
 } catch (error) {
   // Error: Unsupported source adapter: Outlook
 }
@@ -78,7 +78,7 @@ try {
 | Source Type | Required Dependencies                | Description                                    |
 | ----------- | ------------------------------------ | ---------------------------------------------- |
 | `Gmail`     | `emailClient`, `timestampRepository` | Fetches messages from Gmail API                |
-| `ZipFile`   | `zipExtractor`                       | Extracts and processes files from zip archives |
+| `ZipFile`   | `directoryReader`                    | Extracts and processes files from zip archives |
 | `Directory` | `directoryReader`                    | Reads and processes files from directories     |
 
 **Unsupported (will throw)**: `Outlook`, `EmlFile`, `NotionDatabase`, `Other`, `None`
@@ -87,29 +87,29 @@ try {
 
 ```typescript
 import { describe, test, expect } from "bun:test";
-import { DataSourceFactory } from "./DataSourceFactory.js";
+import { SourceReaderFactory } from "./SourceReaderFactory.js";
 
 describe("My Service", () => {
-  test("should create correct data source", () => {
+  test("should create correct source reader", () => {
     const mockLogger = createMockLogger();
     const mockDeps = {
-      zipExtractor: createMockZipExtractor(),
+      directoryReader: createMockDirectoryReader(),
     };
 
-    const dataSource = DataSourceFactory.create(
+    const sourceReader = SourceReaderFactory.create(
       "ZipFile",
       mockLogger,
       mockDeps
     );
 
-    expect(dataSource.getSourceType()).toBe("ZipFile");
+    expect(sourceReader.getSourceType()).toBe("Directory");
   });
 });
 ```
 
 ### Extending the Factory
 
-To add a new data source type:
+To add a new source reader type:
 
 1. **Update SourceAdapter type** (if needed):
 
@@ -127,10 +127,9 @@ export const SOURCE_ADAPTERS = [
 2. **Add dependency interface** (if needed):
 
 ```typescript
-// src/infrastructure/factories/DataSourceFactory.ts
-export interface DataSourceDependencies {
+// src/infrastructure/factories/SourceReaderFactory.ts
+export interface SourceReaderDependencies {
   emailClient?: IEmailClient;
-  zipExtractor?: IZipExtractor;
   directoryReader?: IDirectoryReader;
   myNewClient?: IMyNewClient; // ← Add here
 }
@@ -139,12 +138,12 @@ export interface DataSourceDependencies {
 3. **Add case to switch statement**:
 
 ```typescript
-static create(source: SourceAdapter, logger: ILogger, deps: DataSourceDependencies) {
+static create(source: SourceAdapter, logger: ILogger, deps: SourceReaderDependencies) {
   switch (source) {
     // ... existing cases ...
 
     case 'MyNewSource':
-      return DataSourceFactory.createMyNewDataSource(logger, deps);
+      return SourceReaderFactory.createMyNewSourceReader(logger, deps);
 
     // ...
   }
@@ -154,29 +153,29 @@ static create(source: SourceAdapter, logger: ILogger, deps: DataSourceDependenci
 4. **Add private factory method**:
 
 ```typescript
-private static createMyNewDataSource(
+private static createMyNewSourceReader(
   logger: ILogger,
-  dependencies: DataSourceDependencies
-): MyNewDataSource {
+  dependencies: SourceReaderDependencies
+): MyNewSourceReader {
   const { myNewClient } = dependencies;
 
   if (!myNewClient) {
-    throw new Error('MyNewSource data source requires myNewClient');
+    throw new Error('MyNewSource source reader requires myNewClient');
   }
 
-  return new MyNewDataSource(myNewClient, logger);
+  return new MyNewSourceReader(myNewClient, logger);
 }
 ```
 
 5. **Write tests** (following TDD):
 
 ```typescript
-test("should create MyNewDataSource for MyNewSource type", () => {
-  const source = DataSourceFactory.create("MyNewSource", logger, {
+test("should create MyNewSourceReader for MyNewSource type", () => {
+  const source = SourceReaderFactory.create("MyNewSource", logger, {
     myNewClient: mockClient,
   });
 
-  expect(source).toBeInstanceOf(MyNewDataSource);
+  expect(source).toBeInstanceOf(MyNewSourceReader);
 });
 ```
 
@@ -185,18 +184,17 @@ test("should create MyNewDataSource for MyNewSource type", () => {
 The factory follows **hexagonal architecture** principles:
 
 - Located in **Infrastructure layer** (correct placement)
-- Creates infrastructure adapters (data sources)
+- Creates source readers that orchestrate adapters
 - Uses dependency injection for flexibility
-- Returns domain interfaces (`AbstractDataSource`)
+- Returns domain interfaces (`AbstractSourceReader`)
 
 ### Related Files
 
 - **Type Definition**: `src/domain/entities/SourceAdapter.ts`
-- **Abstract Base**: `src/domain/entities/AbstractDataSource.ts`
+- **Abstract Base**: `src/application/source-readers/AbstractSourceReader.ts`
 - **Implementations**:
-  - `src/infrastructure/adapters/GmailDataSource.ts`
-  - `src/infrastructure/adapters/ZipFileDataSource.ts`
-  - `src/infrastructure/adapters/DirectoryDataSource.ts`
+  - `src/application/source-readers/GmailSourceReader.ts`
+  - `src/application/source-readers/DirectorySourceReader.ts`
 - **Tests**: `src/infrastructure/tests/unit/test-data-source-factory.test.ts`
 
 ### See Also

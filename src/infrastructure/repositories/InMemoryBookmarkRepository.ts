@@ -32,6 +32,7 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
             link.rawContent,
             link.createdAt,
             link.updatedAt,
+            link.contentType,
             link.userId,
             id
         );
@@ -62,6 +63,7 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
             updates.rawContent ?? bookmark.rawContent,
             bookmark.createdAt,
             new Date(),
+            updates.contentType ?? bookmark.contentType,
             bookmark.userId,
             bookmark.id
         );

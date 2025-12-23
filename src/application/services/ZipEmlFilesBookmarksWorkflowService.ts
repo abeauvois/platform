@@ -1,7 +1,6 @@
 import { Bookmark } from '../../domain/entities/Bookmark.js';
-import { ILinksExtractor } from '../../domain/ports/ILinksExtractor.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
-import { IZipExtractor } from '../../domain/ports/IZipExtractor.js';
+import { IDirectoryReader } from '../../domain/ports/IDirectoryReader.js';
 import { Pipeline, WorkflowExecutor } from '../../domain/workflow/index.js';
 import { EmailFile } from '../../domain/entities/EmailFile.js';
 import { IProducer } from '../../domain/workflow/IProducer.js';
@@ -17,7 +16,7 @@ import { IContentAnalyser } from '../../domain/ports/IContentAnalyser.js';
  */
 export class ZipEmlFilesBookmarksWorkflowService {
     constructor(
-        private readonly zipExtractor: IZipExtractor,
+        private readonly directoryReader: IDirectoryReader,
         private readonly anthropicClient: IContentAnalyser,
         private readonly logger: ILogger
     ) { }
@@ -72,7 +71,7 @@ export class ZipEmlFilesBookmarksWorkflowService {
                 return new SingleFolderEmailFileProducer(sourcePath);
             } else if (stats.isFile()) {
                 this.logger.debug(`Source is a file: ${sourcePath}`);
-                return new ZipFileEmailFileProducer(sourcePath, this.zipExtractor);
+                return new ZipFileEmailFileProducer(sourcePath, this.directoryReader);
             } else {
                 throw new Error(`Source path is neither a file nor a directory: ${sourcePath}`);
             }

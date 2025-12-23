@@ -1,16 +1,19 @@
-import { BaseContent } from './BaseContent.js';
-import { SourceAdapter } from './SourceAdapter.js';
-import { IngestionConfig } from './IngestionConfig.js';
-import { ILogger } from '../ports/ILogger.js';
+import { BaseContent } from '../../domain/entities/BaseContent.js';
+import { SourceAdapter } from '../../domain/entities/SourceAdapter.js';
+import { IngestionConfig } from '../../domain/entities/IngestionConfig.js';
+import { ILogger } from '../../domain/ports/ILogger.js';
 
 /**
- * Abstract base class for all data sources
+ * Abstract base class for all source readers
  * Uses Template Method pattern to define the ingestion workflow
- * 
- * @template TRaw - The raw data type from the source (e.g., GmailMessage, EmailFile)
+ *
+ * Source readers orchestrate: fetch → normalize → enrich
+ * They are application-level services, not infrastructure adapters.
+ *
+ * @template TRaw - The raw data type from the source (e.g., GmailMessage, RawFile)
  * @template TNormalized - The normalized content type (extends BaseContent)
  */
-export abstract class AbstractDataSource<TRaw, TNormalized extends BaseContent> {
+export abstract class AbstractSourceReader<TRaw, TNormalized extends BaseContent> {
     constructor(
         protected readonly sourceType: SourceAdapter,
         protected readonly logger: ILogger

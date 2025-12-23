@@ -1,57 +1,24 @@
 import { test, expect, describe } from 'bun:test';
-import { join } from 'path';
-import { CsvFromZipBookmarksWorkflowService } from '../../../application/services/CsvFromZipBookmarksWorkflowService.js';
-import { ZipExtractor } from '../../adapters/ZipExtractor.js';
-import { SimpleCsvParser } from '../../adapters/SimpleCsvParser.js';
-import { CliuiLogger } from '../../adapters/CliuiLogger.js';
-import { ILogger } from '../../../domain/ports/ILogger.js';
+import { join } from 'node:path';
+import { CsvFromZipBookmarksWorkflowService } from '../../../application/services/CsvFromZipBookmarksWorkflowService';
+import { DirectoryReader } from '../../adapters/DirectoryReader';
+import { SimpleCsvParser } from '../../adapters/SimpleCsvParser';
+import { ConsoleLogger } from './ConsoleLogger';
 
-// Simple console logger for integration tests
-class ConsoleLogger implements ILogger {
-    info(message: string, options?: { prefix?: string; suffix?: string }): void {
-        console.log(`[INFO] ${message}`);
-    }
-
-    error(message: string, options?: { prefix?: string; suffix?: string }): void {
-        console.error(`[ERROR] ${message}`);
-    }
-
-    warning(message: string, options?: { prefix?: string; suffix?: string }): void {
-        console.warn(`[WARNING] ${message}`);
-    }
-
-    debug(message: string, options?: { prefix?: string; suffix?: string }): void {
-        console.debug(`[DEBUG] ${message}`);
-    }
-
-    await(message: string, options?: { prefix?: string; suffix?: string }) {
-        return {
-            start: () => {
-                console.log(`[LOADING] ${message}`);
-            },
-            update: (msg: string) => {
-                console.log(`[UPDATE] ${msg}`);
-            },
-            stop: () => {
-                console.log(`[DONE]`);
-            },
-        };
-    }
-}
+const FIXTURES_DIR = join(__dirname, '../fixtures');
 
 describe('CsvFromZipBookmarksWorkflowService Integration Tests', () => {
     const logger = new ConsoleLogger();
-    const zipExtractor = new ZipExtractor();
+    const directoryReader = new DirectoryReader();
     const csvParser = new SimpleCsvParser();
 
     test('should extract and parse CSV bookmarks from zip file', async () => {
-        // ARRANGE
         const service = new CsvFromZipBookmarksWorkflowService(
-            zipExtractor,
+            directoryReader,
             csvParser,
             logger
         );
-        const zipPath = join(__dirname, '../../../../data/fixtures/test_csv_bookmarks.zip');
+        const zipPath = join(FIXTURES_DIR, 'test_csv_bookmarks.zip');
 
         // ACT
         const items = await service.extractAndParseCsv(zipPath);
@@ -75,13 +42,12 @@ describe('CsvFromZipBookmarksWorkflowService Integration Tests', () => {
     });
 
     test('should handle errors gracefully', async () => {
-        // ARRANGE
         const service = new CsvFromZipBookmarksWorkflowService(
-            zipExtractor,
+            directoryReader,
             csvParser,
             logger
         );
-        const nonExistentPath = join(__dirname, '../../../../data/fixtures/does-not-exist.zip');
+        const nonExistentPath = join(FIXTURES_DIR, 'does-not-exist.zip');
 
         // ACT & ASSERT
         await expect(service.extractAndParseCsv(nonExistentPath)).rejects.toThrow();
@@ -89,13 +55,12 @@ describe('CsvFromZipBookmarksWorkflowService Integration Tests', () => {
     });
 
     test('should return statistics about processed items', async () => {
-        // ARRANGE
         const service = new CsvFromZipBookmarksWorkflowService(
-            zipExtractor,
+            directoryReader,
             csvParser,
             logger
         );
-        const zipPath = join(__dirname, '../../../../data/fixtures/test_csv_bookmarks.zip');
+        const zipPath = join(FIXTURES_DIR, 'test_csv_bookmarks.zip');
 
         let capturedStats: any;
 
@@ -115,14 +80,13 @@ describe('CsvFromZipBookmarksWorkflowService Integration Tests', () => {
     });
 
     test('should deduplicate bookmarks with same URL', async () => {
-        // ARRANGE - Create CSV with duplicate URLs
         const service = new CsvFromZipBookmarksWorkflowService(
-            zipExtractor,
+            directoryReader,
             csvParser,
             logger,
-            true // Enable deduplication
+            true
         );
-        const zipPath = join(__dirname, '../../../../data/fixtures/test_csv_bookmarks.zip');
+        const zipPath = join(FIXTURES_DIR, 'test_csv_bookmarks.zip');
 
         // ACT
         const items = await service.extractAndParseCsv(zipPath);
@@ -135,13 +99,12 @@ describe('CsvFromZipBookmarksWorkflowService Integration Tests', () => {
     });
 
     test('should preserve structured data from CSV', async () => {
-        // ARRANGE
         const service = new CsvFromZipBookmarksWorkflowService(
-            zipExtractor,
+            directoryReader,
             csvParser,
             logger
         );
-        const zipPath = join(__dirname, '../../../../data/fixtures/test_csv_bookmarks.zip');
+        const zipPath = join(FIXTURES_DIR, 'test_csv_bookmarks.zip');
 
         // ACT
         const items = await service.extractAndParseCsv(zipPath);

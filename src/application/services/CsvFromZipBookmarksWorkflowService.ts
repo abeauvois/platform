@@ -1,20 +1,20 @@
-import { IZipExtractor } from '../../domain/ports/IZipExtractor.js';
+import { IDirectoryReader } from '../../domain/ports/IDirectoryReader.js';
 import { ICsvParser } from '../../domain/ports/ICsvParser.js';
 import { ILogger } from '../../domain/ports/ILogger.js';
 import { BaseContent } from '../../domain/entities/BaseContent.js';
 import { Pipeline, WorkflowExecutor, WorkflowOptions } from '../../domain/workflow/index.js';
-import { ZipFileDataSource } from '../../infrastructure/adapters/ZipFileDataSource.js';
+import { DirectorySourceReader } from '../source-readers/DirectorySourceReader.js';
 import { CsvFromZipProducer } from '../../infrastructure/workflow/producers/CsvFromZipProducer.js';
 import { BaseContentCollector } from '../../infrastructure/workflow/consumers/BaseContentCollector.js';
 import { BaseContentDeduplicationStage } from '../../infrastructure/workflow/stages/BaseContentDeduplicationStage.js';
 
 /**
- * Service responsible for extracting and parsing CSV files from zip archives
+ * Service responsible for extracting and parsing CSV files from zip archives or directories
  * Uses WorkflowExecutor pattern for consistent error handling and statistics
  */
 export class CsvFromZipBookmarksWorkflowService {
     constructor(
-        private readonly zipExtractor: IZipExtractor,
+        private readonly directoryReader: IDirectoryReader,
         private readonly csvParser: ICsvParser,
         private readonly logger: ILogger,
         private readonly enableDeduplication: boolean = false
@@ -30,12 +30,11 @@ export class CsvFromZipBookmarksWorkflowService {
         sourcePath: string,
         options?: Partial<WorkflowOptions<BaseContent>>
     ): Promise<BaseContent[]> {
-        // Create data source for zip extraction
-        const dataSource = new ZipFileDataSource(this.zipExtractor, this.logger);
+        const sourceReader = new DirectorySourceReader(this.directoryReader, this.logger);
 
         // Create producer that combines extraction + CSV parsing
         const producer = new CsvFromZipProducer(
-            dataSource,
+            sourceReader,
             this.csvParser,
             { path: sourcePath }
         );

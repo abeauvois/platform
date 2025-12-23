@@ -21,9 +21,9 @@ test('findByUserId should return empty array when no bookmarks exist', async () 
 
 test('findByUserId should return only bookmarks for specific user', async () => {
     // Arrange: Create bookmarks for different users
-    const bookmark1 = new Bookmark('https://example.com/1', 'EmlFile', [], '', '', new Date(), new Date(), 'user-123');
-    const bookmark2 = new Bookmark('https://example.com/2', 'EmlFile', [], '', '', new Date(), new Date(), 'user-123');
-    const bookmark3 = new Bookmark('https://example.com/3', 'EmlFile', [], '', '', new Date(), new Date(), 'user-456');
+    const bookmark1 = new Bookmark('https://example.com/1', 'EmlFile', [], '', '', new Date(), new Date(), 'unknown', 'user-123');
+    const bookmark2 = new Bookmark('https://example.com/2', 'EmlFile', [], '', '', new Date(), new Date(), 'unknown', 'user-123');
+    const bookmark3 = new Bookmark('https://example.com/3', 'EmlFile', [], '', '', new Date(), new Date(), 'unknown', 'user-456');
 
     await repository.save(bookmark1);
     await repository.save(bookmark2);
@@ -42,7 +42,7 @@ test('findByUserId should return only bookmarks for specific user', async () => 
 
 test('findByUserId should return empty array for non-existent user', async () => {
     // Arrange
-    const bookmark = new Bookmark('https://example.com/1', 'EmlFile', [], '', '', new Date(), new Date(), 'user-123');
+    const bookmark = new Bookmark('https://example.com/1', 'EmlFile', [], '', '', new Date(), new Date(), 'unknown', 'user-123');
     await repository.save(bookmark);
 
     // Act
@@ -54,7 +54,7 @@ test('findByUserId should return empty array for non-existent user', async () =>
 
 test('findByUserId should handle undefined userId gracefully', async () => {
     // Arrange
-    const bookmarkWithUser = new Bookmark('https://example.com/1', 'EmlFile', [], '', '', new Date(), new Date(), 'user-123');
+    const bookmarkWithUser = new Bookmark('https://example.com/1', 'EmlFile', [], '', '', new Date(), new Date(), 'unknown', 'user-123');
     const bookmarkWithoutUser = new Bookmark('https://example.com/2', 'EmlFile', [], '', '', new Date(), new Date());
 
     await repository.save(bookmarkWithUser);

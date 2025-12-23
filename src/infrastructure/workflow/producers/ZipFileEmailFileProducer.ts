@@ -1,23 +1,23 @@
 import { IProducer } from '../../../domain/workflow/IProducer.js';
 import { EmailFile } from '../../../domain/entities/EmailFile.js';
-import { IZipExtractor } from '../../../domain/ports/IZipExtractor.js';
+import { IDirectoryReader } from '../../../domain/ports/IDirectoryReader.js';
 
 /**
- * Producer: Extracts email files from a zip archive or directory
+ * Producer: Extracts email files from a zip archive
  */
 export class ZipFileEmailFileProducer implements IProducer<EmailFile> {
     constructor(
         private readonly filePath: string,
-        private readonly zipExtractor: IZipExtractor
+        private readonly directoryReader: IDirectoryReader
     ) { }
 
     async *produce(): AsyncIterable<EmailFile> {
-        const emailFiles = await this.zipExtractor.extractFiles(this.filePath);
+        const files = await this.directoryReader.readFiles(this.filePath);
 
-        for (const [filename, content] of emailFiles.entries()) {
+        for (const file of files) {
             yield {
-                filename,
-                content,
+                filename: file.filename,
+                content: file.content,
             };
         }
     }

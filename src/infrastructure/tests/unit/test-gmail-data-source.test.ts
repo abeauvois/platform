@@ -64,20 +64,20 @@ class MockLogger implements ILogger {
     }
 }
 
-// Import the class we're testing (will be created next)
-import { GmailDataSource } from '../../adapters/GmailDataSource.js';
+// Import the class we're testing
+import { GmailSourceReader } from '../../../application/source-readers/GmailSourceReader.js';
 
-describe('GmailDataSource', () => {
+describe('GmailSourceReader', () => {
     let mockEmailClient: MockEmailClient;
     let mockTimestampRepo: MockTimestampRepository;
     let mockLogger: MockLogger;
-    let dataSource: GmailDataSource;
+    let sourceReader: GmailSourceReader;
 
     beforeEach(() => {
         mockEmailClient = new MockEmailClient();
         mockTimestampRepo = new MockTimestampRepository();
         mockLogger = new MockLogger();
-        dataSource = new GmailDataSource(
+        sourceReader = new GmailSourceReader(
             mockEmailClient,
             mockTimestampRepo,
             mockLogger
@@ -85,7 +85,7 @@ describe('GmailDataSource', () => {
     });
 
     test('should have Gmail source type', () => {
-        expect(dataSource.getSourceType()).toBe('Gmail');
+        expect(sourceReader.getSourceType()).toBe('Gmail');
     });
 
     test('should throw error if credentials are missing', async () => {
@@ -93,7 +93,7 @@ describe('GmailDataSource', () => {
             credentials: {} as any,
         };
 
-        await expect(dataSource.ingest(config)).rejects.toThrow('Gmail requires clientId, clientSecret, and refreshToken in credentials');
+        await expect(sourceReader.ingest(config)).rejects.toThrow('Gmail requires clientId, clientSecret, and refreshToken in credentials');
     });
 
     test('should fetch and normalize Gmail messages', async () => {
@@ -118,7 +118,7 @@ describe('GmailDataSource', () => {
             since: testDate,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(1);
         expect(results[0]).toBeInstanceOf(BaseContent);
@@ -144,7 +144,7 @@ describe('GmailDataSource', () => {
             },
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(3);
         expect(results[0].sourceAdapter).toBe('Gmail');
@@ -175,7 +175,7 @@ describe('GmailDataSource', () => {
             since: configDate,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(1);
         // Config date should be used, not timestamp from repo
@@ -204,7 +204,7 @@ describe('GmailDataSource', () => {
             },
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(1);
     });
@@ -232,7 +232,7 @@ describe('GmailDataSource', () => {
             },
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(1);
     });
@@ -257,7 +257,7 @@ describe('GmailDataSource', () => {
             },
         };
 
-        await dataSource.ingest(config);
+        await sourceReader.ingest(config);
 
         expect(mockLogger.logs.length).toBeGreaterThan(0);
         expect(mockLogger.logs.some(log => log.includes('Fetching data'))).toBe(true);

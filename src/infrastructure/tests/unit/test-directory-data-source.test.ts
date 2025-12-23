@@ -1,43 +1,47 @@
 import { test, expect, describe, beforeEach } from 'bun:test';
-import { DirectoryDataSource } from '../../adapters/DirectoryDataSource';
+import { DirectorySourceReader } from '../../../application/source-readers/DirectorySourceReader';
 import { BaseContent } from '../../../domain/entities/BaseContent.js';
 import { FileIngestionConfig } from '../../../domain/entities/IngestionConfig.js';
 import { IDirectoryReader } from '../../../domain/ports/IDirectoryReader.js';
+import { RawFile, createRawFile } from '../../../domain/entities/RawFile.js';
 import { MockLogger } from './MockLogger';
 
 // Mock implementations
 class MockDirectoryReader implements IDirectoryReader {
-    private files: Map<string, string> = new Map();
+    private files: RawFile[] = [];
 
     setFiles(files: Map<string, string>) {
-        this.files = files;
+        // Convert Map<filename, content> to RawFile[]
+        this.files = Array.from(files.entries()).map(([filename, content]) =>
+            createRawFile(filename, content)
+        );
     }
 
     async readFiles(
         directoryPath: string,
         recursive?: boolean,
         filePattern?: string
-    ): Promise<Map<string, string>> {
+    ): Promise<RawFile[]> {
         return this.files;
     }
 }
 
-describe('DirectoryDataSource', () => {
+describe('DirectorySourceReader', () => {
     let mockDirectoryReader: MockDirectoryReader;
     let mockLogger: MockLogger;
-    let dataSource: DirectoryDataSource;
+    let sourceReader: DirectorySourceReader;
 
     beforeEach(() => {
         mockDirectoryReader = new MockDirectoryReader();
         mockLogger = new MockLogger();
-        dataSource = new DirectoryDataSource(
+        sourceReader = new DirectorySourceReader(
             mockDirectoryReader,
             mockLogger
         );
     });
 
     test('should have Directory source type', () => {
-        expect(dataSource.getSourceType()).toBe('Directory');
+        expect(sourceReader.getSourceType()).toBe('Directory');
     });
 
     test('should throw error if path is missing', async () => {
@@ -45,7 +49,7 @@ describe('DirectoryDataSource', () => {
             path: '',
         };
 
-        await expect(dataSource.ingest(config)).rejects.toThrow('path is required');
+        await expect(sourceReader.ingest(config)).rejects.toThrow('path is required');
     });
 
     test('should fetch and normalize files from directory', async () => {
@@ -60,7 +64,7 @@ describe('DirectoryDataSource', () => {
             path: '/path/to/directory',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(2);
         expect(results[0]).toBeInstanceOf(BaseContent);
@@ -77,7 +81,7 @@ describe('DirectoryDataSource', () => {
             path: '/path/to/empty',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(0);
     });
@@ -93,7 +97,7 @@ describe('DirectoryDataSource', () => {
             path: '/path/to/directory',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(1);
         expect(results[0].sourceAdapter).toBe('Directory');
@@ -113,7 +117,7 @@ describe('DirectoryDataSource', () => {
             path: '/path/to/directory',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(3);
         results.forEach((result: BaseContent) => {
@@ -134,7 +138,7 @@ describe('DirectoryDataSource', () => {
             path: '/path/to/directory',
         };
 
-        await dataSource.ingest(config);
+        await sourceReader.ingest(config);
 
         expect(mockLogger.logs.length).toBeGreaterThan(0);
         expect(mockLogger.logs.some(log => log.includes('Fetching data'))).toBe(true);
@@ -154,7 +158,7 @@ describe('DirectoryDataSource', () => {
             path: '/path/to/directory',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(1);
         expect(results[0].rawContent).toBe(testContent);
@@ -173,7 +177,7 @@ describe('DirectoryDataSource', () => {
         };
 
         const before = new Date();
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
         const after = new Date();
 
         expect(results).toHaveLength(1);
@@ -194,7 +198,7 @@ describe('DirectoryDataSource', () => {
             recursive: true,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toHaveLength(2);
         results.forEach((result: BaseContent) => {
@@ -215,7 +219,7 @@ describe('DirectoryDataSource', () => {
             filePattern: '*.eml',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Should only get .eml files
         expect(results).toHaveLength(2);

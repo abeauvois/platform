@@ -20,11 +20,11 @@ export class GmailBookmarksWorkflowService {
 
     /**
      * Fetch Gmail messages received since last execution
-     * 
-     * Note: While DataSourceFactory can create a GmailDataSource instance,
+     *
+     * Note: While SourceReaderFactory can create a GmailSourceReader instance,
      * this service uses GmailMessageProducer directly with the workflow pattern.
      * The producer handles fetching messages and managing timestamp state.
-     * 
+     *
      * @returns Array of Bookmark objects
      */
     async fetchRecentMessages(): Promise<Bookmark[]> {

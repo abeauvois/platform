@@ -10,7 +10,7 @@ import { AnthropicClient } from "../adapters/AnthropicClient";
 import { GmailBookmarksWorkflowService } from "../../application/services/GmailBookmarksWorkflowService";
 import { ZipEmlFilesBookmarksWorkflowService } from "../../application/services/ZipEmlFilesBookmarksWorkflowService";
 import { CsvFromZipBookmarksWorkflowService } from "../../application/services/CsvFromZipBookmarksWorkflowService";
-import { ZipExtractor } from "../adapters/ZipExtractor";
+import { DirectoryReader } from "../adapters/DirectoryReader";
 import { SimpleCsvParser } from "../adapters/SimpleCsvParser";
 // import { TwitterClient } from "../adapters/TwitterClient";
 // import { UrlsBookmarksWorkflowService } from "../../application/services/UrlsBookmarksWorkflowService.wip";
@@ -47,9 +47,9 @@ class WorkflowCreator {
 
                 break;
             case "bookmarksFromZipEmlFiles":
-                const zipExtractor = new ZipExtractor();
+                const directoryReader = new DirectoryReader();
                 const zipWorkflow = new ZipEmlFilesBookmarksWorkflowService(
-                    zipExtractor,
+                    directoryReader,
                     anthropicClient,
                     this.logger,
                 );
@@ -58,13 +58,13 @@ class WorkflowCreator {
                 zipWorkflow.extractAndParseEmails(path);
                 break;
             case "csvFromZip":
-                const csvZipExtractor = new ZipExtractor();
+                const csvDirectoryReader = new DirectoryReader();
                 const csvParser = new SimpleCsvParser();
                 const csvWorkflow = new CsvFromZipBookmarksWorkflowService(
-                    csvZipExtractor,
+                    csvDirectoryReader,
                     csvParser,
                     this.logger,
-                    true // Enable deduplication
+                    true
                 );
                 const csvPath = join(__dirname, '../../../data/fixtures/test_csv_bookmarks.zip');
                 const csvItems = await csvWorkflow.extractAndParseCsv(csvPath);

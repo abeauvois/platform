@@ -1,9 +1,8 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { DataSourceFactory } from '../../factories/DataSourceFactory.js';
+import { SourceReaderFactory } from '../../factories/SourceReaderFactory.js';
 import { SourceAdapter } from '../../../domain/entities/SourceAdapter.js';
-import { GmailDataSource } from '../../adapters/GmailDataSource.js';
-import { ZipFileDataSource } from '../../adapters/ZipFileDataSource.js';
-import { DirectoryDataSource } from '../../adapters/DirectoryDataSource.js';
+import { GmailSourceReader } from '../../../application/source-readers/GmailSourceReader.js';
+import { DirectorySourceReader } from '../../../application/source-readers/DirectorySourceReader.js';
 import { ILogger } from '../../../domain/ports/ILogger.js';
 
 // Mock logger for testing
@@ -35,7 +34,7 @@ class MockLogger implements ILogger {
     }
 }
 
-describe('DataSourceFactory', () => {
+describe('SourceReaderFactory', () => {
     let mockLogger: MockLogger;
 
     beforeEach(() => {
@@ -43,7 +42,7 @@ describe('DataSourceFactory', () => {
     });
 
     describe('create', () => {
-        test('should create GmailDataSource for Gmail source type', () => {
+        test('should create GmailSourceReader for Gmail source type', () => {
             const mockTimestampRepo = {
                 getLastExecutionTime: async () => null,
                 saveLastExecutionTime: async () => { }
@@ -52,49 +51,49 @@ describe('DataSourceFactory', () => {
                 fetchMessagesSince: async () => []
             };
 
-            const dataSource = DataSourceFactory.create(
+            const sourceReader = SourceReaderFactory.create(
                 'Gmail',
                 mockLogger,
                 { emailClient: mockEmailClient, timestampRepository: mockTimestampRepo }
             );
 
-            expect(dataSource).toBeInstanceOf(GmailDataSource);
-            expect(dataSource.getSourceType()).toBe('Gmail');
+            expect(sourceReader).toBeInstanceOf(GmailSourceReader);
+            expect(sourceReader.getSourceType()).toBe('Gmail');
         });
 
-        test('should create ZipFileDataSource for ZipFile source type', () => {
-            const mockZipExtractor = {
-                extractFiles: async () => new Map()
+        test('should create DirectorySourceReader for ZipFile source type', () => {
+            const mockDirectoryReader = {
+                readFiles: async () => []
             };
 
-            const dataSource = DataSourceFactory.create(
+            const sourceReader = SourceReaderFactory.create(
                 'ZipFile',
                 mockLogger,
-                { zipExtractor: mockZipExtractor }
+                { directoryReader: mockDirectoryReader }
             );
 
-            expect(dataSource).toBeInstanceOf(ZipFileDataSource);
-            expect(dataSource.getSourceType()).toBe('ZipFile');
+            expect(sourceReader).toBeInstanceOf(DirectorySourceReader);
+            expect(sourceReader.getSourceType()).toBe('Directory');
         });
 
-        test('should create DirectoryDataSource for Directory source type', () => {
+        test('should create DirectorySourceReader for Directory source type', () => {
             const mockDirectoryReader = {
-                readFiles: async () => new Map()
+                readFiles: async () => []
             };
 
-            const dataSource = DataSourceFactory.create(
+            const sourceReader = SourceReaderFactory.create(
                 'Directory',
                 mockLogger,
                 { directoryReader: mockDirectoryReader }
             );
 
-            expect(dataSource).toBeInstanceOf(DirectoryDataSource);
-            expect(dataSource.getSourceType()).toBe('Directory');
+            expect(sourceReader).toBeInstanceOf(DirectorySourceReader);
+            expect(sourceReader.getSourceType()).toBe('Directory');
         });
 
         test('should throw error for unsupported source type', () => {
             expect(() => {
-                DataSourceFactory.create(
+                SourceReaderFactory.create(
                     'Outlook' as SourceAdapter,
                     mockLogger,
                     {}
@@ -104,22 +103,22 @@ describe('DataSourceFactory', () => {
 
         test('should throw error for None source type', () => {
             expect(() => {
-                DataSourceFactory.create(
+                SourceReaderFactory.create(
                     'None',
                     mockLogger,
                     {}
                 );
-            }).toThrow('Cannot create data source for None type');
+            }).toThrow('Cannot create source reader for None type');
         });
 
         test('should throw error when required dependencies are missing', () => {
             expect(() => {
-                DataSourceFactory.create(
+                SourceReaderFactory.create(
                     'Gmail',
                     mockLogger,
                     {} // Missing emailClient and timestampRepository
                 );
-            }).toThrow('Gmail data source requires emailClient and timestampRepository');
+            }).toThrow('Gmail source reader requires emailClient and timestampRepository');
         });
 
         test('should create correct instance for each supported type', () => {
@@ -130,35 +129,35 @@ describe('DataSourceFactory', () => {
                 getLastExecutionTime: async () => null,
                 saveLastExecutionTime: async () => { }
             };
-            const mockZipExtractor = {
-                extractFiles: async () => new Map()
-            };
             const mockDirectoryReader = {
-                readFiles: async () => new Map()
+                readFiles: async () => []
             };
 
-            const sources: Array<{ type: SourceAdapter; deps: any; expectedClass: any }> = [
+            const sources: Array<{ type: SourceAdapter; deps: any; expectedClass: any; expectedSourceType: string }> = [
                 {
                     type: 'Gmail',
                     deps: { emailClient: mockEmailClient, timestampRepository: mockTimestampRepo },
-                    expectedClass: GmailDataSource
+                    expectedClass: GmailSourceReader,
+                    expectedSourceType: 'Gmail'
                 },
                 {
                     type: 'ZipFile',
-                    deps: { zipExtractor: mockZipExtractor },
-                    expectedClass: ZipFileDataSource
+                    deps: { directoryReader: mockDirectoryReader },
+                    expectedClass: DirectorySourceReader,
+                    expectedSourceType: 'Directory'
                 },
                 {
                     type: 'Directory',
                     deps: { directoryReader: mockDirectoryReader },
-                    expectedClass: DirectoryDataSource
+                    expectedClass: DirectorySourceReader,
+                    expectedSourceType: 'Directory'
                 }
             ];
 
-            sources.forEach(({ type, deps, expectedClass }) => {
-                const dataSource = DataSourceFactory.create(type, mockLogger, deps);
-                expect(dataSource).toBeInstanceOf(expectedClass);
-                expect(dataSource.getSourceType()).toBe(type);
+            sources.forEach(({ type, deps, expectedClass, expectedSourceType }) => {
+                const sourceReader = SourceReaderFactory.create(type, mockLogger, deps);
+                expect(sourceReader).toBeInstanceOf(expectedClass);
+                expect(sourceReader.getSourceType()).toBe(expectedSourceType);
             });
         });
     });

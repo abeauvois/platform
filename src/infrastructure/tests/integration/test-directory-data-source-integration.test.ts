@@ -1,24 +1,23 @@
 import { test, expect, describe } from 'bun:test';
-import { join } from 'path';
-import { DirectoryDataSource } from '../../adapters/DirectoryDataSource.js';
-import { DirectoryReader } from '../../adapters/DirectoryReader.js';
-import { FileIngestionConfig } from '../../../domain/entities/IngestionConfig.js';
-import { SourceAdapter } from '../../../domain/entities/SourceAdapter.js';
-import { ConsoleLogger } from './ConsoleLogger.js';
+import { join } from 'node:path';
+import { DirectorySourceReader } from '../../../application/source-readers/DirectorySourceReader';
+import { DirectoryReader } from '../../adapters/DirectoryReader';
+import { FileIngestionConfig } from '../../../domain/entities/IngestionConfig';
+import { ConsoleLogger } from './ConsoleLogger';
 
-describe('DirectoryDataSource Integration Tests', () => {
+describe('DirectorySourceReader Integration Tests', () => {
     const logger = new ConsoleLogger();
     const directoryReader = new DirectoryReader();
-    const dataSource = new DirectoryDataSource(directoryReader, logger);
+    const sourceReader = new DirectorySourceReader(directoryReader, logger);
 
     test('should ingest real directory with email files', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Verify we got results
         expect(results.length).toBeGreaterThan(0);
@@ -35,13 +34,13 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should extract content from all files in directory', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Test a sample to ensure content is actually extracted
         const firstResult = results[0];
@@ -53,13 +52,13 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should handle smaller test directory', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks_2');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks_2');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results.length).toBeGreaterThan(0);
         console.log(`✅ Successfully processed directory: ${results.length} files`);
@@ -73,14 +72,14 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should set correct timestamps on ingested content', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks_2');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks_2');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
         const beforeIngest = new Date();
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
         const afterIngest = new Date();
 
         // All timestamps should be set during ingestion
@@ -95,25 +94,25 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should throw error for non-existent directory', async () => {
-        const nonExistentPath = join(__dirname, '../../../../data/fixtures/does-not-exist');
+        const nonExistentPath = join(__dirname, '../fixtures/does-not-exist');
 
         const config: FileIngestionConfig = {
             path: nonExistentPath,
         };
 
         // Should throw error during fetchRaw
-        await expect(dataSource.ingest(config)).rejects.toThrow();
+        await expect(sourceReader.ingest(config)).rejects.toThrow();
         console.log(`✅ Correctly throws error for non-existent directory`);
     });
 
     test('should normalize content consistently across all files', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks_2');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks_2');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // All results should have consistent normalization
         results.forEach(content => {
@@ -131,13 +130,13 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should handle directory with email files', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Log the types of files found (by checking content patterns)
         const emailFiles = results.filter(c =>
@@ -151,37 +150,33 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should preserve file content integrity', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks_2');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks_2');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Verify content is extracted completely and not corrupted
         results.forEach(content => {
-            // All email files should have headers
-            const hasEmailHeaders =
-                content.rawContent.includes('From:') ||
-                content.rawContent.includes('Subject:') ||
-                content.rawContent.includes('Date:') ||
-                content.rawContent.includes('To:');
-
-            expect(hasEmailHeaders).toBe(true);
+            // All files should have non-empty content
+            expect(content.rawContent.length).toBeGreaterThan(0);
+            // Content type should be set
+            expect(content.contentType).toBeDefined();
         });
 
         console.log(`✅ Content integrity verified for ${results.length} files`);
     });
 
     test('should handle each file as separate BaseContent item', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks_2');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks_2');
 
         const config: FileIngestionConfig = {
             path: dirPath,
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Each file should be a separate BaseContent item
         expect(results.length).toBeGreaterThan(0);
@@ -202,14 +197,14 @@ describe('DirectoryDataSource Integration Tests', () => {
     });
 
     test('should support file pattern filtering', async () => {
-        const dirPath = join(__dirname, '../../../../data/fixtures/test_mylinks');
+        const dirPath = join(__dirname, '../fixtures/test_mylinks');
 
         const config: FileIngestionConfig = {
             path: dirPath,
             filePattern: '*.eml',
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         // Should only get .eml files
         expect(results.length).toBeGreaterThan(0);
@@ -219,5 +214,41 @@ describe('DirectoryDataSource Integration Tests', () => {
         results.forEach(content => {
             expect(content.sourceAdapter).toBe('Directory');
         });
+    });
+
+    test('should infer contentType for email files', async () => {
+        const dirPath = join(__dirname, '../fixtures/test_mylinks');
+
+        const config: FileIngestionConfig = {
+            path: dirPath,
+            filePattern: '*.eml',
+        };
+
+        const results = await sourceReader.ingest(config);
+
+        // All .eml files should have 'email' contentType
+        expect(results.length).toBeGreaterThan(0);
+        results.forEach(content => {
+            expect(content.contentType).toBe('email');
+        });
+
+        console.log(`✅ All ${results.length} .eml files have contentType='email'`);
+    });
+
+    test('should set contentType based on file extension', async () => {
+        const dirPath = join(__dirname, '../fixtures/test_mylinks_2');
+
+        const config: FileIngestionConfig = {
+            path: dirPath,
+        };
+
+        const results = await sourceReader.ingest(config);
+
+        // All files should have a contentType set
+        results.forEach(content => {
+            expect(['email', 'csv', 'json', 'text', 'markdown', 'html', 'unknown']).toContain(content.contentType);
+        });
+
+        console.log(`✅ All ${results.length} files have valid contentType`);
     });
 });

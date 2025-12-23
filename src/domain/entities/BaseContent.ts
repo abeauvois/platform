@@ -1,7 +1,8 @@
 import { SourceAdapter } from "./SourceAdapter";
+import { FileType } from "./RawFile";
 
 /**
- * Domain Entity: Represents an extracted email link with metadata
+ * Domain Entity: Represents extracted content with metadata
  */
 export class BaseContent {
     constructor(
@@ -11,7 +12,8 @@ export class BaseContent {
         public readonly summary: string = '',
         public readonly rawContent: string = '',
         public readonly createdAt: Date = new Date(),
-        public readonly updatedAt: Date = new Date()
+        public readonly updatedAt: Date = new Date(),
+        public readonly contentType: FileType = 'unknown'
     ) { }
 
     /**
@@ -25,7 +27,8 @@ export class BaseContent {
             summary,
             this.rawContent,
             this.createdAt,
-            new Date() // Update the updatedAt timestamp
+            new Date(), // Update the updatedAt timestamp
+            this.contentType
         );
     }
 
@@ -40,7 +43,8 @@ export class BaseContent {
             this.summary,
             this.rawContent,
             this.createdAt,
-            new Date() // Update the updatedAt timestamp
+            new Date(), // Update the updatedAt timestamp
+            this.contentType
         );
     }
 

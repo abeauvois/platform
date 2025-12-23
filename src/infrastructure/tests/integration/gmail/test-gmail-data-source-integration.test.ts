@@ -1,27 +1,26 @@
 import { test, expect, describe } from 'bun:test';
-import { GmailDataSource } from '../../../adapters/GmailDataSource.js';
+import { GmailSourceReader } from '../../../../application/source-readers/GmailSourceReader.js';
 import { GmailClient } from '../../../adapters/GmailClient.js';
 import { FileTimestampRepository } from '../../../repositories/FileTimestampRepository.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
 import { EnvConfig } from '../../../config/EnvConfig.js';
 import { ApiIngestionConfig } from '../../../../domain/entities/IngestionConfig.js';
-import { SourceAdapter } from '../../../../domain/entities/SourceAdapter.js';
 
 /**
- * Integration Test: GmailDataSource with Real Gmail API
- * 
- * Tests the GmailDataSource abstraction with real Gmail API connectivity.
- * 
+ * Integration Test: GmailSourceReader with Real Gmail API
+ *
+ * Tests the GmailSourceReader abstraction with real Gmail API connectivity.
+ *
  * Prerequisites:
  * - GMAIL_CLIENT_ID in .env
  * - GMAIL_CLIENT_SECRET in .env
  * - GMAIL_REFRESH_TOKEN in .env
  * - MY_EMAIL_ADDRESS in .env (optional)
- * 
+ *
  * This test will be skipped if credentials are not configured.
  */
 
-describe('GmailDataSource Integration Tests', () => {
+describe('GmailSourceReader Integration Tests', () => {
     test('should ingest real Gmail messages using data source abstraction', async () => {
         // Load credentials from .env
         const envConfig = new EnvConfig();
@@ -55,8 +54,8 @@ describe('GmailDataSource Integration Tests', () => {
         const gmailClient = new GmailClient(clientId, clientSecret, refreshToken, logger);
         const timestampRepo = new FileTimestampRepository('.gmail-integration-test-last-run');
 
-        // Create GmailDataSource
-        const dataSource = new GmailDataSource(
+        // Create GmailSourceReader
+        const sourceReader = new GmailSourceReader(
             gmailClient,
             timestampRepo,
             logger
@@ -78,7 +77,7 @@ describe('GmailDataSource Integration Tests', () => {
 
         let results;
         try {
-            results = await dataSource.ingest(ingestionConfig);
+            results = await sourceReader.ingest(ingestionConfig);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
@@ -141,7 +140,7 @@ describe('GmailDataSource Integration Tests', () => {
         const gmailClient = new GmailClient('invalid', 'invalid', 'invalid', logger);
         const timestampRepo = new FileTimestampRepository('.gmail-test-timestamp');
 
-        const dataSource = new GmailDataSource(
+        const sourceReader = new GmailSourceReader(
             gmailClient,
             timestampRepo,
             logger
@@ -158,7 +157,7 @@ describe('GmailDataSource Integration Tests', () => {
         };
 
         // Should throw error during ingestion
-        await expect(dataSource.ingest(config)).rejects.toThrow();
+        await expect(sourceReader.ingest(config)).rejects.toThrow();
 
         console.log('✅ Invalid credentials properly rejected');
     }, 30000);
@@ -168,7 +167,7 @@ describe('GmailDataSource Integration Tests', () => {
         const gmailClient = new GmailClient('test', 'test', 'test', logger);
         const timestampRepo = new FileTimestampRepository('.gmail-test-timestamp');
 
-        const dataSource = new GmailDataSource(
+        const sourceReader = new GmailSourceReader(
             gmailClient,
             timestampRepo,
             logger
@@ -182,7 +181,7 @@ describe('GmailDataSource Integration Tests', () => {
         };
 
         // Should throw validation error
-        await expect(dataSource.ingest(config)).rejects.toThrow('Gmail requires clientId, clientSecret, and refreshToken');
+        await expect(sourceReader.ingest(config)).rejects.toThrow('Gmail requires clientId, clientSecret, and refreshToken');
 
         console.log('✅ Missing credentials validation works correctly');
     });
@@ -210,7 +209,7 @@ describe('GmailDataSource Integration Tests', () => {
         const testTimestamp = new Date('2024-01-01');
         await timestampRepo.saveLastExecutionTime(testTimestamp);
 
-        const dataSource = new GmailDataSource(
+        const sourceReader = new GmailSourceReader(
             gmailClient,
             timestampRepo,
             logger
@@ -226,7 +225,7 @@ describe('GmailDataSource Integration Tests', () => {
             // No 'since' - should fall back to timestamp repository
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toBeDefined();
         console.log(`✅ Timestamp repository used correctly, fetched ${results.length} messages`);
@@ -252,7 +251,7 @@ describe('GmailDataSource Integration Tests', () => {
         const gmailClient = new GmailClient(clientId, clientSecret, refreshToken, logger);
         const timestampRepo = new FileTimestampRepository('.gmail-filter-test');
 
-        const dataSource = new GmailDataSource(
+        const sourceReader = new GmailSourceReader(
             gmailClient,
             timestampRepo,
             logger
@@ -273,7 +272,7 @@ describe('GmailDataSource Integration Tests', () => {
             },
         };
 
-        const results = await dataSource.ingest(config);
+        const results = await sourceReader.ingest(config);
 
         expect(results).toBeDefined();
         console.log(`✅ Email filter applied, found ${results.length} message(s) from ${filterEmail}`);

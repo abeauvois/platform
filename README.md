@@ -1,66 +1,38 @@
-# Platform - Build real world apps quicker
+# Platform
 
-A modern, modular platform for managing personal bookmarks with AI-powered categorization and multi-source ingestion. Built with Bun, TypeScript, and hexagonal architecture principles.
+A modular platform for building real-world applications with Bun, TypeScript, and hexagonal architecture.
 
-## 🎯 Overview
+## Architecture Overview
 
-This monorepo contains multiple applications and packages that work together to provide a complete bookmark management solution:
-
-- **Web Application** - Full-stack app with React frontend and Hono backend
-- **CLI Application** - Command-line interface for bookmark operations
-- **Platform SDK** - Reusable SDK for authentication and API communication
-- **Domain Package** - Shared domain entities and business logic
-
-## 📁 Project Structure
+This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
 
 ```
-platform/
-├── apps/                          # Applications
-│   ├── cli/                       # Command-line interface
-│   │   ├── index.ts              # CLI entry point
-│   │   ├── commands/             # CLI commands
-│   │   ├── package.json          # Independent package
-│   │   └── README.md             # CLI documentation
-│   └── web/                       # Web application
-│       ├── server/               # Hono API server
-│       │   ├── index.ts          # Server entry
-│       │   ├── routes/           # API routes
-│       │   ├── db/               # Database (Drizzle ORM)
-│       │   └── lib/              # Better-auth setup
-│       └── client/               # React frontend
-│           ├── src/              # React components
-│           └── vite.config.ts    # Vite configuration
-│
-├── packages/                      # Shared packages
-│   ├── platform-sdk/             # Platform SDK (NEW)
-│   │   ├── src/
-│   │   │   ├── auth/Auth.ts      # Authentication client
-│   │   │   ├── fetcher/Fetcher.ts # API client
-│   │   │   ├── logger/           # Logging adapter
-│   │   │   └── ports/            # Interfaces
-│   │   └── tests/
-│   │       ├── unit/             # Unit tests
-│   │       └── integration/      # Integration tests
-│   ├── domain/                   # Shared domain entities
-│   │   └── src/
-│   │       └── entities/
-│   │           └── Bookmark.ts   # Core domain model
-│   └── cached-http-client/       # HTTP client library
-│
-├── src/                          # Legacy email extraction (to be migrated)
-│   ├── domain/
-│   ├── application/
-│   └── infrastructure/
-│
-└── docs/                         # Documentation
-    └── ai/                       # AI assistant guides
+/apps
+├── api/              # Central platform server (Hono, port 3000)
+├── dashboard/        # Web client (React + Vite, port 5000)
+├── trading/          # Trading app with hybrid architecture
+│   ├── server/       # Trading-specific APIs (Hono + OpenAPI, port 3001)
+│   └── client/       # Trading client (React + Vite, port 5001)
+└── cli/              # Command-line interface
+
+/packages
+├── domain/           # Shared domain entities, ports, and services
+├── platform-auth/    # Authentication (better-auth)
+├── platform-db/      # Database schema (Drizzle ORM + PostgreSQL)
+├── platform-sdk/     # Platform API client SDK
+├── trading-domain/   # Trading-specific domain models
+├── trading-sdk/      # Trading API client SDK
+└── cached-http-client/ # HTTP client with caching
+
+/src                  # Legacy domain code (being migrated to packages/domain)
+├── domain/           # Core business logic and entities
+├── application/      # Use cases and workflows
+└── infrastructure/   # Adapters for external services
 ```
 
-## 🏗️ Architecture Principles
+## Hexagonal Architecture (Ports and Adapters)
 
-### Hexagonal Architecture (Ports & Adapters)
-
-All applications follow hexagonal architecture for maximum flexibility and testability:
+The core domain follows hexagonal architecture:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -75,281 +47,155 @@ All applications follow hexagonal architecture for maximum flexibility and testa
                │
 ┌──────────────▼──────────────────────────┐
 │          Domain Layer                   │
-│  (Entities, Ports/Interfaces)          │
+│  (Entities, Ports/Interfaces)           │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
 │      Infrastructure Layer               │
-│  (Adapters: DB, API, File System)      │
+│  (Adapters: DB, API, File System)       │
 └─────────────────────────────────────────┘
 ```
 
-**Key Principles:**
+- **Domain**: Core business logic independent of frameworks
+- **Application**: Use cases and business workflows
+- **Infrastructure**: Adapters for external services
 
-- **Domain First**: Business logic is independent of frameworks
-- **Dependency Inversion**: Dependencies point inward toward domain
-- **Ports & Adapters**: Interfaces define contracts, implementations are swappable
-- **Test-Driven Development**: Write tests first, implementation second
+## Client-Server Architecture
 
-### Monorepo Benefits
+| App | Port | Purpose |
+|-----|------|---------|
+| api | 3000 | Central platform server (auth, todos, bookmarks, config) |
+| dashboard | 5000 | React frontend for the platform |
+| trading server | 3001 | Trading-specific APIs (Binance integration) |
+| trading client | 5001 | Connects to both API server (auth) and trading server |
 
-- **Code Sharing**: Common domain logic across apps
-- **Independent Deployment**: Each app can be built/deployed separately
-- **Type Safety**: TypeScript across the entire stack
-- **Unified Testing**: Consistent testing patterns
+### Configuration
 
-## 🚀 Applications
+The API server (`/apps/api`) is the single source of truth for configuration. Environment variables are stored in `/apps/api/.env` and served via the `/api/config` endpoint.
 
-### 1. CLI Application (`apps/cli`)
+- CLI and clients fetch config from the API (requires authentication)
+- Use `ApiConfigProvider` from `@platform/sdk` to load config
+- Use `EnvConfigProvider` for direct `.env` access (API server only)
 
-Command-line interface for bookmark management.
+## Technology Stack
 
-**Features:**
+- **Runtime**: Bun
+- **Language**: TypeScript
+- **Backend**: Hono (lightweight HTTP framework)
+- **Frontend**: React 19 + Vite + TailwindCSS + DaisyUI
+- **Routing**: TanStack Router
+- **State**: TanStack React Query
+- **Database**: PostgreSQL + Drizzle ORM
+- **Auth**: better-auth
 
-- List bookmarks from API
-- Ingest bookmarks from Gmail, CSV, etc.
-- Interactive authentication
-- Session persistence
-
-**Usage:**
-
-```bash
-# List bookmarks
-bun run platform personal bookmark list
-
-# Ingest from Gmail
-bun run platform personal bookmark ingest -f gmail
-
-# With custom API URL
-PLATFORM_API_URL=http://localhost:5000 bun run platform personal bookmark list
-```
-
-**Architecture:**
-
-- Uses `@platform/sdk` for API communication
-- Independent package with own `package.json`
-- Can be built and deployed separately
-
-### 2. Web Application (`apps/web`)
-
-Full-stack web application with React frontend and Hono backend.
-
-**Frontend (React + TanStack Router):**
-
-- Modern React with TypeScript
-- TanStack Router for routing
-- Vite for building
-
-**Backend (Hono API):**
-
-- REST API at `http://localhost:5000/api`
-- Better-auth for authentication
-- Drizzle ORM for database
-- PostgreSQL database
-
-**API Endpoints:**
-
-- `POST /api/auth/sign-up/email` - User registration
-- `POST /api/auth/sign-in/email` - User login
-- `GET /api/bookmarks` - List bookmarks (authenticated)
-- `POST /api/bookmarks` - Create bookmark (authenticated)
-
-**Start the web app:**
-
-```bash
-cd apps/web
-bun run dev
-```
-
-### 3. Platform SDK (`packages/platform-sdk`)
-
-Reusable SDK for API communication used by CLI and other apps.
-
-**Components:**
-
-- **Auth** - Email/password authentication with session management
-- **Fetcher** - HTTP client for bookmark operations
-- **Logger** - Terminal logging adapter
-
-**Example Usage:**
-
-```typescript
-import { Auth, Fetcher, CliuiLogger } from "@platform/sdk";
-
-const logger = new CliuiLogger();
-const auth = new Auth({ baseUrl: "http://localhost:5000", logger });
-const credentials = await auth.login();
-
-const fetcher = new Fetcher({
-  baseUrl: "http://localhost:5000",
-  credentials,
-  logger,
-});
-const bookmarks = await fetcher.fetchBookmarks();
-```
-
-**Testing:**
-
-- Unit tests: 8/8 passing
-- Integration tests: 4/4 passing
-- TDD approach throughout
-
-## 🔧 Development
+## Development
 
 ### Prerequisites
 
 - [Bun](https://bun.sh) v1.0+
-- PostgreSQL (for web app)
-- Node.js 18+ (optional, for compatibility)
+- PostgreSQL (via Docker)
 
 ### Installation
 
 ```bash
-# Install all dependencies
 bun install
-
-# Build all packages
 bun run build
 ```
 
 ### Running Applications
 
 ```bash
-# Web application (frontend + backend)
-cd apps/web && bun run dev
+# Start API server + dashboard (main development)
+bun run dev
 
-# CLI application
-bun run platform personal bookmark list
+# Start all apps (API + dashboard + trading server + trading client)
+bun run dev:all
 
-# Build SDK
-bun run build:sdk
+# Individual apps
+bun run api           # Start API server (port 3000)
+bun run dashboard     # Start dashboard client (port 5000)
+bun run trading:server # Start trading server (port 3001)
+bun run trading:client # Start trading client (port 5001)
+
+# CLI
+bun run cli           # Run CLI
+bun run cli:dev       # Run CLI in watch mode
+```
+
+### Database (from /apps/api)
+
+```bash
+bun run db:up         # Start PostgreSQL via Docker
+bun run db:generate   # Generate migrations
+bun run db:migrate    # Run migrations
+bun run db:studio     # Open Drizzle Studio
+```
+
+### Building
+
+```bash
+bun run build         # Build all packages
+bun run build:lib     # Build library packages
 ```
 
 ### Testing
 
 ```bash
-# SDK unit tests
-cd packages/platform-sdk && bun test tests/unit/
-
-# SDK integration tests (requires server running)
-cd packages/platform-sdk && bun test tests/integration/
-
-# Legacy tests
-bun run test:unit
-bun run it
-bun run test:e2e
+bun run test:unit     # Run unit tests
+bun run test:e2e      # Run end-to-end tests
+bun run it:notion     # Integration tests for Notion
+bun run it:twitter    # Integration tests for Twitter
 ```
 
-## 🔑 Configuration
+## Packages
 
-### Environment Variables
+### @platform/domain
 
-Create `.env` files in respective directories:
+Shared domain entities, ports, and services used across applications.
 
-**Root `.env`** (for legacy CLI):
+### @platform/auth
 
-```bash
-ANTHROPIC_API_KEY=your-key
-NOTION_INTEGRATION_TOKEN=your-token
-NOTION_DATABASE_ID=your-db-id
-TWITTER_BEARER_TOKEN=your-token
+Authentication package built on better-auth.
+
+### @platform/db
+
+Database schema and migrations using Drizzle ORM with PostgreSQL.
+
+### @platform/sdk
+
+Platform API client SDK for authentication and API communication.
+
+```typescript
+import { Auth, Fetcher } from "@platform/sdk";
+
+const auth = new Auth({ baseUrl: "http://localhost:3000" });
+const credentials = await auth.login();
+
+const fetcher = new Fetcher({
+  baseUrl: "http://localhost:3000",
+  credentials,
+});
 ```
 
-**`apps/web/.env`**:
+### @platform/trading-domain
 
-```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/bookmarks
-CLIENT_URL=http://localhost:3001
-```
+Trading-specific domain models and business logic.
 
-### CLI Configuration
+### @platform/trading-sdk
 
-The CLI stores session in `~/.platform-cli/session.json` for persistent authentication.
+Trading API client SDK for market data and trading operations.
 
-## 📚 Documentation
+### @platform/cached-http-client
 
-### Application Docs
+HTTP client with built-in caching support.
 
-- **[apps/cli/README.md](./apps/cli/README.md)** - CLI usage and testing
-- **[apps/cli/IMPLEMENTATION_SUMMARY.md](./apps/cli/IMPLEMENTATION_SUMMARY.md)** - CLI implementation details
-- **[apps/web/README.md](./apps/web/README.md)** - Web app setup and deployment
+## Key Patterns
 
-### Architecture & Testing
+- Workspace packages use `workspace:*` protocol for dependencies
+- Shared types exported from `@platform/domain`
+- Authentication handled by `@platform/auth` package
+- Database schema centralized in `@platform/db` package
 
-- **[docs/ai/TDD.md](./docs/ai/TDD.md)** - Test-Driven Development guide
-- **[docs/ai/TESTING_GUIDE.md](./docs/ai/TESTING_GUIDE.md)** - Testing strategies
-- **[docs/ai/ARCHITECTURE_TESTING.md](./docs/ai/ARCHITECTURE_TESTING.md)** - Testing hexagonal architecture
-- **[docs/ai/AI_TDD_PROMPTS.md](./docs/ai/AI_TDD_PROMPTS.md)** - AI assistant prompts
-- **[.clinerules](./.clinerules)** - Project rules for AI assistants
-
-### Legacy Features (Email Extraction)
-
-- **[docs/GMAIL_COMMAND.md](./docs/GMAIL_COMMAND.md)** - Gmail integration
-- **[docs/SELECT_COMMAND.md](./docs/SELECT_COMMAND.md)** - Interactive selection
-
-## 🎯 Key Features
-
-### Bookmark Management
-
-- ✅ Create, read bookmarks via REST API
-- ✅ Tag-based organization
-- ✅ AI-powered categorization (legacy)
-- ✅ Multi-source ingestion (Gmail, CSV)
-
-### Authentication & Security
-
-- ✅ Email/password authentication (Better-auth)
-- ✅ Session management with cookies
-- ✅ JWT tokens for API access
-- ✅ Secure password hashing
-
-### Developer Experience
-
-- ✅ TypeScript throughout
-- ✅ Hot reload in development
-- ✅ Comprehensive testing (unit + integration)
-- ✅ Type-safe API client (SDK)
-- ✅ Independent app deployment
-
-## 🚢 Deployment
-
-### CLI
-
-```bash
-cd apps/cli
-bun run build
-# Deploy dist/index.js as standalone executable
-```
-
-### Web Application
-
-```bash
-cd apps/web
-bun run build
-# Deploys to Fly.io or similar
-```
-
-### Platform SDK
-
-```bash
-cd packages/platform-sdk
-bun run build
-# Can be published to npm as @platform/sdk
-```
-
-## 🤝 Contributing
-
-This project follows TDD and hexagonal architecture principles:
-
-1. **Write tests first** - Define expected behavior
-2. **Implement minimal code** - Make tests pass
-3. **Refactor** - Improve code quality
-4. **Respect layer boundaries** - Domain never imports from infrastructure
-
-## 📄 License
+## License
 
 MIT
-
----
-
-Built with ❤️ using Bun, TypeScript, and modern web technologies.
