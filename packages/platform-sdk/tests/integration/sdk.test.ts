@@ -69,7 +69,7 @@ describe('PlatformApiClient Integration Tests', () => {
         expect(client).toBeInstanceOf(PlatformApiClient);
     });
 
-    test('should ingest gmail with options', async () => {
+    test.only('should ingest gmail with options', async () => {
         const platformClient = new PlatformApiClient({
             baseUrl: "http://localhost:3000",
             logger

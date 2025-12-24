@@ -5,6 +5,8 @@ import {
   uuid,
   varchar,
   text,
+  integer,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 
 // Authentication tables reference - DO NOT MIGRATE
@@ -82,4 +84,23 @@ export const todos = pgTable('todos', {
   completed: boolean().default(false),
   createdAt: timestamp({ withTimezone: true }).defaultNow(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow(),
+});
+
+/**
+ * Ingest job status tracking table
+ * Complements pg-boss for real-time status polling
+ */
+export const ingestJobs = pgTable('ingest_jobs', {
+  id: varchar('id', { length: 100 }).primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  preset: varchar('preset', { length: 50 }).notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  progress: integer('progress').notNull().default(0),
+  message: varchar('message', { length: 500 }).notNull().default('Job created'),
+  result: jsonb('result'),
+  pgBossJobId: uuid('pg_boss_job_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

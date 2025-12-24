@@ -1,23 +1,24 @@
 import { test, expect, describe } from 'bun:test';
+import { join } from 'node:path';
 import { GmailClient } from '../../../adapters/GmailClient.js';
 import { CliuiLogger } from '../../../adapters/CliuiLogger.js';
 import { EnvConfigProvider } from '@platform/sdk';
 
 /**
  * Integration Test: Gmail Credentials & API Connection
- * 
+ *
  * Tests real Gmail API connectivity with credentials from .env file.
- * 
+ *
  * Prerequisites:
  * - GMAIL_CLIENT_ID in .env
  * - GMAIL_CLIENT_SECRET in .env
  * - GMAIL_REFRESH_TOKEN in .env
  * - MY_EMAIL_ADDRESS in .env
- * 
+ *
  * This test will be skipped if credentials are not configured.
  */
 
-const envPath = './apps/api/.env'
+const envPath = join(import.meta.dir, '../../.env')
 
 describe('Gmail API Integration', () => {
     test('should authenticate and fetch messages with valid credentials', async () => {
