@@ -92,7 +92,7 @@ export class PlatformApiClient {
             }
 
             const responseData = await response.json() as { user?: { id: string; email: string } };
-            const sessionToken = this.extractSessionToken(response);
+            const sessionToken = this.extractSessionTokenFromHeaders(response);
 
             if (!sessionToken || !responseData.user) {
                 throw new Error('Invalid response from server');
@@ -139,7 +139,7 @@ export class PlatformApiClient {
             }
 
             const responseData = await response.json() as { user?: { id: string; email: string } };
-            const sessionToken = this.extractSessionToken(response);
+            const sessionToken = this.extractSessionTokenFromHeaders(response);
 
             if (!sessionToken || !responseData.user) {
                 throw new Error('Invalid response from server');
@@ -447,14 +447,14 @@ export class PlatformApiClient {
     }
 
     /**
-     * Extract session token from response headers
+     * Extract session token from Set-Cookie header
      */
-    private extractSessionToken(response: Response): string | null {
+    private extractSessionTokenFromHeaders(response: Response): string | null {
         const setCookie = response.headers.get('set-cookie');
         if (!setCookie) return null;
 
-        // Parse session token from better-auth cookie
-        const match = setCookie.match(/better-auth\.session_token=([^;]+)/);
-        return match ? match[1] : null;
+        // Parse session token from better-auth cookie (includes signature)
+        const match = /better-auth\.session_token=([^;]+)/.exec(setCookie);
+        return match ? decodeURIComponent(match[1]) : null;
     }
 }

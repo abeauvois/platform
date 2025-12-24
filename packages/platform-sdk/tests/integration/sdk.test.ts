@@ -69,7 +69,7 @@ describe('PlatformApiClient Integration Tests', () => {
         expect(client).toBeInstanceOf(PlatformApiClient);
     });
 
-    test.only('should ingest gmail with options', async () => {
+    test('should ingest gmail with options', async () => {
         const platformClient = new PlatformApiClient({
             baseUrl: "http://localhost:3000",
             logger
@@ -159,34 +159,15 @@ describe('PlatformApiClient Integration Tests', () => {
     }, { timeout: 10000 });
 
     test('should load session from file if exists', async () => {
-        const fs = await import('fs');
-        const path = await import('path');
-        const os = await import('os');
-
-        const sessionPath = path.join(os.homedir(), '.platform-cli', 'test-session.json');
-
-        if (!fs.existsSync(sessionPath)) {
-            console.log('⚠️  Skipping: No session file found');
-            console.log('   To create a session, run:');
-            console.log('   PLATFORM_API_URL=http://localhost:5000 bun run platform personal bookmark list');
-            return;
-        }
-
-        // Load session from file
-        const sessionData = fs.readFileSync(sessionPath, 'utf-8');
-        const savedSession = JSON.parse(sessionData) as {
-            sessionToken: string;
-            userId: string;
-            email: string;
-        };
-
-        console.log(`✓ Loaded session for ${savedSession.email}`);
-
         // Create new client with session token
         const clientWithSession = new PlatformApiClient({
             baseUrl: API_BASE_URL,
-            sessionToken: savedSession.sessionToken,
             logger,
+        });
+
+        await clientWithSession.signIn({
+            email: 'test@example.com',
+            password: 'password123',
         });
 
         const bookmarks = await clientWithSession.fetchBookmarks();
