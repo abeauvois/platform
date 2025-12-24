@@ -4,18 +4,22 @@
     "type": "module",
     "exports": {
         ".": "./src/index.ts",
-        "./schema": "./src/schema.ts"
+        "./schema": "./src/schema/index.ts"
     },
     "scripts": {
         "db:generate": "drizzle-kit generate",
-        "db:migrate": "drizzle-kit migrate"
+        "db:migrate": "drizzle-kit migrate",
+        "db:studio": "drizzle-kit studio"
     },
     "dependencies": {
-        "drizzle-orm": "^0.30.0",
-        "pg": "^8.11.3"
+        "@neondatabase/serverless": "^1.0.1",
+        "drizzle-orm": "^0.44.4",
+        "pg": "^8.16.3",
+        "ws": "^8.18.3"
     },
     "devDependencies": {
-        "@types/pg": "^8.11.2",
-        "drizzle-kit": "^0.31.7"
+        "@types/pg": "^8.15.5",
+        "@types/ws": "^8.18.1",
+        "drizzle-kit": "^0.31.4"
     }
 }

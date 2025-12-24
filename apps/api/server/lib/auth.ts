@@ -1,6 +1,6 @@
 import { createAuth } from '@platform/auth';
-import { db } from '../db/db';
-import * as schema from '../db/schema';
+import { db } from '@platform/db';
+import * as schema from '@platform/db/schema';
 
 export const auth = createAuth({
   db,

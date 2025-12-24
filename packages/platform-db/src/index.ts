@@ -1,2 +1,5 @@
 // Export all schema tables
-export { user, session, account, verification } from './schema';
+export * from './schema/index';
+
+// Export database connection
+export { db, pool } from './db';

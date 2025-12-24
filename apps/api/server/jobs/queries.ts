@@ -1,6 +1,5 @@
 import { eq, desc, and } from 'drizzle-orm';
-import { db } from '../db/db';
-import { ingestJobs } from '../db/schema';
+import { db, ingestJobs } from '@platform/db';
 import type { IngestJobStatus, IngestJobResult } from './types';
 
 export interface IngestJobRecord {

@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17.5
+    container_name: platform-db
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_PASSWORD: platform
+      POSTGRES_USER: platform
+      POSTGRES_DB: platform
+    volumes:
+      - platform-data:/var/lib/postgresql/data
+
+volumes:
+  platform-data:
