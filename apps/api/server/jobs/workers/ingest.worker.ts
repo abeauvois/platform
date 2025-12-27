@@ -67,10 +67,12 @@ function createGmailSourceReader(logger: ILogger): ISourceReader | undefined {
 
             const messages = await gmailClient.fetchMessagesSince(
                 sinceDate,
-                config.filter?.email
+                config.filter?.email,
+                config.filter?.withUrl
             );
 
             logger.info(`Found ${messages.length} Gmail messages`);
+            logger.info(messages.map(m => `- ${m.rawContent.slice(0, 280)} (${m.receivedAt.toISOString()})`).join('\n'));
 
             // Save current timestamp for next run
             await gmailTimestampRepo.saveLastExecutionTime(new Date());
@@ -80,11 +82,11 @@ function createGmailSourceReader(logger: ILogger): ISourceReader | undefined {
                 message.rawContent || message.snippet,
                 'Gmail',
                 [],
-                '',
+                message.subject,
                 message.rawContent,
                 message.receivedAt,
                 message.receivedAt,
-                'unknown'
+                'email'
             ));
         },
     };
@@ -94,7 +96,7 @@ function createGmailSourceReader(logger: ILogger): ISourceReader | undefined {
  * Factory to create source reader based on preset
  * Returns undefined if no specific source reader is configured for the preset
  */
-function createSourceReader(
+function createPresetSourceReader(
     preset: IngestRequest['preset'],
     logger: ILogger
 ): ISourceReader | undefined {
@@ -141,6 +143,7 @@ function bookmarkToProcessedItem(bookmark: Bookmark, index: number): ProcessedIt
         sourceAdapter: bookmark.sourceAdapter,
         tags: bookmark.tags,
         summary: bookmark.summary || undefined,
+        rawContent: bookmark.rawContent || undefined,
     };
 }
 
@@ -156,7 +159,7 @@ async function processIngestJob(
     logger.info(`Starting ${request.preset} workflow for user ${userId}`);
 
     // Get source reader for the preset
-    const sourceReader = createSourceReader(request.preset, logger);
+    const sourceReader = createPresetSourceReader(request.preset, logger);
 
     // Track the final result via onComplete hook
     let finalItems: Bookmark[] = [];

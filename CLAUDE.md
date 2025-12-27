@@ -17,13 +17,14 @@ Never create ".js" extensions if not asked for it.
 └── cli/              # Command-line interface (cleye)
 
 /packages
-├── cached-http-client/  # HTTP client with caching, throttling, and retry
+├── platform-task/       # Background task abstractions (pg-boss adapters, Task types)
+├── platform-domain/     # Shared domain entities and services (depends on platform-task)
 ├── platform-auth/       # Authentication (better-auth)
 ├── platform-db/         # Database schema (Drizzle ORM + PostgreSQL)
-├── platform-domain/     # Shared domain entities and services
 ├── platform-sdk/        # Platform API client SDK
 ├── trading-domain/      # Trading-specific domain models
-└── trading-sdk/         # Trading API client SDK
+├── trading-sdk/         # Trading API client SDK
+└── cached-http-client/  # HTTP client with caching, throttling, and retry
 
 /src
 └── utils/            # Legacy utilities (HtmlLinksParser.ts)
@@ -37,7 +38,7 @@ IMPORTANT: key hexagonal architecture principle: the application layer should ex
 
 ### Client-Server Architecture
 
-- **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, ingest, and job queue (pg-boss)
+- **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, ingest, and background tasks (via @platform/task)
 - **Dashboard Client** (`/apps/dashboard`): React frontend for the platform
 - **Trading Server** (`/apps/trading/server`): Trading-specific APIs with Binance integration and OpenAPI docs at `/api/docs`
 - **Trading Client** (`/apps/trading/client`): Hybrid - connects to both API server (auth) and trading server (trading APIs)
@@ -57,6 +58,21 @@ The API server (`/apps/api`) is the single source of truth for configuration. En
 - Shared types exported from `@platform/platform-domain`
 - Authentication handled by `@platform/auth` package
 - Database schema in `@platform/db` package
+
+### Task Abstraction Pattern
+
+Background jobs follow hexagonal architecture with a unified "Task" concept:
+
+- **Domain**: Uses `taskId`, `TaskStatus`, `IngestionTask` (not "job" terminology)
+- **Ports**: `IBackgroundTaskRunner`, `IIdGenerator` in `@platform/task`
+- **Adapters**: `PgBossTaskRunner`, `TimestampIdGenerator` implement the ports
+- **Infrastructure mapping**: Repository maps domain (`taskId`) ↔ database (`id`, `pgBossJobId`)
+
+```typescript
+// Domain service expresses intent, not implementation
+const task = await ingestionService.startIngestion(userId, request);
+// Returns IngestionTask with taskId, not "jobId"
+```
 
 ## Test-Driven Development (TDD) Requirements
 
@@ -298,5 +314,5 @@ bun run it:twitter    # Integration tests for Twitter
 - **State**: TanStack React Query
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: better-auth
-- **Job Queue**: pg-boss
+- **Job Queue**: pg-boss (v12+, via @platform/task)
 - **CLI**: cleye

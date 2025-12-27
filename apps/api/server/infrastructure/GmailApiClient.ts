@@ -6,7 +6,7 @@ import { GmailMessage } from '@platform/platform-domain';
  * Defined here to avoid circular dependencies with platform-domain
  */
 export interface IEmailClient {
-    fetchMessagesSince(since: Date, filterEmail?: string): Promise<GmailMessage[]>;
+    fetchMessagesSince(since: Date, filterEmail?: string, withUrl?: boolean): Promise<GmailMessage[]>;
 }
 
 export interface GmailCredentials {
@@ -37,8 +37,11 @@ export class GmailApiClient implements IEmailClient {
 
     /**
      * Fetch Gmail messages received since a specific date
+     * @param since - Only fetch messages after this date
+     * @param filterEmail - Only fetch messages from this email address
+     * @param withUrl - If true, only return messages that contain URLs
      */
-    async fetchMessagesSince(since: Date, filterEmail?: string): Promise<GmailMessage[]> {
+    async fetchMessagesSince(since: Date, filterEmail?: string, withUrl?: boolean): Promise<GmailMessage[]> {
         const messages: GmailMessage[] = [];
 
         // Build Gmail search query
@@ -65,6 +68,10 @@ export class GmailApiClient implements IEmailClient {
 
                 const fullMessage = await this.fetchMessageDetails(msg.id);
                 if (fullMessage) {
+                    // Filter by URL presence if withUrl is true
+                    if (withUrl && !this.containsUrl(fullMessage.rawContent)) {
+                        continue;
+                    }
                     messages.push(fullMessage);
                 }
             }
@@ -74,6 +81,14 @@ export class GmailApiClient implements IEmailClient {
             const errorMessage = error instanceof Error ? error.message : String(error);
             throw new Error(`Failed to fetch Gmail messages: ${errorMessage}`);
         }
+    }
+
+    /**
+     * Check if content contains a URL
+     */
+    private containsUrl(content: string): boolean {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return urlRegex.test(content);
     }
 
     /**
@@ -92,7 +107,6 @@ export class GmailApiClient implements IEmailClient {
 
             // Extract headers
             const headers = message.payload?.headers || [];
-            console.log("🚀 ~ GmailApiClient ~ fetchMessageDetails ~ headers:", headers)
             const getHeader = (name: string): string => {
                 const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
                 return header?.value || '';
@@ -103,8 +117,32 @@ export class GmailApiClient implements IEmailClient {
             const dateStr = getHeader('Date');
             const receivedAt = dateStr ? new Date(dateStr) : new Date();
 
+            const bodyContent = this.extractBodyContent(message.payload);
+
+            const keepHeaders = (name: string) => {
+                const lowerName = name.toLowerCase();
+                return ['from', 'to', 'subject', 'date', 'has-url'].includes(lowerName);
+            }
+
+            const includesUrl = (content: string) => {
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                return urlRegex.test(content);
+            }
+
+            const getUrl = () => {
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const match = urlRegex.exec(bodyContent);
+                return match ? match[0] : '';
+            }
+
+            if (includesUrl(bodyContent)) {
+                const url = getUrl();
+                headers.push({ name: 'url', value: url });
+            }
+
+            const headerSummary = headers.filter(h => h.name && keepHeaders(h.name)).map(h => `${h.name}: ${h.value}`).join('\n')
             // Extract body content
-            const rawContent = this.extractBodyContent(message.payload);
+            const rawContent = headerSummary + '\n' + bodyContent;
             const snippet = message.snippet || '';
 
             return new GmailMessage(

@@ -22,6 +22,12 @@ export const gmailCommand = command({
             alias: 'l',
             default: 7,
         },
+        withUrl: {
+            type: Boolean,
+            description: 'Include URL in processed items output',
+            alias: 'u',
+            default: false,
+        },
     },
     help: {
         description: 'Trigger Gmail ingestion workflow',
@@ -34,7 +40,7 @@ export const gmailCommand = command({
         const ctx = await createCliContext();
 
         // Build filter options
-        const filter: { email?: string; limitDays?: number } = {};
+        const filter: { email?: string; limitDays?: number; withUrl?: boolean } = {};
 
         // Use provided filter, or fall back to config/user email
         if (argv.flags.filter) {
@@ -50,6 +56,10 @@ export const gmailCommand = command({
             filter.limitDays = argv.flags.limitDays;
         }
 
+        if (argv.flags.withUrl) {
+            filter.withUrl = argv.flags.withUrl;
+        }
+
         // Display configuration
         const configLines = [];
         if (filter.email) {
@@ -62,12 +72,15 @@ export const gmailCommand = command({
         const workflow = ctx.apiClient.ingest.create('gmail', { filter });
 
         await workflow.execute({
-            onItemProcessed: ({ index, total }: { index: number, total: number }) => {
+            onItemProcessed: ({ index, total }) => {
                 ctx.logger.info(`Processed ${index + 1}/${total} items`);
             },
             onError: () => {
                 p.log.error('An error occurred during ingestion.');
             },
+            onComplete: ({ processedItems }) => {
+                processedItems.map(item => p.note(item.rawContent.slice(0, 280)));
+            }
         });
 
         p.outro('Gmail ingestion completed successfully!');

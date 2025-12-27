@@ -98,6 +98,8 @@ export interface IngestFilter {
     email?: string;
     /** Limit ingestion to emails from the last N days */
     limitDays?: number;
+    /** Include URL in processed items output */
+    withUrl?: boolean;
 }
 
 /**
@@ -191,6 +193,8 @@ export interface ProcessedItem {
     tags: string[];
     /** Summary of the bookmark content */
     summary?: string;
+    /** Raw content of the bookmark */
+    rawContent?: string;
 }
 
 /**

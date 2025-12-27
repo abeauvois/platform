@@ -30,6 +30,7 @@ export interface ProcessedItem {
     sourceAdapter: string;
     tags: string[];
     summary?: string;
+    rawContent?: string;
 }
 
 /**

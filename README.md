@@ -16,13 +16,14 @@ This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
 └── cli/              # Command-line interface
 
 /packages
-├── domain/           # Shared domain entities, ports, and services
-├── platform-auth/    # Authentication (better-auth)
-├── platform-db/      # Database schema (Drizzle ORM + PostgreSQL)
-├── platform-sdk/     # Platform API client SDK
-├── trading-domain/   # Trading-specific domain models
-├── trading-sdk/      # Trading API client SDK
-└── cached-http-client/ # HTTP client with caching
+├── platform-task/       # Background task abstractions (pg-boss)
+├── platform-domain/     # Shared domain entities, ports, and services
+├── platform-auth/       # Authentication (better-auth)
+├── platform-db/         # Database schema (Drizzle ORM + PostgreSQL)
+├── platform-sdk/        # Platform API client SDK
+├── trading-domain/      # Trading-specific domain models
+├── trading-sdk/         # Trading API client SDK
+└── cached-http-client/  # HTTP client with caching
 
 /src                  # Legacy domain code (being migrated to packages/domain)
 ├── domain/           # Core business logic and entities
@@ -87,6 +88,7 @@ The API server (`/apps/api`) is the single source of truth for configuration. En
 - **State**: TanStack React Query
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: better-auth
+- **Job Queue**: pg-boss (via @platform/task)
 
 ## Development
 
@@ -163,7 +165,22 @@ bun run api:renew-session your@email.com yourpassword
 
 ## Packages
 
-### @platform/domain
+### @platform/task
+
+Background task abstractions following hexagonal architecture. Provides a unified "Task" concept for background jobs.
+
+```typescript
+import { initBoss, PgBossTaskRunner, TimestampIdGenerator } from '@platform/task';
+
+// Initialize pg-boss
+const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
+
+// Create task runner
+const taskRunner = new PgBossTaskRunner(boss);
+await taskRunner.submit('my-task', { data: 'payload' });
+```
+
+### @platform/platform-domain
 
 Shared domain entities, ports, and services used across applications.
 
