@@ -6,8 +6,9 @@ import { todos } from './routes/todo.routes';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { ingest } from './routes/ingest.routes';
-import { initializeBoss, stopBoss } from './jobs/boss';
+import { initBoss, stopBoss, createQueue } from '@platform/task';
 import { registerAllWorkers } from './jobs/workers';
+import { QUEUE_NAMES } from './jobs/types';
 
 const app = new Hono();
 
@@ -42,7 +43,11 @@ export type AppType = typeof router;
 // Initialize pg-boss and workers
 async function startJobQueue() {
   try {
-    const boss = await initializeBoss();
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is required');
+    }
+    const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
+    await createQueue(QUEUE_NAMES.INGEST);
     await registerAllWorkers(boss);
     console.log('Job queue initialized');
   } catch (error) {

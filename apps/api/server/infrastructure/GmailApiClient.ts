@@ -20,7 +20,7 @@ export interface GmailCredentials {
  * Uses Google APIs to fetch Gmail messages
  */
 export class GmailApiClient implements IEmailClient {
-    private gmail: gmail_v1.Gmail;
+    private readonly gmail: gmail_v1.Gmail;
 
     constructor(credentials: GmailCredentials) {
         const oauth2Client = new google.auth.OAuth2(
@@ -92,6 +92,7 @@ export class GmailApiClient implements IEmailClient {
 
             // Extract headers
             const headers = message.payload?.headers || [];
+            console.log("🚀 ~ GmailApiClient ~ fetchMessageDetails ~ headers:", headers)
             const getHeader = (name: string): string => {
                 const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
                 return header?.value || '';

@@ -11,7 +11,7 @@ export const QUEUE_NAMES = {
  * Payload for ingest jobs
  */
 export interface IngestJobPayload {
-    jobId: string;
+    taskId: string;
     userId: string;
     request: IngestRequest;
 }

@@ -2,19 +2,21 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
 import { ingestValidator } from '../validators/ingest.validator';
 import { authMiddleware } from '@/middlewares/auth.middleware';
-import { getBoss } from '../jobs/boss';
-import { QUEUE_NAMES, type IngestJobPayload } from '../jobs/types';
-import {
-    createIngestJob,
-    getIngestJobById,
-    getIngestJobsByUserId,
-} from '../jobs/queries';
+import { getBoss, PgBossTaskRunner, TimestampIdGenerator } from '@platform/task';
+import { DataIngestionService, IngestionError } from '@platform/platform-domain';
+import { DrizzleIngestionTaskRepository } from '../infrastructure/DrizzleIngestionTaskRepository';
 
-/**
- * Generate a unique job ID
- */
-function generateJobId(): string {
-    return `ingest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+// Lazy initialization - service is created on first use after boss is initialized
+let ingestionService: DataIngestionService | null = null;
+
+function getIngestionService(): DataIngestionService {
+    if (!ingestionService) {
+        const taskRunner = new PgBossTaskRunner(getBoss());
+        const repository = new DrizzleIngestionTaskRepository();
+        const idGenerator = new TimestampIdGenerator();
+        ingestionService = new DataIngestionService(taskRunner, repository, idGenerator);
+    }
+    return ingestionService;
 }
 
 export const ingest = new Hono<HonoEnv>()
@@ -28,90 +30,70 @@ export const ingest = new Hono<HonoEnv>()
         const user = c.get('user');
         const request = c.req.valid('json');
 
-        const jobId = generateJobId();
-        const boss = getBoss();
+        try {
+            const task = await getIngestionService().startIngestion(user.id, request);
 
-        // Create job payload
-        const payload: IngestJobPayload = {
-            jobId,
-            userId: user.id,
-            request,
-        };
-
-        // Enqueue job with pg-boss
-        const pgBossJobId = await boss.send(QUEUE_NAMES.INGEST, payload, {
-            retryLimit: 3,
-            retryDelay: 30,
-            retryBackoff: true,
-        });
-
-        if (!pgBossJobId) {
-            return c.json({ error: 'Failed to create job' }, 500);
+            return c.json({
+                taskId: task.taskId,
+                status: task.status,
+                message: 'Data ingestion started',
+                preset: request.preset,
+                filter: request.filter,
+            }, 202);
+        } catch (error) {
+            if (error instanceof IngestionError) {
+                return c.json({ error: error.message }, 500);
+            }
+            throw error;
         }
-
-        // Create tracking record in custom table
-        await createIngestJob({
-            id: jobId,
-            userId: user.id,
-            preset: request.preset,
-            pgBossJobId,
-        });
-
-        return c.json({
-            jobId,
-            status: 'pending',
-            message: 'Ingest job started',
-            preset: request.preset,
-            filter: request.filter,
-        }, 202);
     })
 
     /**
-     * GET /api/ingest/:jobId
-     * Get status of an ingestion job
+     * GET /api/ingest/:taskId
+     * Get status of an ingestion task
      */
-    .get('/:jobId', async (c) => {
+    .get('/:taskId', async (c) => {
         const user = c.get('user');
-        const jobId = c.req.param('jobId');
+        const taskId = c.req.param('taskId');
 
-        const job = await getIngestJobById(jobId, user.id);
+        const task = await getIngestionService().getIngestion(taskId, user.id);
 
-        if (!job) {
-            return c.json({ error: 'Job not found' }, 404);
+        if (!task) {
+            return c.json({ error: 'Ingestion task not found' }, 404);
         }
 
         return c.json({
-            jobId: job.id,
-            preset: job.preset,
-            status: job.status,
-            progress: job.progress,
-            message: job.message,
-            currentStep: job.currentStep,
-            itemProgress: job.itemProgress,
-            createdAt: job.createdAt,
-            updatedAt: job.updatedAt,
-            result: job.result,
+            taskId: task.taskId,
+            preset: task.preset,
+            status: task.status,
+            progress: task.progress,
+            message: task.message,
+            currentStep: task.currentStep,
+            itemProgress: task.itemProgress,
+            createdAt: task.createdAt,
+            updatedAt: task.updatedAt,
+            result: task.result,
         });
     })
 
     /**
      * GET /api/ingest
-     * List all ingestion jobs for the current user
+     * List all ingestion tasks for the current user
      */
     .get('/', async (c) => {
         const user = c.get('user');
 
-        const jobs = await getIngestJobsByUserId(user.id);
+        const tasks = await getIngestionService().listIngestions(user.id);
 
         return c.json({
-            jobs: jobs.map((job) => ({
-                jobId: job.id,
-                preset: job.preset,
-                status: job.status,
-                progress: job.progress,
-                message: job.message,
-                createdAt: job.createdAt,
-                updatedAt: job.updatedAt,
+            tasks: tasks.map((task) => ({
+                taskId: task.taskId,
+                preset: task.preset,
+                status: task.status,
+                progress: task.progress,
+                message: task.message,
+                createdAt: task.createdAt,
+                updatedAt: task.updatedAt,
             })),
         });
     });

@@ -1,4 +1,4 @@
-import type { PgBoss } from 'pg-boss';
+import type { PgBoss } from '@platform/task';
 import { registerIngestWorker } from './ingest.worker';
 
 /**

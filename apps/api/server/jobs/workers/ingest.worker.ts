@@ -1,4 +1,4 @@
-import { type PgBoss, type Job } from 'pg-boss';
+import type { PgBoss, Job } from '@platform/task';
 import {
     QUEUE_NAMES,
     type IngestJobPayload,
@@ -150,8 +150,8 @@ function bookmarkToProcessedItem(bookmark: Bookmark, index: number): ProcessedIt
 async function processIngestJob(
     job: Job<IngestJobPayload>
 ): Promise<IngestJobResult> {
-    const { jobId, userId, request } = job.data;
-    const logger = createJobLogger(jobId);
+    const { taskId, userId, request } = job.data;
+    const logger = createJobLogger(taskId);
 
     logger.info(`Starting ${request.preset} workflow for user ${userId}`);
 
@@ -170,7 +170,7 @@ async function processIngestJob(
         .addStep(new ExportStep(request.csvOnly ?? false, logger))
         .onStart(async (info) => {
             stepNames = info.stepNames;
-            await updateIngestJobStatus(jobId, {
+            await updateIngestJobStatus(taskId, {
                 status: 'running',
                 progress: 0,
                 message: `Starting: ${info.stepNames.join(' → ')}`,
@@ -184,7 +184,7 @@ async function processIngestJob(
             const itemProgress = ((info.index + 1) / info.total) * (100 / stepNames.length);
             const totalProgress = Math.round(stepProgress + itemProgress);
 
-            await updateIngestJobStatus(jobId, {
+            await updateIngestJobStatus(taskId, {
                 progress: Math.min(totalProgress, 99),
                 message: `Running step: ${info.stepName}`,
                 currentStep: info.stepName,
@@ -224,14 +224,14 @@ export async function registerIngestWorker(boss: PgBoss): Promise<void> {
         { batchSize: 1 },
         async (jobs) => {
             for (const job of jobs) {
-                const { jobId, userId } = job.data;
-                console.log(`Processing ingest job ${jobId} for user ${userId}`);
+                const { taskId, userId } = job.data;
+                console.log(`Processing ingest job ${taskId} for user ${userId}`);
 
                 try {
                     const result = await processIngestJob(job);
 
                     // Update final status
-                    await updateIngestJobStatus(jobId, {
+                    await updateIngestJobStatus(taskId, {
                         status: 'completed',
                         progress: 100,
                         message: 'Workflow completed successfully',
@@ -239,10 +239,10 @@ export async function registerIngestWorker(boss: PgBoss): Promise<void> {
                     });
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                    console.error(`Job ${jobId} failed:`, error);
+                    console.error(`Job ${taskId} failed:`, error);
 
                     // Update failed status
-                    await updateIngestJobStatus(jobId, {
+                    await updateIngestJobStatus(taskId, {
                         status: 'failed',
                         message: errorMessage,
                     });

@@ -11,7 +11,7 @@ import type {
  * API response when starting an ingest job
  */
 interface IngestJobResponse {
-    jobId: string;
+    taskId: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
     message: string;
     preset: string;
@@ -24,7 +24,7 @@ interface IngestJobResponse {
  * API response when getting job status
  */
 interface IngestJobStatus {
-    jobId: string;
+    taskId: string;
     preset: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
     progress: number;
@@ -254,10 +254,10 @@ export class IngestWorkflow implements IIngestWorkflow {
 
         // Start the job
         const jobResponse = await this.startJob();
-        logger.info(`Job started: ${jobResponse.jobId}`);
+        logger.info(`Job started: ${jobResponse.taskId}`);
 
         // Poll for completion with item progress callback
-        const finalStatus = await this.pollJobStatus(jobResponse.jobId, onItemProcessed);
+        const finalStatus = await this.pollJobStatus(jobResponse.taskId, onItemProcessed);
 
         // Log results
         const result = finalStatus.result ?? { itemsProcessed: 0, itemsCreated: 0, errors: [], processedItems: [] };

@@ -2,20 +2,26 @@
  * Public entrypoint for the shared domain package.
  */
 
+// Re-export from platform-task for convenience
+export * from '@platform/task'
+
 // Entities
 export * from './domain/entities/BaseContent'
 export * from './domain/entities/Bookmark'
 export * from './domain/entities/EmailFile'
 export * from './domain/entities/GmailMessage'
 export * from './domain/entities/SourceAdapter'
+export * from './domain/entities/IngestionTask'
 
 // Core ports commonly needed across apps
 export * from './domain/ports/IConfigProvider'
 export * from './domain/ports/ILinkRepository'
 export * from './domain/ports/ILogger'
+export * from './domain/ports/IIngestionTaskRepository'
 
 // Application Services
 export * from './application/services/GetBookmarksByUserIdService'
+export * from './application/services/DataIngestionService'
 
 // Workflows
 export * from './application/workflows'

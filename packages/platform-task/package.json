@@ -1,0 +1,17 @@
+{
+  "name": "@platform/task",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pg-boss": "^12.5.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

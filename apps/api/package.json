@@ -16,10 +16,10 @@
     "@platform/auth": "workspace:*",
     "@platform/db": "workspace:*",
     "@platform/platform-domain": "workspace:*",
+    "@platform/task": "workspace:*",
     "drizzle-orm": "^0.44.4",
     "hono": "^4.8.12",
     "pg": "^8.16.3",
-    "pg-boss": "^12.5.4",
     "ws": "^8.18.3"
   },
   "devDependencies": {

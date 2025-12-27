@@ -1,5 +1,4 @@
-import { eq, desc, and } from 'drizzle-orm';
-import { db, todos } from '@platform/db';
+import { db, todos, eq, desc, and } from '@platform/db';
 import type { NewTodo, Todo } from '../types';
 
 export const getTodosByUserId = async (userId: string) => {

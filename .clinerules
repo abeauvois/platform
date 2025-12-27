@@ -76,40 +76,6 @@ When creating new features:
    // "Tests are passing. Let's refactor to improve quality..."
    ```
 
-### Test Location Strategy
-
-- **Domain entities**: Co-located tests optional (prefer `/tests/unit/`)
-- **Application services**: `/tests/unit/`
-- **Infrastructure adapters**: `/tests/unit/` for logic, `/tests/integration/` for external APIs
-- **Complete workflows**: `/tests/e2e/`
-
-### Test Naming Convention
-
-```
-test-[component-name].ts
-```
-
-Examples:
-- `test-csv-repository.ts`
-- `test-email-extraction.ts`
-- `test-workflow-single-folder-producer.ts`
-
-## 📁 File Organization Rules
-
-### Where to Create New Code
-
-| Component Type | Location | Example |
-|----------------|----------|---------|
-| Domain Entity | `src/domain/entities/` | `Bookmark.ts` |
-| Domain Port | `src/domain/ports/` | `ILinkRepository.ts` |
-| Use Case | `src/application/` | `ExtractLinksUseCase.ts` |
-| Service | `src/application/services/` | `LinkAnalysisService.ts` |
-| Adapter | `src/infrastructure/adapters/` | `UrlAndContextAnthropicAnalyser.ts` |
-| Repository | `src/infrastructure/repositories/` | `NotionLinkRepository.ts` |
-| CLI Command | `src/cli/commands/` | `select.ts` |
-| Unit Test | `src/infrastructure/tests/unit/` | `test-*.ts` |
-| Integration Test | `src/infrastructure/tests/integration/` | `test-*.ts` |
-| E2E Test | `src/infrastructure/tests/e2e/` | `test-*.ts` |
 
 ## 💻 Code Style & Conventions
 
@@ -125,16 +91,6 @@ async function analyzeLink(url: string): Promise<LinkAnalysis> {
 async function analyzeLink(url) {
   return await this.analyzer.analyze(url);
 }
-```
-
-### Imports
-
-```typescript
-// ✅ GOOD: Use .js extension for imports (required by Bun/ESM)
-import { Bookmark } from './domain/entities/Bookmark.js';
-
-// ❌ WRONG: Missing .js extension
-import { Bookmark } from './domain/entities/Bookmark';
 ```
 
 ### Dependency Injection
@@ -174,7 +130,7 @@ catch (error) {
 ### Always Check Tests First
 
 ```
-1. Find related tests in src/infrastructure/tests/
+1. Find related tests
 2. Run tests: bun run test:unit
 3. Ensure tests still pass after changes
 4. Add new tests for new behavior
@@ -211,46 +167,26 @@ export class NewPortAdapter implements INewPort {
 
 ### Creating a New Use Case
 
-```typescript
-// 1. Write test first
-// src/infrastructure/tests/unit/test-new-use-case.ts
-test("should perform expected behavior", async () => {
-  const mockPort = createMockPort();
-  const useCase = new NewUseCase(mockPort);
-  const result = await useCase.execute(input);
-  expect(result).toEqual(expected);
-});
+1. Write test first
+2. Implement use case
 
-// 2. Implement use case
-// src/application/NewUseCase.ts
-export class NewUseCase {
-  constructor(private port: IPort) {}
-  
-  async execute(input: Input): Promise<Output> {
-    return await this.port.process(input);
-  }
-}
-```
 
 ### Creating a New Repository
 
-```typescript
-// 1. Define interface in src/domain/ports/
+1. Define interface 
 export interface ILinkRepository {
   save(link: Bookmark): Promise<void>;
   findByUrl(url: string): Promise<Bookmark | null>;
 }
 
-// 2. Write tests for implementation
-// src/infrastructure/tests/unit/test-new-repository.ts
+2. Write tests for implementation
 
-// 3. Implement in src/infrastructure/repositories/
+3. Implement 
 export class NewRepository implements ILinkRepository {
   async save(link: Bookmark): Promise<void> {
     // Implementation
   }
 }
-```
 
 ## 🚫 Anti-Patterns to AVOID
 
