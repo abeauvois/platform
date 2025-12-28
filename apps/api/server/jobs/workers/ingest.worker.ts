@@ -5,123 +5,19 @@ import {
     type IngestJobResult,
     type ProcessedItem,
 } from '../types';
-import { updateIngestJobStatus } from '../queries';
 import {
     WorkflowBuilder,
-    Bookmark,
     BaseContent,
     type ILogger,
+    type IIngestionTaskRepository,
 } from '@platform/platform-domain';
-import {
-    ExtractStep,
-    AnalyzeStep,
-    EnrichStep,
-    ExportStep,
-    type ISourceReader,
-    type SourceReaderConfig,
-} from './workflow.steps';
-import type { IngestRequest } from '../../validators/ingest.validator';
-import { GmailApiClient } from '../../infrastructure/GmailApiClient';
-import { InMemoryTimestampRepository } from '../../infrastructure/InMemoryTimestampRepository';
-import { truncateText } from '@platform/utils';
-
-// Singleton timestamp repository to persist state across jobs
-const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
+import { getPreset } from './presets';
 
 /**
- * Create a Gmail source reader that fetches real Gmail messages
+ * Create a logger for the task
  */
-function createGmailSourceReader(logger: ILogger): ISourceReader | undefined {
-    const clientId = process.env.GMAIL_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
-
-    if (!clientId || !clientSecret || !refreshToken) {
-        logger.warning('Gmail credentials not configured. Set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REFRESH_TOKEN');
-        return undefined;
-    }
-
-    const gmailClient = new GmailApiClient({
-        clientId,
-        clientSecret,
-        refreshToken,
-    });
-
-    return {
-        async ingest(config: SourceReaderConfig): Promise<BaseContent[]> {
-            logger.info('Fetching Gmail messages...');
-
-            // Calculate since timestamp
-            let sinceDate: Date;
-            const lastExecution = await gmailTimestampRepo.getLastExecutionTime();
-
-            if (config.filter?.limitDays) {
-                sinceDate = new Date(Date.now() - config.filter.limitDays * 24 * 60 * 60 * 1000);
-            } else if (lastExecution) {
-                sinceDate = lastExecution;
-            } else {
-                // Default: last 7 days for first run
-                sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-            }
-
-            logger.info(`Fetching messages since ${sinceDate.toISOString()}`);
-
-            const messages = await gmailClient.fetchMessagesSince(
-                sinceDate,
-                config.filter?.email,
-                config.filter?.withUrl
-            );
-
-            logger.info(`Found ${messages.length} Gmail messages`);
-            logger.info(messages.map(m => truncateText(m.rawContent, 380)).join('\n'));
-            logger.info('\n');
-
-            // Save current timestamp for next run
-            await gmailTimestampRepo.saveLastExecutionTime(new Date());
-
-            // Convert GmailMessage to BaseContent
-            return messages.map(message => new BaseContent(
-                message.rawContent || message.snippet,
-                'Gmail',
-                [],
-                message.subject,
-                message.rawContent,
-                message.receivedAt,
-                message.receivedAt,
-                'email'
-            ));
-        },
-    };
-}
-
-/**
- * Factory to create source reader based on preset
- * Returns undefined if no specific source reader is configured for the preset
- */
-function createPresetSourceReader(
-    preset: IngestRequest['preset'],
-    logger: ILogger
-): ISourceReader | undefined {
-    switch (preset) {
-        case 'gmail':
-            return createGmailSourceReader(logger);
-
-        case 'full':
-        case 'quick':
-        case 'analyzeOnly':
-        case 'twitterFocus':
-        case 'csvOnly':
-        default:
-            // These presets use the fallback sample data
-            return undefined;
-    }
-}
-
-/**
- * Create a logger for the job
- */
-function createJobLogger(jobId: string): ILogger {
-    const prefix = `[Job ${jobId}]`;
+function createTaskLogger(taskId: string): ILogger {
+    const prefix = `[Task ${taskId}]`;
     return {
         info: (message: string) => console.log(`${prefix} INFO: ${message}`),
         warning: (message: string) => console.warn(`${prefix} WARN: ${message}`),
@@ -136,46 +32,64 @@ function createJobLogger(jobId: string): ILogger {
 }
 
 /**
- * Convert Bookmark to ProcessedItem for API response
+ * Convert BaseContent to ProcessedItem for API response
  */
-function bookmarkToProcessedItem(bookmark: Bookmark, index: number): ProcessedItem {
+function contentToProcessedItem(content: BaseContent, index: number): ProcessedItem {
     return {
-        id: bookmark.id ?? `item-${index}`,
-        url: bookmark.url,
-        sourceAdapter: bookmark.sourceAdapter,
-        tags: bookmark.tags,
-        summary: bookmark.summary || undefined,
-        rawContent: bookmark.rawContent || undefined,
+        id: `item-${index}`,
+        url: content.url,
+        sourceAdapter: content.sourceAdapter,
+        tags: content.tags,
+        summary: content.summary || undefined,
+        rawContent: content.rawContent || undefined,
     };
 }
 
 /**
- * Process an ingest job using WorkflowBuilder
+ * Process an ingest task using WorkflowBuilder and preset configuration
  */
-async function processIngestJob(
-    job: Job<IngestJobPayload>
+async function processIngestTask(
+    job: Job<IngestJobPayload>,
+    taskRepository: IIngestionTaskRepository
 ): Promise<IngestJobResult> {
     const { taskId, userId, request } = job.data;
-    const logger = createJobLogger(taskId);
+    const logger = createTaskLogger(taskId);
 
     logger.info(`Starting ${request.preset} workflow for user ${userId}`);
 
-    // Get source reader for the preset
-    const sourceReader = createPresetSourceReader(request.preset, logger);
+    // Get preset configuration
+    const preset = getPreset(request.preset);
+
+    // Create source reader from preset
+    const sourceReader = preset.createSourceReader(logger);
+
+    // Create workflow steps from preset
+    const steps = preset.createSteps({
+        logger,
+        filter: request.filter,
+        skipAnalysis: request.skipAnalysis,
+        skipTwitter: request.skipTwitter,
+        csvOnly: request.csvOnly,
+        sourceReader,
+    });
 
     // Track the final result via onComplete hook
-    let finalItems: Bookmark[] = [];
+    let finalItems: BaseContent[] = [];
     let stepNames: string[] = [];
 
-    // Build the workflow with conditional steps
-    const workflow = new WorkflowBuilder<Bookmark>(logger)
-        .addStep(new ExtractStep(request.preset, request.filter, logger, sourceReader))
-        .when(!request.skipAnalysis, (b) => b.addStep(new AnalyzeStep(logger)))
-        .when(!request.skipTwitter, (b) => b.addStep(new EnrichStep(logger)))
-        .addStep(new ExportStep(request.csvOnly ?? false, logger))
+    // Build the workflow with steps from preset
+    const builder = new WorkflowBuilder<BaseContent>(logger);
+
+    // Add all steps from preset
+    for (const step of steps) {
+        builder.addStep(step);
+    }
+
+    // Configure lifecycle hooks
+    const workflow = builder
         .onStart(async (info) => {
             stepNames = info.stepNames;
-            await updateIngestJobStatus(taskId, {
+            await taskRepository.updateStatus(taskId, {
                 status: 'running',
                 progress: 0,
                 message: `Starting: ${info.stepNames.join(' → ')}`,
@@ -189,7 +103,7 @@ async function processIngestJob(
             const itemProgress = ((info.index + 1) / info.total) * (100 / stepNames.length);
             const totalProgress = Math.round(stepProgress + itemProgress);
 
-            await updateIngestJobStatus(taskId, {
+            await taskRepository.updateStatus(taskId, {
                 progress: Math.min(totalProgress, 99),
                 message: `Running step: ${info.stepName}`,
                 currentStep: info.stepName,
@@ -210,7 +124,7 @@ async function processIngestJob(
     await workflow.execute('', '');
 
     // Convert to API response format
-    const processedItems = finalItems.map((b, i) => bookmarkToProcessedItem(b, i));
+    const processedItems = finalItems.map((item, i) => contentToProcessedItem(item, i));
 
     return {
         itemsProcessed: finalItems.length,
@@ -223,20 +137,23 @@ async function processIngestJob(
 /**
  * Register the ingest worker with pg-boss
  */
-export async function registerIngestWorker(boss: PgBoss): Promise<void> {
+export async function registerIngestWorker(
+    boss: PgBoss,
+    taskRepository: IIngestionTaskRepository
+): Promise<void> {
     await boss.work<IngestJobPayload>(
         QUEUE_NAMES.INGEST,
         { batchSize: 1 },
         async (jobs) => {
             for (const job of jobs) {
                 const { taskId, userId } = job.data;
-                console.log(`Processing ingest job ${taskId} for user ${userId}`);
+                console.log(`Processing ingest task ${taskId} for user ${userId}`);
 
                 try {
-                    const result = await processIngestJob(job);
+                    const result = await processIngestTask(job, taskRepository);
 
                     // Update final status
-                    await updateIngestJobStatus(taskId, {
+                    await taskRepository.updateStatus(taskId, {
                         status: 'completed',
                         progress: 100,
                         message: 'Workflow completed successfully',
@@ -244,10 +161,10 @@ export async function registerIngestWorker(boss: PgBoss): Promise<void> {
                     });
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                    console.error(`Job ${taskId} failed:`, error);
+                    console.error(`Task ${taskId} failed:`, error);
 
                     // Update failed status
-                    await updateIngestJobStatus(taskId, {
+                    await taskRepository.updateStatus(taskId, {
                         status: 'failed',
                         message: errorMessage,
                     });

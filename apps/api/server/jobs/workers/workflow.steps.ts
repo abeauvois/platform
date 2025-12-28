@@ -3,23 +3,14 @@ import {
     type WorkflowContext,
     type StepResult,
     type ILogger,
-    Bookmark,
+    type ISourceReader,
+    type SourceReaderConfig,
     BaseContent,
 } from '@platform/platform-domain';
 import type { IngestRequest } from '../../validators/ingest.validator';
 
-/**
- * Port: Source reader interface for extracting content from various sources
- */
-export interface ISourceReader {
-    ingest(config: SourceReaderConfig): Promise<BaseContent[]>;
-}
-
-export interface SourceReaderConfig {
-    preset: string;
-    filter?: IngestRequest['filter'];
-    userId?: string;
-}
+// Re-export for convenience
+export type { ISourceReader, SourceReaderConfig };
 
 /**
  * Port: Content analyzer interface for AI-powered analysis
@@ -40,14 +31,14 @@ export interface ITwitterClient {
  * Port: Export service interface
  */
 export interface IExportService {
-    exportToCsv(items: Bookmark[], outputPath: string): Promise<void>;
-    exportToNotion(items: Bookmark[]): Promise<void>;
+    exportToCsv(items: BaseContent[], outputPath: string): Promise<void>;
+    exportToNotion(items: BaseContent[]): Promise<void>;
 }
 
 /**
  * Extract step - fetches items from the source (Gmail, etc.)
  */
-export class ExtractStep implements IWorkflowStep<Bookmark> {
+export class ExtractStep implements IWorkflowStep<BaseContent> {
     readonly name = 'extract';
 
     constructor(
@@ -57,7 +48,7 @@ export class ExtractStep implements IWorkflowStep<Bookmark> {
         private readonly sourceReader?: ISourceReader
     ) { }
 
-    async execute(context: WorkflowContext<Bookmark>): Promise<StepResult<Bookmark>> {
+    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
         this.logger.info(`Extracting items from ${this.preset} source...`);
 
         // Fetch items from source
@@ -85,55 +76,22 @@ export class ExtractStep implements IWorkflowStep<Bookmark> {
         };
     }
 
-    private async fetchFromSource(): Promise<Bookmark[]> {
+    private async fetchFromSource(): Promise<BaseContent[]> {
         // Use injected source reader if available
         if (this.sourceReader) {
-            const contents = await this.sourceReader.ingest({
-                preset: this.preset,
+            return await this.sourceReader.read({
                 filter: this.filter,
             });
-            // Convert BaseContent to Bookmark
-            return contents.map((content, i) => new Bookmark(
-                content.url,
-                content.sourceAdapter,
-                content.tags,
-                content.summary,
-                content.rawContent,
-                content.createdAt,
-                content.updatedAt,
-                content.contentType,
-                undefined, // userId - set later if needed
-                `bookmark-${Date.now()}-${i}`
-            ));
         }
 
-        // Fallback: return sample bookmarks for development/testing
-        this.logger.warning('No source reader configured, using sample data');
-        const sampleUrls = [
-            'https://github.com/anthropics/claude-code',
-            'https://news.ycombinator.com/item?id=12345',
-            'https://twitter.com/anthropic/status/123456789',
-        ];
-
-        return sampleUrls.map((url, i) => new Bookmark(
-            url,
-            this.preset === 'gmail' ? 'Gmail' : 'None',
-            [],
-            '',
-            '',
-            new Date(),
-            new Date(),
-            'unknown',
-            undefined,
-            `bookmark-${Date.now()}-${i}`
-        ));
+        throw new Error('No source reader configured for extraction');
     }
 }
 
 /**
  * Analysis step - analyzes content with AI
  */
-export class AnalyzeStep implements IWorkflowStep<Bookmark> {
+export class AnalyzeStep implements IWorkflowStep<BaseContent> {
     readonly name = 'analyze';
 
     constructor(
@@ -141,14 +99,14 @@ export class AnalyzeStep implements IWorkflowStep<Bookmark> {
         private readonly contentAnalyser?: IContentAnalyser
     ) { }
 
-    async execute(context: WorkflowContext<Bookmark>): Promise<StepResult<Bookmark>> {
+    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
         if (context.items.length === 0) {
             return { context, continue: true, message: 'No items to analyze' };
         }
 
         this.logger.info(`Analyzing ${context.items.length} items with AI...`);
 
-        const analyzedItems: Bookmark[] = [];
+        const analyzedItems: BaseContent[] = [];
 
         for (let i = 0; i < context.items.length; i++) {
             const item = context.items[i];
@@ -210,7 +168,7 @@ export class AnalyzeStep implements IWorkflowStep<Bookmark> {
 /**
  * Enrich step - enriches Twitter/X links with additional content
  */
-export class EnrichStep implements IWorkflowStep<Bookmark> {
+export class EnrichStep implements IWorkflowStep<BaseContent> {
     readonly name = 'enrich';
 
     constructor(
@@ -219,7 +177,7 @@ export class EnrichStep implements IWorkflowStep<Bookmark> {
         private readonly contentAnalyser?: IContentAnalyser
     ) { }
 
-    async execute(context: WorkflowContext<Bookmark>): Promise<StepResult<Bookmark>> {
+    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
         const twitterItems = context.items.filter(item => this.isTwitterUrl(item.url));
 
         if (twitterItems.length === 0) {
@@ -281,7 +239,7 @@ export class EnrichStep implements IWorkflowStep<Bookmark> {
         return url.includes('twitter.com') || url.includes('x.com') || url.includes('t.co');
     }
 
-    private async enrichTwitterItem(item: Bookmark): Promise<Bookmark> {
+    private async enrichTwitterItem(item: BaseContent): Promise<BaseContent> {
         // Use injected Twitter client if available
         if (this.twitterClient) {
             if (this.twitterClient.isRateLimited()) {
@@ -316,7 +274,7 @@ export class EnrichStep implements IWorkflowStep<Bookmark> {
 /**
  * Export step - exports results to CSV/Notion
  */
-export class ExportStep implements IWorkflowStep<Bookmark> {
+export class ExportStep implements IWorkflowStep<BaseContent> {
     readonly name = 'export';
 
     constructor(
@@ -326,7 +284,7 @@ export class ExportStep implements IWorkflowStep<Bookmark> {
         private readonly outputPath?: string
     ) { }
 
-    async execute(context: WorkflowContext<Bookmark>): Promise<StepResult<Bookmark>> {
+    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
         if (context.items.length === 0) {
             return { context, continue: true, message: 'No items to export' };
         }

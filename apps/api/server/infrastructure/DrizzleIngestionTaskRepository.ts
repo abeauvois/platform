@@ -1,5 +1,5 @@
 import { db, ingestJobs, eq, desc, and } from '@platform/db';
-import type { IIngestionTaskRepository, IngestionTask, IngestionTaskCreate } from '@platform/platform-domain';
+import type { IIngestionTaskRepository, IngestionTask, IngestionTaskCreate, IngestionTaskUpdate } from '@platform/platform-domain';
 
 export class DrizzleIngestionTaskRepository implements IIngestionTaskRepository {
     async create(data: IngestionTaskCreate): Promise<IngestionTask> {
@@ -36,6 +36,16 @@ export class DrizzleIngestionTaskRepository implements IIngestionTaskRepository 
             .orderBy(desc(ingestJobs.createdAt));
 
         return results.map((r) => this.toDomain(r));
+    }
+
+    async updateStatus(taskId: string, update: IngestionTaskUpdate): Promise<void> {
+        await db
+            .update(ingestJobs)
+            .set({
+                ...update,
+                updatedAt: new Date(),
+            })
+            .where(eq(ingestJobs.id, taskId));
     }
 
     private toDomain(row: typeof ingestJobs.$inferSelect): IngestionTask {

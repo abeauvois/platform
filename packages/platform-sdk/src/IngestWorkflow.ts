@@ -8,9 +8,9 @@ import type {
 } from './types.js';
 
 /**
- * API response when starting an ingest job
+ * API response when starting an ingest task
  */
-interface IngestJobResponse {
+interface IngestTaskResponse {
     taskId: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
     message: string;
@@ -21,9 +21,9 @@ interface IngestJobResponse {
 }
 
 /**
- * API response when getting job status
+ * API response when getting task status
  */
-interface IngestJobStatus {
+interface IngestTaskStatus {
     taskId: string;
     preset: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
@@ -146,9 +146,9 @@ export class IngestWorkflow implements IIngestWorkflow {
     }
 
     /**
-     * Start the ingest job via API
+     * Start the ingest task via API
      */
-    private async startJob(): Promise<IngestJobResponse> {
+    private async startTask(): Promise<IngestTaskResponse> {
         const { preset, options, logger } = this.config;
 
         logger.info(`Starting ${preset} workflow via API`);
@@ -161,19 +161,19 @@ export class IngestWorkflow implements IIngestWorkflow {
             csvOnly: options.csvOnly,
         };
 
-        return this.apiRequest<IngestJobResponse>('/api/ingest', {
+        return this.apiRequest<IngestTaskResponse>('/api/ingest', {
             method: 'POST',
             body: JSON.stringify(body),
         });
     }
 
     /**
-     * Poll for job status until completion
+     * Poll for task status until completion
      */
-    private async pollJobStatus(
-        jobId: string,
+    private async pollTaskStatus(
+        taskId: string,
         onItemProcessed?: (info: import('./types.js').ItemProcessedInfo) => void | Promise<void>
-    ): Promise<IngestJobStatus> {
+    ): Promise<IngestTaskStatus> {
         const { logger } = this.config;
         let attempts = 0;
         let lastMessage = '';
@@ -185,10 +185,10 @@ export class IngestWorkflow implements IIngestWorkflow {
 
         try {
             while (attempts < this.maxPollAttempts) {
-                const status = await this.apiRequest<IngestJobStatus>(`/api/ingest/${jobId}`);
+                const status = await this.apiRequest<IngestTaskStatus>(`/api/ingest/${taskId}`);
                 logger.debug(status.itemProgress ?
-                    `Job ${jobId} status: ${status.status}, step: ${status.currentStep}, item progress: ${status.itemProgress.current}/${status.itemProgress.total}` :
-                    `Job ${jobId} status: ${status.status}, step: ${status.currentStep}`);
+                    `Task ${taskId} status: ${status.status}, step: ${status.currentStep}, item progress: ${status.itemProgress.current}/${status.itemProgress.total}` :
+                    `Task ${taskId} status: ${status.status}, step: ${status.currentStep}`);
 
                 if (status.status === 'completed') {
                     spinner.stop();
@@ -197,7 +197,7 @@ export class IngestWorkflow implements IIngestWorkflow {
 
                 if (status.status === 'failed') {
                     spinner.stop();
-                    throw new Error(`Job ${jobId} failed: ${status.message}`);
+                    throw new Error(`Task ${taskId} failed: ${status.message}`);
                 }
 
                 // Call onItemProcessed hook if item progress changed
@@ -226,7 +226,7 @@ export class IngestWorkflow implements IIngestWorkflow {
             }
 
             spinner.stop();
-            throw new Error(`Job ${jobId} timed out after ${this.maxPollAttempts * this.pollIntervalMs / 1000} seconds`);
+            throw new Error(`Task ${taskId} timed out after ${this.maxPollAttempts * this.pollIntervalMs / 1000} seconds`);
         } catch (error) {
             spinner.stop();
             throw error;
@@ -252,12 +252,12 @@ export class IngestWorkflow implements IIngestWorkflow {
             logger.info('Skipping Twitter enrichment');
         }
 
-        // Start the job
-        const jobResponse = await this.startJob();
-        logger.info(`Job started: ${jobResponse.taskId}`);
+        // Start the task
+        const taskResponse = await this.startTask();
+        logger.info(`Task started: ${taskResponse.taskId}`);
 
         // Poll for completion with item progress callback
-        const finalStatus = await this.pollJobStatus(jobResponse.taskId, onItemProcessed);
+        const finalStatus = await this.pollTaskStatus(taskResponse.taskId, onItemProcessed);
 
         // Log results
         const result = finalStatus.result ?? { itemsProcessed: 0, itemsCreated: 0, errors: [], processedItems: [] };

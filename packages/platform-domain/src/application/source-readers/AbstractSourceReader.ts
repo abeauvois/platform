@@ -5,7 +5,7 @@ import { ILogger } from '../../domain/ports/ILogger.js';
 
 /**
  * Abstract base class for all source readers
- * Uses Template Method pattern to define the ingestion workflow
+ * Uses Template Method pattern to define the read workflow
  *
  * Source readers orchestrate: fetch → normalize → enrich
  * They are application-level services, not infrastructure adapters.
@@ -20,22 +20,22 @@ export abstract class AbstractSourceReader<TRaw, TNormalized extends BaseContent
     ) { }
 
     /**
-     * Main ingestion workflow (Template Method)
+     * Main read workflow (Template Method)
      * Defines the steps: validate → fetch → normalize → enrich
      */
-    async ingest(config: IngestionConfig): Promise<TNormalized[]> {
+    async read(config: IngestionConfig): Promise<TNormalized[]> {
         await this.validateConfig(config);
 
-        this.logger.info(`📥 Fetching data from ${this.sourceType}...`);
+        this.logger.info(`Fetching data from ${this.sourceType}...`);
         const rawData = await this.fetchRaw(config);
 
-        this.logger.info(`🔄 Normalizing ${rawData.length} items...`);
+        this.logger.info(`Normalizing ${rawData.length} items...`);
         const normalized = await this.normalize(rawData);
 
-        this.logger.info(`✨ Enriching ${normalized.length} items...`);
+        this.logger.info(`Enriching ${normalized.length} items...`);
         const enriched = await this.enrich(normalized);
 
-        this.logger.info(`✅ Ingestion complete: ${enriched.length} items`);
+        this.logger.info(`Read complete: ${enriched.length} items`);
         return enriched;
     }
 

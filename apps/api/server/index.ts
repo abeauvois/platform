@@ -9,6 +9,7 @@ import { ingest } from './routes/ingest.routes';
 import { initBoss, stopBoss, createQueue } from '@platform/task';
 import { registerAllWorkers } from './jobs/workers';
 import { QUEUE_NAMES } from './jobs/types';
+import { DrizzleIngestionTaskRepository } from './infrastructure/DrizzleIngestionTaskRepository';
 
 const app = new Hono();
 
@@ -48,7 +49,8 @@ async function startJobQueue() {
     }
     const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
     await createQueue(QUEUE_NAMES.INGEST);
-    await registerAllWorkers(boss);
+    const taskRepository = new DrizzleIngestionTaskRepository();
+    await registerAllWorkers(boss, taskRepository);
     console.log('Job queue initialized');
   } catch (error) {
     console.error('Failed to initialize job queue:', error);

@@ -27,6 +27,7 @@ This document describes the data flow for Gmail ingestion from CLI to background
 │  packages/platform-sdk/src/IngestWorkflow.ts                                    │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
 │  │  IngestWorkflow.execute()                                           │        │
+│  │  const { preset, options, logger } = this.config;                   │        │
 │  │  • POST /api/ingest → startJob()                                    │        │
 │  │  • GET /api/ingest/:taskId → pollJobStatus() (loops until done)     │        │
 │  │  • Fires hooks: onStart, onItemProcessed, onComplete, onError       │        │
@@ -141,23 +142,25 @@ CLI displays results
 ## Key Types
 
 ### IngestFilter (SDK)
+
 ```typescript
 interface IngestFilter {
-    email?: string;      // Filter by sender email
-    limitDays?: number;  // Only fetch emails from last N days
-    withUrl?: boolean;   // Only include emails containing URLs
+  email?: string; // Filter by sender email
+  limitDays?: number; // Only fetch emails from last N days
+  withUrl?: boolean; // Only include emails containing URLs
 }
 ```
 
 ### ProcessedItem (SDK & API)
+
 ```typescript
 interface ProcessedItem {
-    id: string;
-    url: string;
-    sourceAdapter: string;
-    tags: string[];
-    summary?: string;
-    rawContent?: string;
+  id: string;
+  url: string;
+  sourceAdapter: string;
+  tags: string[];
+  summary?: string;
+  rawContent?: string;
 }
 ```
 
