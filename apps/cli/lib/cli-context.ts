@@ -55,7 +55,7 @@ export interface CreateCliContextOptions {
  * const ctx = await createCliContext();
  *
  * // Use the API client
- * const workflow = ctx.apiClient.ingest.create('gmail', { filter });
+ * const workflow = ctx.apiClient.workflow.create('gmail', { filter });
  *
  * // Get config values
  * const email = ctx.config.getOptional('MY_EMAIL_ADDRESS');

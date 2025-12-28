@@ -119,28 +119,26 @@ curl http://localhost:3000/api/config/keys -b cookies.txt | jq
 curl http://localhost:3000/api/config/SOME_KEY -b cookies.txt | jq
 ```
 
-## Ingestion
+## Workflows
 
-### Start an Ingest Job
+### Start a Workflow
 
 ```bash
-curl -X POST http://localhost:3000/api/ingest \
+curl -X POST http://localhost:3000/api/workflows \
   -H "Content-Type: application/json" \
   -d '{
     "preset": "gmail",
-    "options": {
-      "filter": {
-        "email": "user@example.com"
-      }
+    "filter": {
+      "email": "user@example.com"
     }
   }' \
   -b cookies.txt | jq
 ```
 
-### Get Job Status
+### Get Workflow Task Status
 
 ```bash
-curl http://localhost:3000/api/ingest/<job-id>/status -b cookies.txt | jq
+curl http://localhost:3000/api/workflows/<task-id> -b cookies.txt | jq
 ```
 
 ## Session Renewal Script

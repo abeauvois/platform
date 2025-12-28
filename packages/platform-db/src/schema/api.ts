@@ -29,10 +29,10 @@ export const bookmarks = pgTable('bookmarks', {
 });
 
 /**
- * Ingest job status tracking table
- * Used for tracking background ingestion workflows
+ * Background tasks table
+ * Used for tracking background workflows
  */
-export const ingestJobs = pgTable('ingest_jobs', {
+export const backgroundTasks = pgTable('background_tasks', {
     id: varchar('id', { length: 100 }).primaryKey(),
     userId: text('user_id')
         .notNull()

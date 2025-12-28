@@ -1,25 +1,25 @@
-import type { IngestRequest } from '../validators/ingest.validator';
+import type { WorkflowRequest } from '../validators/workflow.validator';
 
 /**
  * Job queue names
  */
 export const QUEUE_NAMES = {
-    INGEST: 'ingest-workflow',
+    WORKFLOW: 'workflow',
 } as const;
 
 /**
- * Payload for ingest jobs
+ * Payload for workflow jobs
  */
-export interface IngestJobPayload {
+export interface WorkflowJobPayload {
     taskId: string;
     userId: string;
-    request: IngestRequest;
+    request: WorkflowRequest;
 }
 
 /**
- * Ingest job status (compatible with existing API contract)
+ * Job status (compatible with existing API contract)
  */
-export type IngestJobStatus = 'pending' | 'running' | 'completed' | 'failed';
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed';
 
 /**
  * Processed item returned by the workflow
@@ -36,7 +36,7 @@ export interface ProcessedItem {
 /**
  * Result stored after job completion
  */
-export interface IngestJobResult {
+export interface JobResult {
     itemsProcessed: number;
     itemsCreated: number;
     errors: string[];
@@ -55,13 +55,13 @@ export interface ItemProgress {
 /**
  * Job metadata stored in pg-boss output
  */
-export interface IngestJobOutput {
-    status: IngestJobStatus;
+export interface JobOutput {
+    status: JobStatus;
     progress: number;
     message: string;
     /** Current step being executed */
     currentStep?: string;
     /** Item progress within current step */
     itemProgress?: ItemProgress;
-    result?: IngestJobResult;
+    result?: JobResult;
 }

@@ -82,7 +82,7 @@ export interface ConfigKeysResponse {
 }
 
 // ============================================
-// Ingest/Workflow Types
+// Workflow Types
 // ============================================
 
 /**
@@ -91,23 +91,23 @@ export interface ConfigKeysResponse {
 export type WorkflowPreset = 'full' | 'quick' | 'analyzeOnly' | 'twitterFocus' | 'csvOnly' | 'gmail';
 
 /**
- * Filter options for ingestion
+ * Filter options for workflow
  */
-export interface IngestFilter {
+export interface WorkflowFilter {
     /** Filter by email address (for Gmail source) */
     email?: string;
-    /** Limit ingestion to emails from the last N days */
+    /** Limit to items from the last N days */
     limitDays?: number;
     /** Include URL in processed items output */
     withUrl?: boolean;
 }
 
 /**
- * Options for the ingest method
+ * Options for the workflow method
  */
-export interface IngestOptions {
+export interface WorkflowOptions {
     /** Filter criteria for source data */
-    filter?: IngestFilter;
+    filter?: WorkflowFilter;
     /** Skip AI analysis step */
     skipAnalysis?: boolean;
     /** Skip Twitter enrichment step */
@@ -212,9 +212,9 @@ export interface WorkflowExecuteOptions {
 }
 
 /**
- * Executable workflow returned by the ingest method
+ * Executable workflow returned by the workflow client
  */
-export interface IIngestWorkflow {
+export interface IWorkflow {
     /** Execute the workflow with lifecycle hooks */
     execute(options?: WorkflowExecuteOptions): Promise<void>;
 }

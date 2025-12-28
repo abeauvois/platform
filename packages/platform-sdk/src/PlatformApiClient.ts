@@ -2,7 +2,7 @@ import type { SignInData, SignUpData, AuthResponse, ILogger } from './types.js';
 import { AuthClient } from './clients/AuthClient.js';
 import { BookmarkClient } from './clients/BookmarkClient.js';
 import { ConfigClient } from './clients/ConfigClient.js';
-import { IngestClient } from './clients/IngestClient.js';
+import { WorkflowClient } from './clients/WorkflowClient.js';
 import { SourcesClient } from './clients/SourcesClient.js';
 import type { BaseClient } from './clients/BaseClient.js';
 
@@ -75,8 +75,8 @@ class SyncedAuthClient {
  * // Config
  * const config = await client.config.fetchAll();
  *
- * // Ingestion
- * const workflow = client.ingest.create('gmail', { filter: { email: 'user@example.com' } });
+ * // Workflow
+ * const workflow = client.workflow.create('gmail', { filter: { email: 'user@example.com' } });
  * await workflow.execute();
  * ```
  */
@@ -84,7 +84,7 @@ export class PlatformApiClient {
     readonly auth: SyncedAuthClient;
     readonly bookmarks: BookmarkClient;
     readonly config: ConfigClient;
-    readonly ingest: IngestClient;
+    readonly workflow: WorkflowClient;
     readonly sources: SourcesClient;
 
     private readonly clients: BaseClient[];
@@ -100,10 +100,10 @@ export class PlatformApiClient {
         this.authClient = new AuthClient(clientConfig);
         this.bookmarks = new BookmarkClient(clientConfig);
         this.config = new ConfigClient(clientConfig);
-        this.ingest = new IngestClient(clientConfig);
+        this.workflow = new WorkflowClient(clientConfig);
         this.sources = new SourcesClient(clientConfig);
 
-        this.clients = [this.authClient, this.bookmarks, this.config, this.ingest, this.sources];
+        this.clients = [this.authClient, this.bookmarks, this.config, this.workflow, this.sources];
         this.auth = new SyncedAuthClient(this.authClient, this.clients);
     }
 

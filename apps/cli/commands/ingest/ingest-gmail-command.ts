@@ -34,7 +34,6 @@ export const ingestGmailCommand = command({
         description: 'Trigger Gmail ingestion workflow',
     },
 }, async (argv) => {
-    console.log("🚀 ~ argv:", argv)
     p.intro('Gmail Source Ingestion as base content');
 
     try {
@@ -71,7 +70,7 @@ export const ingestGmailCommand = command({
         p.note(configLines.join('\n'), 'Configuration');
 
         // Create and execute workflow
-        const workflow = ctx.apiClient.ingest.create('gmail', {
+        const workflow = ctx.apiClient.workflow.create('gmail', {
             filter,
             skipAnalysis: false,
             skipTwitter: true

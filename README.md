@@ -63,19 +63,19 @@ The core domain follows hexagonal architecture:
 
 ## Client-Server Architecture
 
-| App | Port | Purpose |
-|-----|------|---------|
-| api | 3000 | Central platform server (auth, todos, bookmarks, config, ingest) |
-| dashboard | 5000 | React frontend for the platform |
-| trading server | 3001 | Trading-specific APIs (Binance integration) |
-| trading client | 5001 | Connects to both API server (auth) and trading server |
+| App            | Port | Purpose                                                             |
+| -------------- | ---- | ------------------------------------------------------------------- |
+| api            | 3000 | Central platform server (auth, todos, bookmarks, config, workflows) |
+| dashboard      | 5000 | React frontend for the platform                                     |
+| trading server | 3001 | Trading-specific APIs (Binance integration)                         |
+| trading client | 5001 | Connects to both API server (auth) and trading server               |
 
 ### API Server Structure
 
 The API server follows hexagonal architecture with clear separation:
 
 - `infrastructure/` - Adapters implementing domain ports (repositories, API clients)
-- `tasks/` - Background task workers (pg-boss based)
+- `tasks/` - Background task workers (pg-boss based) - a background task is a multi-steps workflow
 - `routes/` - HTTP API endpoints
 - `validators/` - Request validation schemas
 
@@ -179,14 +179,18 @@ bun run api:renew-session your@email.com yourpassword
 Background task abstractions following hexagonal architecture. Provides a unified "Task" concept for background jobs.
 
 ```typescript
-import { initBoss, PgBossTaskRunner, TimestampIdGenerator } from '@platform/task';
+import {
+  initBoss,
+  PgBossTaskRunner,
+  TimestampIdGenerator,
+} from "@platform/task";
 
 // Initialize pg-boss
 const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
 
 // Create task runner
 const taskRunner = new PgBossTaskRunner(boss);
-await taskRunner.submit('my-task', { data: 'payload' });
+await taskRunner.submit("my-task", { data: "payload" });
 ```
 
 ### @platform/platform-domain
@@ -206,14 +210,24 @@ Database schema and migrations using Drizzle ORM with PostgreSQL.
 Platform API client SDK for authentication and API communication.
 
 ```typescript
-import { Auth, Fetcher } from "@platform/sdk";
+import { PlatformApiClient } from "@platform/sdk";
 
-const auth = new Auth({ baseUrl: "http://localhost:3000" });
-const credentials = await auth.login();
-
-const fetcher = new Fetcher({
+const client = new PlatformApiClient({
   baseUrl: "http://localhost:3000",
-  credentials,
+  logger: console,
+});
+
+// Authenticate
+await client.auth.signIn({ email: "user@example.com", password: "secret" });
+
+// Create and execute a workflow
+// A background task is a multi-steps workflow
+const workflow = client.workflow.create("gmail", {
+  filter: { email: "newsletter@example.com", limitDays: 7 },
+});
+
+await workflow.execute({
+  onComplete: ({ processedItems }) => console.log(processedItems),
 });
 ```
 

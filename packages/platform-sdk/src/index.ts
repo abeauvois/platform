@@ -12,7 +12,7 @@ export {
     AuthClient,
     BookmarkClient,
     ConfigClient,
-    IngestClient,
+    WorkflowClient,
     SourcesClient,
     type BaseClientConfig,
     type Bookmark,
@@ -24,7 +24,7 @@ export {
 export { EnvConfigProvider, ApiConfigProvider } from './config/index.js';
 
 // Workflow
-export { IngestWorkflow } from './IngestWorkflow.js';
+export { Workflow } from './Workflow.js';
 
 // Types
 export type {
@@ -37,15 +37,15 @@ export type {
     ConfigBatchRequest,
     ConfigBatchResponse,
     ConfigKeysResponse,
-    // Ingest/Workflow types
+    // Workflow types
     WorkflowPreset,
-    IngestFilter,
-    IngestOptions,
+    WorkflowFilter,
+    WorkflowOptions,
     WorkflowHookInfo,
     WorkflowExecuteOptions,
     WorkflowCompleteInfo,
     ItemProcessedInfo,
     ProcessedItem,
-    IIngestWorkflow,
+    IWorkflow,
     ILogger,
 } from './types.js';

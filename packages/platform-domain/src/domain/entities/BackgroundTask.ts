@@ -1,18 +1,18 @@
 import type { Task } from '@platform/task';
 
-export interface IngestionResult {
+export interface TaskResult {
     itemsProcessed: number;
     itemsCreated: number;
     errors: string[];
 }
 
-export interface IngestionTask extends Task {
+export interface BackgroundTask extends Task {
     userId: string;
     preset: string;
-    result: IngestionResult | null;
+    result: TaskResult | null;
 }
 
-export interface IngestionTaskCreate {
+export interface BackgroundTaskCreate {
     taskId: string;
     userId: string;
     preset: string;

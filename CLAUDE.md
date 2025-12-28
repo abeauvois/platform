@@ -38,7 +38,7 @@ IMPORTANT: key hexagonal architecture principle: the application layer should ex
 
 ### Client-Server Architecture
 
-- **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, ingest, and background tasks (via @platform/task)
+- **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, workflows, and background tasks (via @platform/task)
 - **Dashboard Client** (`/apps/dashboard`): React frontend for the platform
 - **Trading Server** (`/apps/trading/server`): Trading-specific APIs with Binance integration and OpenAPI docs at `/api/docs`
 - **Trading Client** (`/apps/trading/client`): Hybrid - connects to both API server (auth) and trading server (trading APIs)
@@ -63,15 +63,15 @@ The API server (`/apps/api`) is the single source of truth for configuration. En
 
 Background tasks follow hexagonal architecture with a unified "Task" concept:
 
-- **Domain**: Uses `taskId`, `TaskStatus`, `IngestionTask` (not "job" terminology)
+- **Domain**: Uses `taskId`, `TaskStatus`, `BackgroundTask` (not "job" terminology)
 - **Ports**: `IBackgroundTaskRunner`, `IIdGenerator` in `@platform/task`
 - **Adapters**: `PgBossTaskRunner`, `TimestampIdGenerator` implement the ports
 - **Infrastructure mapping**: Repository maps domain (`taskId`) ↔ database (`id`, `pgBossJobId`)
 
 ```typescript
 // Domain service expresses intent, not implementation
-const task = await ingestionService.startIngestion(userId, request);
-// Returns IngestionTask with taskId, not "jobId"
+const task = await taskService.startTask(userId, request);
+// Returns BackgroundTask with taskId, not "jobId"
 ```
 
 ### API Server Structure
@@ -81,19 +81,36 @@ The API server (`/apps/api/server`) follows hexagonal architecture:
 ```
 /apps/api/server/
 ├── infrastructure/          # Adapters implementing domain ports
-│   ├── DrizzleIngestionTaskRepository.ts   # IIngestionTaskRepository
+│   ├── DrizzleBackgroundTaskRepository.ts  # IBackgroundTaskRepository
 │   ├── GmailApiClient.ts                   # IEmailClient
 │   ├── InMemoryBookmarkRepository.ts       # ILinkRepository
-│   └── InMemoryTimestampRepository.ts      # ITimestampRepository
+│   ├── InMemoryTimestampRepository.ts      # ITimestampRepository
+│   └── source-readers/                     # Direct source reader factories
+│       └── GmailSourceReader.ts            # ISourceReader for Gmail
 ├── tasks/                   # Background task workers (pg-boss)
 │   ├── types.ts             # Task payload/result types
 │   └── workers/             # Worker implementations
-│       ├── ingest.worker.ts # Ingestion workflow worker
+│       ├── workflow.worker.ts # Workflow worker
 │       ├── presets.ts       # Workflow preset configurations
 │       └── workflow.steps.ts # Workflow step implementations
 ├── routes/                  # HTTP API adapters
+│   ├── workflow.routes.ts   # Task-based workflows (async)
+│   └── sources.routes.ts    # Direct source reading (sync)
 └── validators/              # Request validation (Zod)
 ```
+
+### Source Reading Patterns
+
+Two patterns for reading from data sources:
+
+1. **Task-based (async)**: `POST /api/workflows` → pg-boss task → polls for completion
+   - Use for long-running workflows with analysis/enrichment steps
+   - CLI: `bun run cli workflow gmail`
+
+2. **Direct (sync)**: `GET /api/sources/gmail/read` → immediate response
+   - Use for quick reads without workflow processing
+   - CLI: `bun run cli list source gmail --filter=email@example.com --limit-days=7 --with-url`
+   - Returns `BaseContent[]` directly, no task queue involved
 
 ## Test-Driven Development (TDD) Requirements
 

@@ -2,40 +2,40 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 
 /**
- * Workflow presets available for ingestion
+ * Workflow presets available
  */
-const workflowPresets = ['gmail', 'bookmark', 'analyzeOnly', 'twitterFocus', 'csvOnly', 'gmail'] as const;
+const workflowPresets = ['gmail', 'bookmark', 'analyzeOnly', 'twitterFocus', 'csvOnly'] as const;
 
 /**
- * Schema for ingest filter options
+ * Schema for workflow filter options
  */
-const ingestFilterSchema = z.object({
+const workflowFilterSchema = z.object({
     email: z.string().email().optional(),
     limitDays: z.number().int().positive().max(365).optional(),
     withUrl: z.boolean().optional(),
 }).optional();
 
 /**
- * Schema for ingest request body
+ * Schema for workflow request body
  */
-export const ingestSchema = z.object({
+export const workflowSchema = z.object({
     preset: z.enum(workflowPresets),
-    filter: ingestFilterSchema,
+    filter: workflowFilterSchema,
     skipAnalysis: z.boolean().optional(),
     skipTwitter: z.boolean().optional(),
     csvOnly: z.boolean().optional(),
 });
 
-export type IngestRequest = z.infer<typeof ingestSchema>;
+export type WorkflowRequest = z.infer<typeof workflowSchema>;
 
-export const ingestValidator = zValidator(
+export const workflowValidator = zValidator(
     'json',
-    ingestSchema,
+    workflowSchema,
     (result, c) => {
         if (!result.success) {
             return c.json(
                 {
-                    error: 'Invalid ingest request',
+                    error: 'Invalid workflow request',
                     details: result.error.issues.map((issue) => ({
                         field: issue.path.join('.'),
                         message: issue.message,

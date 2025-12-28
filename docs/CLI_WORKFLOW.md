@@ -1,6 +1,6 @@
-# Ingest Flow
+# Workflow Flow
 
-This document describes the data flow for content ingestion from CLI to background task.
+This document describes the data flow for content workflows from CLI to background task.
 
 ## Architecture Diagram
 
@@ -14,7 +14,7 @@ This document describes the data flow for content ingestion from CLI to backgrou
 │  │  gmailCommand                                                       │        │
 │  │  • Parses flags: --filter, --limitDays, --withUrl                   │        │
 │  │  • Creates filter: { email?, limitDays?, withUrl? }                 │        │
-│  │  • Calls: ctx.apiClient.ingest.create('gmail', { filter })          │        │
+│  │  • Calls: ctx.apiClient.workflow.create('gmail', { filter })        │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 └─────────────────────────────────┼───────────────────────────────────────────────┘
@@ -24,18 +24,18 @@ This document describes the data flow for content ingestion from CLI to backgrou
 │                              SDK LAYER                                          │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│  packages/platform-sdk/src/IngestWorkflow.ts                                    │
+│  packages/platform-sdk/src/Workflow.ts                                          │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  IngestWorkflow.execute()                                           │        │
+│  │  Workflow.execute()                                                 │        │
 │  │  const { preset, options, logger } = this.config;                   │        │
-│  │  • POST /api/ingest → startTask()                                   │        │
-│  │  • GET /api/ingest/:taskId → pollTaskStatus() (loops until done)    │        │
+│  │  • POST /api/workflows → startTask()                                │        │
+│  │  • GET /api/workflows/:taskId → pollTaskStatus() (loops until done) │        │
 │  │  • Fires hooks: onStart, onItemProcessed, onComplete, onError       │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 │  packages/platform-sdk/src/types.ts                                             │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  IngestFilter { email?, limitDays?, withUrl? }                      │        │
+│  │  WorkflowFilter { email?, limitDays?, withUrl? }                    │        │
 │  │  ProcessedItem { id, url, sourceAdapter, tags, summary?, rawContent? }       │
 │  └─────────────────────────────────────────────────────────────────────┘        │
 │                                                                                 │
@@ -46,20 +46,20 @@ This document describes the data flow for content ingestion from CLI to backgrou
 │                              API SERVER (port 3000)                             │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│  apps/api/server/validators/ingest.validator.ts                                 │
+│  apps/api/server/validators/workflow.validator.ts                               │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  ingestSchema (Zod)                                                 │        │
+│  │  workflowSchema (Zod)                                               │        │
 │  │  • Validates: preset, filter { email?, limitDays?, withUrl? }       │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
-│  apps/api/server/routes/ingest.routes.ts                                        │
+│  apps/api/server/routes/workflow.routes.ts                                      │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  POST /api/ingest                                                   │        │
-│  │  • Creates taskId via DataIngestionService                          │        │
+│  │  POST /api/workflows                                                │        │
+│  │  • Creates taskId via BackgroundTaskService                         │        │
 │  │  • Enqueues task to pg-boss queue                                   │        │
 │  │  • Returns { taskId, status: 'pending' }                            │        │
 │  │                                                                     │        │
-│  │  GET /api/ingest/:taskId                                            │        │
+│  │  GET /api/workflows/:taskId                                         │        │
 │  │  • Returns task status + progress + result                          │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
@@ -70,9 +70,9 @@ This document describes the data flow for content ingestion from CLI to backgrou
 │                           BACKGROUND WORKER                                     │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│  apps/api/server/tasks/workers/ingest.worker.ts                                 │
+│  apps/api/server/tasks/workers/workflow.worker.ts                               │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  processIngestTask()                                                │        │
+│  │  processWorkflowTask()                                              │        │
 │  │  • Gets SourceReader for preset (e.g., createGmailSourceReader)     │        │
 │  │  • Builds WorkflowBuilder with steps:                               │        │
 │  │      ReadStep → AnalyzeStep → EnrichStep → ExportStep               │        │
@@ -103,9 +103,9 @@ This document describes the data flow for content ingestion from CLI to backgrou
 │  │  • Returns GmailMessage[]                                           │        │
 │  └─────────────────────────────────────────────────────────────────────┘        │
 │                                                                                 │
-│  apps/api/server/infrastructure/DrizzleIngestionTaskRepository.ts               │
+│  apps/api/server/infrastructure/DrizzleBackgroundTaskRepository.ts              │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  DrizzleIngestionTaskRepository implements IIngestionTaskRepository │        │
+│  │  DrizzleBackgroundTaskRepository implements IBackgroundTaskRepository│        │
 │  │  • Persists task state to PostgreSQL via Drizzle ORM                │        │
 │  │  • Maps domain (taskId) ↔ database (id, pgBossJobId)                │        │
 │  └─────────────────────────────────────────────────────────────────────┘        │
@@ -119,10 +119,10 @@ This document describes the data flow for content ingestion from CLI to backgrou
 User CLI Input
      │
      ▼
-IngestFilter { email, limitDays, withUrl }
+WorkflowFilter { email, limitDays, withUrl }
      │
      ▼
-POST /api/ingest ──► pg-boss queue ──► Worker picks up task
+POST /api/workflows ──► pg-boss queue ──► Worker picks up task
      │                                        │
      │                                        ▼
      │                              GmailApiClient.fetchMessagesSince()
@@ -137,7 +137,7 @@ POST /api/ingest ──► pg-boss queue ──► Worker picks up task
      │                              BaseContent[] → ProcessedItem[]
      │                                        │
      ▼                                        ▼
-GET /api/ingest/:taskId ◄──────── Task status + result stored
+GET /api/workflows/:taskId ◄──────── Task status + result stored
      │
      ▼
 SDK polls until completed, fires onComplete({ processedItems })
@@ -148,10 +148,10 @@ CLI displays results
 
 ## Key Types
 
-### IngestFilter (SDK)
+### WorkflowFilter (SDK)
 
 ```typescript
-interface IngestFilter {
+interface WorkflowFilter {
   email?: string; // Filter by sender email
   limitDays?: number; // Only fetch emails from last N days
   withUrl?: boolean; // Only include emails containing URLs
@@ -175,7 +175,7 @@ interface ProcessedItem {
 
 | Preset | Description | Steps |
 |--------|-------------|-------|
-| `gmail` | Gmail ingestion | Read → Analyze → Enrich → Export |
+| `gmail` | Gmail workflow | Read → Analyze → Enrich → Export |
 | `full` | Full workflow with all steps | Read → Analyze → Enrich → Export |
 | `quick` | Skip enrichment | Read → Analyze → Export |
 | `analyzeOnly` | Only extract and analyze | Read → Analyze |
@@ -185,7 +185,7 @@ interface ProcessedItem {
 ## CLI Usage
 
 ```bash
-# Basic Gmail ingestion (last 7 days)
+# Basic Gmail workflow (last 7 days)
 bun run cli list source gmail
 
 # Filter by sender email
@@ -203,12 +203,12 @@ bun run cli list source gmail -f newsletter@example.com -l 7 -u
 
 ## Hexagonal Architecture Layers
 
-The ingestion flow follows hexagonal architecture:
+The workflow follows hexagonal architecture:
 
 1. **Domain Layer** (`@platform/platform-domain`)
-   - `DataIngestionService` - orchestrates ingestion
-   - `IngestionTask` - task entity
-   - `IIngestionTaskRepository` - port for task persistence
+   - `BackgroundTaskService` - orchestrates background tasks
+   - `BackgroundTask` - task entity
+   - `IBackgroundTaskRepository` - port for task persistence
 
 2. **Application Layer** (`tasks/workers/`)
    - `presets.ts` - workflow configurations
@@ -216,4 +216,4 @@ The ingestion flow follows hexagonal architecture:
 
 3. **Infrastructure Layer** (`infrastructure/`)
    - `GmailApiClient` - Gmail API adapter
-   - `DrizzleIngestionTaskRepository` - database adapter
+   - `DrizzleBackgroundTaskRepository` - database adapter

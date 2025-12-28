@@ -1,21 +1,21 @@
 import type { IBackgroundTaskRunner, BackgroundTaskOptions, IIdGenerator } from '@platform/task';
-import type { IIngestionTaskRepository } from '../../domain/ports/IIngestionTaskRepository.js';
-import type { IngestionTask } from '../../domain/entities/IngestionTask.js';
+import type { IBackgroundTaskRepository } from '../../domain/ports/IBackgroundTaskRepository.js';
+import type { BackgroundTask } from '../../domain/entities/BackgroundTask.js';
 
-export interface IngestionRequest {
+export interface TaskRequest {
     preset: string;
     filter?: unknown;
 }
 
-export class IngestionError extends Error {
+export class TaskError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = 'IngestionError';
+        this.name = 'TaskError';
     }
 }
 
-export class DataIngestionService {
-    private static readonly TASK_TYPE = 'ingest-workflow';
+export class BackgroundTaskService {
+    private static readonly TASK_TYPE = 'workflow';
     private static readonly DEFAULT_OPTIONS: BackgroundTaskOptions = {
         retryLimit: 3,
         retryDelay: 30,
@@ -24,21 +24,21 @@ export class DataIngestionService {
 
     constructor(
         private readonly taskRunner: IBackgroundTaskRunner,
-        private readonly repository: IIngestionTaskRepository,
+        private readonly repository: IBackgroundTaskRepository,
         private readonly idGenerator: IIdGenerator
     ) {}
 
-    async startIngestion(userId: string, request: IngestionRequest): Promise<IngestionTask> {
-        const taskId = this.idGenerator.generate('ingest');
+    async startTask(userId: string, request: TaskRequest): Promise<BackgroundTask> {
+        const taskId = this.idGenerator.generate('task');
 
         const backendTaskId = await this.taskRunner.submit(
-            DataIngestionService.TASK_TYPE,
+            BackgroundTaskService.TASK_TYPE,
             { taskId, userId, request },
-            DataIngestionService.DEFAULT_OPTIONS
+            BackgroundTaskService.DEFAULT_OPTIONS
         );
 
         if (!backendTaskId) {
-            throw new IngestionError('Failed to start data ingestion');
+            throw new TaskError('Failed to start background task');
         }
 
         return await this.repository.create({
@@ -49,11 +49,11 @@ export class DataIngestionService {
         });
     }
 
-    async getIngestion(taskId: string, userId: string): Promise<IngestionTask | null> {
+    async getTask(taskId: string, userId: string): Promise<BackgroundTask | null> {
         return await this.repository.findById(taskId, userId);
     }
 
-    async listIngestions(userId: string): Promise<IngestionTask[]> {
+    async listTasks(userId: string): Promise<BackgroundTask[]> {
         return await this.repository.findByUserId(userId);
     }
 }

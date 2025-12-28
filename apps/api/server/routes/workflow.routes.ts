@@ -1,47 +1,47 @@
 import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
-import { ingestValidator } from '../validators/ingest.validator';
+import { workflowValidator } from '../validators/workflow.validator';
 import { authMiddleware } from '@/middlewares/auth.middleware';
 import { getBoss, PgBossTaskRunner, TimestampIdGenerator } from '@platform/task';
-import { DataIngestionService, IngestionError } from '@platform/platform-domain';
-import { DrizzleIngestionTaskRepository } from '../infrastructure/DrizzleIngestionTaskRepository';
+import { BackgroundTaskService, TaskError } from '@platform/platform-domain';
+import { DrizzleBackgroundTaskRepository } from '../infrastructure/DrizzleBackgroundTaskRepository';
 
 // Lazy initialization - service is created on first use after boss is initialized
-let ingestionService: DataIngestionService | null = null;
+let taskService: BackgroundTaskService | null = null;
 
-function getIngestionService(): DataIngestionService {
-    if (!ingestionService) {
+function getTaskService(): BackgroundTaskService {
+    if (!taskService) {
         const taskRunner = new PgBossTaskRunner(getBoss());
-        const repository = new DrizzleIngestionTaskRepository();
+        const repository = new DrizzleBackgroundTaskRepository();
         const idGenerator = new TimestampIdGenerator();
-        ingestionService = new DataIngestionService(taskRunner, repository, idGenerator);
+        taskService = new BackgroundTaskService(taskRunner, repository, idGenerator);
     }
-    return ingestionService;
+    return taskService;
 }
 
-export const ingest = new Hono<HonoEnv>()
+export const workflows = new Hono<HonoEnv>()
     .use(authMiddleware)
 
     /**
-     * POST /api/ingest
-     * Start a new ingestion workflow
+     * POST /api/workflows
+     * Start a new workflow
      */
-    .post('/', ingestValidator, async (c) => {
+    .post('/', workflowValidator, async (c) => {
         const user = c.get('user');
         const request = c.req.valid('json');
 
         try {
-            const task = await getIngestionService().startIngestion(user.id, request);
+            const task = await getTaskService().startTask(user.id, request);
 
             return c.json({
                 taskId: task.taskId,
                 status: task.status,
-                message: 'Data ingestion started',
+                message: 'Workflow started',
                 preset: request.preset,
                 filter: request.filter,
             }, 202);
         } catch (error) {
-            if (error instanceof IngestionError) {
+            if (error instanceof TaskError) {
                 return c.json({ error: error.message }, 500);
             }
             throw error;
@@ -49,17 +49,17 @@ export const ingest = new Hono<HonoEnv>()
     })
 
     /**
-     * GET /api/ingest/:taskId
-     * Get status of an ingestion task
+     * GET /api/workflows/:taskId
+     * Get status of a workflow task
      */
     .get('/:taskId', async (c) => {
         const user = c.get('user');
         const taskId = c.req.param('taskId');
 
-        const task = await getIngestionService().getIngestion(taskId, user.id);
+        const task = await getTaskService().getTask(taskId, user.id);
 
         if (!task) {
-            return c.json({ error: 'Ingestion task not found' }, 404);
+            return c.json({ error: 'Task not found' }, 404);
         }
 
         return c.json({
@@ -77,13 +77,13 @@ export const ingest = new Hono<HonoEnv>()
     })
 
     /**
-     * GET /api/ingest
-     * List all ingestion tasks for the current user
+     * GET /api/workflows
+     * List all workflow tasks for the current user
      */
     .get('/', async (c) => {
         const user = c.get('user');
 
-        const tasks = await getIngestionService().listIngestions(user.id);
+        const tasks = await getTaskService().listTasks(user.id);
 
         return c.json({
             tasks: tasks.map((task) => ({

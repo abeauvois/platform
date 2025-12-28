@@ -1,16 +1,16 @@
 import type {
     WorkflowPreset,
-    IngestOptions,
+    WorkflowOptions,
     WorkflowExecuteOptions,
-    IIngestWorkflow,
+    IWorkflow,
     ILogger,
     ProcessedItem,
 } from './types.js';
 
 /**
- * API response when starting an ingest task
+ * API response when starting a workflow task
  */
-interface IngestTaskResponse {
+interface WorkflowTaskResponse {
     taskId: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
     message: string;
@@ -23,7 +23,7 @@ interface IngestTaskResponse {
 /**
  * API response when getting task status
  */
-interface IngestTaskStatus {
+interface WorkflowTaskStatus {
     taskId: string;
     preset: string;
     status: 'pending' | 'running' | 'completed' | 'failed';
@@ -52,20 +52,20 @@ interface IngestTaskStatus {
  */
 interface WorkflowConfig {
     preset: WorkflowPreset;
-    options: IngestOptions;
+    options: WorkflowOptions;
     logger: ILogger;
     baseUrl: string;
     sessionToken?: string;
 }
 
 /**
- * IngestWorkflow - Executes data ingestion workflows via API
+ * Workflow - Executes data workflows via API
  *
  * This class encapsulates a workflow that can be executed with lifecycle hooks.
- * It's returned by PlatformApiClient.ingest() and provides a fluent API for
+ * It's returned by PlatformApiClient.workflow.create() and provides a fluent API for
  * executing workflows with customizable event handlers.
  */
-export class IngestWorkflow implements IIngestWorkflow {
+export class Workflow implements IWorkflow {
     private readonly config: WorkflowConfig;
     private readonly pollIntervalMs = 500;
     private readonly maxPollAttempts = 120; // 60 seconds max wait
@@ -146,9 +146,9 @@ export class IngestWorkflow implements IIngestWorkflow {
     }
 
     /**
-     * Start the ingest task via API
+     * Start the workflow task via API
      */
-    private async startTask(): Promise<IngestTaskResponse> {
+    private async startTask(): Promise<WorkflowTaskResponse> {
         const { preset, options, logger } = this.config;
 
         logger.info(`Starting ${preset} workflow via API`);
@@ -161,7 +161,7 @@ export class IngestWorkflow implements IIngestWorkflow {
             csvOnly: options.csvOnly,
         };
 
-        return this.apiRequest<IngestTaskResponse>('/api/ingest', {
+        return this.apiRequest<WorkflowTaskResponse>('/api/workflows', {
             method: 'POST',
             body: JSON.stringify(body),
         });
@@ -173,7 +173,7 @@ export class IngestWorkflow implements IIngestWorkflow {
     private async pollTaskStatus(
         taskId: string,
         onItemProcessed?: (info: import('./types.js').ItemProcessedInfo) => void | Promise<void>
-    ): Promise<IngestTaskStatus> {
+    ): Promise<WorkflowTaskStatus> {
         const { logger } = this.config;
         let attempts = 0;
         let lastMessage = '';
@@ -185,7 +185,7 @@ export class IngestWorkflow implements IIngestWorkflow {
 
         try {
             while (attempts < this.maxPollAttempts) {
-                const status = await this.apiRequest<IngestTaskStatus>(`/api/ingest/${taskId}`);
+                const status = await this.apiRequest<WorkflowTaskStatus>(`/api/workflows/${taskId}`);
                 logger.debug(status.itemProgress ?
                     `Task ${taskId} status: ${status.status}, step: ${status.currentStep}, item progress: ${status.itemProgress.current}/${status.itemProgress.total}` :
                     `Task ${taskId} status: ${status.status}, step: ${status.currentStep}`);
@@ -261,7 +261,7 @@ export class IngestWorkflow implements IIngestWorkflow {
 
         // Log results
         const result = finalStatus.result ?? { itemsProcessed: 0, itemsCreated: 0, errors: [], processedItems: [] };
-        logger.info(`Processed ${result.itemsProcessed} items, createdx ${result.itemsCreated}`);
+        logger.info(`Processed ${result.itemsProcessed} items, created ${result.itemsCreated}`);
         if (result.errors.length > 0) {
             logger.warning(`Encountered ${result.errors.length} errors`);
         }

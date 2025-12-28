@@ -48,12 +48,29 @@ bun run apps/cli/index.ts <command>
 # List bookmarks
 bun run cli personal bookmark list
 
-# Trigger Gmail ingestion workflow
-bun run cli list source gmail --filter=user@example.com --limit-days=7
+# Direct Gmail read (synchronous, no workflow/task)
+bun run cli list source gmail --filter=user@example.com --limit-days=7 --with-url
 
-# Gmail ingestion with defaults (7 days)
+# Gmail read with defaults (7 days, no URL filter)
 bun run cli list source gmail
+
+# Trigger Gmail ingestion workflow (async, with analysis)
+bun run cli ingest gmail --filter=user@example.com --limit-days=7
 ```
+
+### Gmail Commands
+
+Two ways to read Gmail:
+
+| Command | Pattern | Use Case |
+|---------|---------|----------|
+| `list source gmail` | Direct (sync) | Quick reads, returns raw content immediately |
+| `ingest gmail` | Task-based (async) | Full workflow with analysis/enrichment steps |
+
+**Direct read flags:**
+- `--filter`, `-f` - Filter by sender email address
+- `--limit-days`, `-l` - Limit to emails from last N days (default: 7)
+- `--with-url`, `-u` - Only include emails containing URLs
 
 ## Configuration
 

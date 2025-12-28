@@ -1,15 +1,15 @@
 import type { PgBoss, Job } from '@platform/task';
 import {
     QUEUE_NAMES,
-    type IngestJobPayload,
-    type IngestJobResult,
+    type WorkflowJobPayload,
+    type JobResult,
     type ProcessedItem,
 } from '../types';
 import {
     WorkflowBuilder,
     BaseContent,
     type ILogger,
-    type IIngestionTaskRepository,
+    type IBackgroundTaskRepository,
 } from '@platform/platform-domain';
 import { getPreset } from './presets';
 
@@ -46,12 +46,12 @@ function contentToProcessedItem(content: BaseContent, index: number): ProcessedI
 }
 
 /**
- * Process an ingest task using WorkflowBuilder and preset configuration
+ * Process a workflow task using WorkflowBuilder and preset configuration
  */
-async function processIngestTask(
-    job: Job<IngestJobPayload>,
-    taskRepository: IIngestionTaskRepository
-): Promise<IngestJobResult> {
+async function processWorkflowTask(
+    job: Job<WorkflowJobPayload>,
+    taskRepository: IBackgroundTaskRepository
+): Promise<JobResult> {
     const { taskId, userId, request } = job.data;
     const logger = createTaskLogger(taskId);
 
@@ -135,22 +135,22 @@ async function processIngestTask(
 }
 
 /**
- * Register the ingest worker with pg-boss
+ * Register the workflow worker with pg-boss
  */
-export async function registerIngestWorker(
+export async function registerWorkflowWorker(
     boss: PgBoss,
-    taskRepository: IIngestionTaskRepository
+    taskRepository: IBackgroundTaskRepository
 ): Promise<void> {
-    await boss.work<IngestJobPayload>(
-        QUEUE_NAMES.INGEST,
+    await boss.work<WorkflowJobPayload>(
+        QUEUE_NAMES.WORKFLOW,
         { batchSize: 1 },
         async (jobs) => {
             for (const job of jobs) {
                 const { taskId, userId } = job.data;
-                console.log(`Processing ingest task ${taskId} for user ${userId}`);
+                console.log(`Processing workflow task ${taskId} for user ${userId}`);
 
                 try {
-                    const result = await processIngestTask(job, taskRepository);
+                    const result = await processWorkflowTask(job, taskRepository);
 
                     // Update final status
                     await taskRepository.updateStatus(taskId, {
@@ -175,5 +175,5 @@ export async function registerIngestWorker(
         }
     );
 
-    console.log(`Registered worker for ${QUEUE_NAMES.INGEST}`);
+    console.log(`Registered worker for ${QUEUE_NAMES.WORKFLOW}`);
 }

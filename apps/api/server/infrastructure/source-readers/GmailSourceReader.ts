@@ -59,6 +59,8 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
             // Save current timestamp for next run
             await gmailTimestampRepo.saveLastExecutionTime(new Date());
 
+            const today = new Date(Date.now());
+
             // Convert GmailMessage to BaseContent
             return messages.map(
                 (message) =>
@@ -68,8 +70,8 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
                         [],
                         message.subject,
                         message.rawContent,
-                        message.receivedAt,
-                        message.receivedAt,
+                        today,
+                        today,
                         'email'
                     )
             );

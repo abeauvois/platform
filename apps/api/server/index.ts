@@ -4,12 +4,12 @@ import { logger } from 'hono/logger';
 import { auth } from './lib/auth';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
-import { ingest } from './routes/ingest.routes';
+import { workflows } from './routes/workflow.routes';
 import { sources } from './routes/sources.routes';
 import { initBoss, stopBoss, createQueue } from '@platform/task';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
-import { DrizzleIngestionTaskRepository } from './infrastructure/DrizzleIngestionTaskRepository';
+import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgroundTaskRepository';
 
 const app = new Hono();
 
@@ -36,7 +36,7 @@ const router = app
   .on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
   .route('/api/bookmarks', bookmarks)
   .route('/api/config', config)
-  .route('/api/ingest', ingest)
+  .route('/api/workflows', workflows)
   .route('/api/sources', sources);
 
 export type AppType = typeof router;
@@ -48,8 +48,8 @@ async function startJobQueue() {
       throw new Error('DATABASE_URL environment variable is required');
     }
     const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
-    await createQueue(QUEUE_NAMES.INGEST);
-    const taskRepository = new DrizzleIngestionTaskRepository();
+    await createQueue(QUEUE_NAMES.WORKFLOW);
+    const taskRepository = new DrizzleBackgroundTaskRepository();
     await registerAllWorkers(boss, taskRepository);
     console.log('Job queue initialized');
   } catch (error) {

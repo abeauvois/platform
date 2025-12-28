@@ -72,8 +72,8 @@ describe.skipIf(!serverAvailable)('CLI Gmail Source Integration Tests', () => {
         });
     });
 
-    test('should trigger gmail ingestion with filter and limit-days', async () => {
-        const workflow = client.ingest.create('gmail', {
+    test('should trigger gmail workflow with filter and limit-days', async () => {
+        const workflow = client.workflow.create('gmail', {
             filter: {
                 email: 'abeauvois@gmail.com',
                 limitDays: 7,
@@ -113,8 +113,8 @@ describe.skipIf(!serverAvailable)('CLI Gmail Source Integration Tests', () => {
         expect(Array.isArray(finalProcessedItems)).toBe(true);
     }, { timeout: 30000 });
 
-    test('should trigger gmail ingestion with only limit-days', async () => {
-        const workflow = client.ingest.create('gmail', {
+    test('should trigger gmail workflow with only limit-days', async () => {
+        const workflow = client.workflow.create('gmail', {
             filter: {
                 limitDays: 3,
             },
@@ -131,8 +131,8 @@ describe.skipIf(!serverAvailable)('CLI Gmail Source Integration Tests', () => {
         expect(completed).toBe(true);
     }, { timeout: 30000 });
 
-    test('should trigger gmail ingestion with default options', async () => {
-        const workflow = client.ingest.create('gmail', {});
+    test('should trigger gmail workflow with default options', async () => {
+        const workflow = client.workflow.create('gmail', {});
 
         let completed = false;
 

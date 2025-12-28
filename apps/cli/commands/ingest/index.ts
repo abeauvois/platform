@@ -13,7 +13,7 @@ export const ingestCommand = command(
         name: 'ingest',
         commands: [sourceCommand],
         help: {
-            description: 'ingest and manage platform data',
+            description: 'ingest is a background task for that triggers a multi-steps workflow for platform data ingestion',
         },
     },
     argv => {
