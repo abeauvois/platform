@@ -1,5 +1,6 @@
 import { google, gmail_v1 } from 'googleapis';
 import { GmailMessage } from '@platform/platform-domain';
+import { truncateText } from '@platform/utils';
 
 /**
  * Port: IEmailClient interface
@@ -14,6 +15,36 @@ export interface GmailCredentials {
     clientSecret: string;
     refreshToken: string;
 }
+
+/**
+ * Normalized headers extracted from Gmail message
+ */
+interface NormalizedHeaders {
+    subject: string;
+    from: string;
+    to: string;
+    date: string;
+    receivedAt: Date;
+    url: string;
+}
+
+/**
+ * Normalized message content
+ */
+interface NormalizedContent {
+    body: string;
+    rawContent: string;
+    snippet: string;
+}
+
+/** Headers to preserve in the raw content summary */
+const PRESERVED_HEADERS = ['from', 'to', 'subject', 'date', 'url'] as const;
+
+/** URL regex pattern for detecting HTTP/HTTPS URLs */
+const URL_REGEX = /(https?:\/\/[^\s<>"')\]]+)/g;
+
+/** Maximum length for subject before truncation */
+const MAX_SUBJECT_LENGTH = 100;
 
 /**
  * Gmail API Client - Infrastructure adapter implementing IEmailClient
@@ -43,17 +74,9 @@ export class GmailApiClient implements IEmailClient {
      */
     async fetchMessagesSince(since: Date, filterEmail?: string, withUrl?: boolean): Promise<GmailMessage[]> {
         const messages: GmailMessage[] = [];
-
-        // Build Gmail search query
-        const afterTimestamp = Math.floor(since.getTime() / 1000);
-        let query = `after:${afterTimestamp}`;
-
-        if (filterEmail) {
-            query += ` from:${filterEmail}`;
-        }
+        const query = this.buildSearchQuery(since, filterEmail);
 
         try {
-            // Get message list
             const listResponse = await this.gmail.users.messages.list({
                 userId: 'me',
                 q: query,
@@ -62,13 +85,11 @@ export class GmailApiClient implements IEmailClient {
 
             const messageList = listResponse.data.messages || [];
 
-            // Fetch full message details for each message
             for (const msg of messageList) {
                 if (!msg.id) continue;
 
                 const fullMessage = await this.fetchMessageDetails(msg.id);
                 if (fullMessage) {
-                    // Filter by URL presence if withUrl is true
                     if (withUrl && !this.containsUrl(fullMessage.rawContent)) {
                         continue;
                     }
@@ -84,11 +105,110 @@ export class GmailApiClient implements IEmailClient {
     }
 
     /**
+     * Build Gmail search query string
+     */
+    private buildSearchQuery(since: Date, filterEmail?: string): string {
+        const afterTimestamp = Math.floor(since.getTime() / 1000);
+        let query = `after:${afterTimestamp}`;
+
+        if (filterEmail) {
+            query += ` from:${filterEmail}`;
+        }
+
+        return query;
+    }
+
+    /**
      * Check if content contains a URL
      */
     private containsUrl(content: string): boolean {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return urlRegex.test(content);
+        return URL_REGEX.test(content);
+    }
+
+    /**
+     * Extract first URL from content
+     */
+    private extractUrl(content: string): string {
+        // Reset regex lastIndex before using
+        URL_REGEX.lastIndex = 0;
+        const match = URL_REGEX.exec(content);
+        return match ? match[0] : '';
+    }
+
+    /**
+     * Normalize headers from Gmail message payload
+     * Extracts and structures relevant headers into a consistent format
+     */
+    private normalizeHeaders(headers: gmail_v1.Schema$MessagePartHeader[]): NormalizedHeaders {
+        const getHeader = (name: string): string => {
+            const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
+            return header?.value || '';
+        };
+
+        const subject = getHeader('Subject');
+        const from = getHeader('From');
+        const to = getHeader('To');
+        const dateStr = getHeader('Date');
+        const receivedAt = dateStr ? new Date(dateStr) : new Date();
+
+        // Extract URL from subject if present
+        const urlFromSubject = this.extractUrl(subject);
+
+        return {
+            subject,
+            from,
+            to,
+            date: dateStr,
+            receivedAt,
+            url: urlFromSubject,
+        };
+    }
+
+    /**
+     * Normalize body content and extract URL if not already found in headers
+     * @param payload - Gmail message payload
+     * @param headers - Already normalized headers (may be mutated to add URL and truncate subject)
+     */
+    private normalizeBody(
+        payload: gmail_v1.Schema$MessagePart | undefined,
+        headers: NormalizedHeaders,
+        snippet: string
+    ): NormalizedContent {
+        let body = this.extractBodyContent(payload);
+
+        // If no URL found in subject, try to extract from body
+        if (!headers.url) {
+            headers.url = this.extractUrl(body);
+        }
+
+        // If subject is too long, prepend full subject to body and truncate the header
+        const originalSubject = headers.subject;
+        if (originalSubject.length > MAX_SUBJECT_LENGTH) {
+            body = `[Full Subject]: ${originalSubject}\n\n${body}`;
+            headers.subject = truncateText(originalSubject, MAX_SUBJECT_LENGTH);
+        }
+
+        // Build header summary for raw content
+        const headerEntries: Array<{ name: string; value: string }> = [
+            { name: 'from', value: headers.from },
+            { name: 'to', value: headers.to },
+            { name: 'subject', value: headers.subject },
+            { name: 'date', value: headers.date },
+            { name: 'url', value: headers.url },
+        ];
+
+        const headerSummary = headerEntries
+            .filter(h => h.value && PRESERVED_HEADERS.includes(h.name as typeof PRESERVED_HEADERS[number]))
+            .map(h => `${h.name}: ${h.value}`)
+            .join('\n');
+
+        const rawContent = headerSummary + '\n' + body;
+
+        return {
+            body,
+            rawContent,
+            snippet,
+        };
     }
 
     /**
@@ -105,53 +225,21 @@ export class GmailApiClient implements IEmailClient {
             const message = response.data;
             if (!message) return null;
 
-            // Extract headers
-            const headers = message.payload?.headers || [];
-            const getHeader = (name: string): string => {
-                const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
-                return header?.value || '';
-            };
-
-            const subject = getHeader('Subject');
-            const from = getHeader('From');
-            const dateStr = getHeader('Date');
-            const receivedAt = dateStr ? new Date(dateStr) : new Date();
-
-            const bodyContent = this.extractBodyContent(message.payload);
-
-            const keepHeaders = (name: string) => {
-                const lowerName = name.toLowerCase();
-                return ['from', 'to', 'subject', 'date', 'has-url'].includes(lowerName);
-            }
-
-            const includesUrl = (content: string) => {
-                const urlRegex = /(https?:\/\/[^\s]+)/g;
-                return urlRegex.test(content);
-            }
-
-            const getUrl = () => {
-                const urlRegex = /(https?:\/\/[^\s]+)/g;
-                const match = urlRegex.exec(bodyContent);
-                return match ? match[0] : '';
-            }
-
-            if (includesUrl(bodyContent)) {
-                const url = getUrl();
-                headers.push({ name: 'url', value: url });
-            }
-
-            const headerSummary = headers.filter(h => h.name && keepHeaders(h.name)).map(h => `${h.name}: ${h.value}`).join('\n')
-            // Extract body content
-            const rawContent = headerSummary + '\n' + bodyContent;
-            const snippet = message.snippet || '';
+            const rawHeaders = message.payload?.headers || [];
+            const headers = this.normalizeHeaders(rawHeaders);
+            const content = this.normalizeBody(
+                message.payload,
+                headers,
+                message.snippet || ''
+            );
 
             return new GmailMessage(
                 messageId,
-                subject,
-                from,
-                receivedAt,
-                snippet,
-                rawContent
+                headers.subject,
+                headers.from,
+                headers.receivedAt,
+                content.snippet,
+                content.rawContent
             );
         } catch (error) {
             console.error(`Failed to fetch message ${messageId}:`, error);
@@ -161,6 +249,7 @@ export class GmailApiClient implements IEmailClient {
 
     /**
      * Extract body content from message payload
+     * Prefers text/plain, falls back to text/html (stripped of tags)
      */
     private extractBodyContent(payload: gmail_v1.Schema$MessagePart | undefined): string {
         if (!payload) return '';
@@ -172,12 +261,13 @@ export class GmailApiClient implements IEmailClient {
 
         // Check for multipart content
         if (payload.parts) {
-            // Prefer text/plain, fallback to text/html
+            // Prefer text/plain
             const textPart = payload.parts.find(p => p.mimeType === 'text/plain');
             if (textPart?.body?.data) {
                 return this.decodeBase64(textPart.body.data);
             }
 
+            // Fallback to text/html
             const htmlPart = payload.parts.find(p => p.mimeType === 'text/html');
             if (htmlPart?.body?.data) {
                 return this.stripHtml(this.decodeBase64(htmlPart.body.data));

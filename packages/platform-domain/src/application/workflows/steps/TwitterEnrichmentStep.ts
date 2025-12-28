@@ -1,3 +1,4 @@
+import { truncateText } from '@platform/utils';
 import { Bookmark } from '../../../domain/entities/Bookmark';
 import { IContentAnalyser } from '../../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../../domain/ports/ILogger';
@@ -37,7 +38,7 @@ export class TwitterEnrichmentStep implements IWorkflowStep<Bookmark> {
             const bookmark = context.items[i];
             if (!this.isTwitterUrl(bookmark.url)) continue;
 
-            const truncatedUrl = this.truncateUrl(bookmark.url);
+            const truncatedUrl = truncateText(bookmark.url, ExtractLinksConfig.LINK.MAX_LOG_LENGTH);
             this.logger.info(`  Fetching tweet: ${truncatedUrl}`);
 
             try {
@@ -75,10 +76,5 @@ export class TwitterEnrichmentStep implements IWorkflowStep<Bookmark> {
 
     private isTwitterUrl(url: string): boolean {
         return url.includes('twitter.com/') || url.includes('x.com/') || url.includes('t.co/');
-    }
-
-    private truncateUrl(url: string): string {
-        const maxLength = ExtractLinksConfig.LINK.MAX_LOG_LENGTH;
-        return url.length > maxLength ? url.slice(0, maxLength - 3) + '...' : url;
     }
 }

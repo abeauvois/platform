@@ -16,7 +16,8 @@
         "build": "tsc -p tsconfig.json"
     },
     "dependencies": {
-        "@platform/task": "workspace:*"
+        "@platform/task": "workspace:*",
+        "@platform/utils": "workspace:*"
     },
     "devDependencies": {
         "typescript": "^5.0.0"

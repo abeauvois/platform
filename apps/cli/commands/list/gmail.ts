@@ -1,5 +1,6 @@
 import { command } from 'cleye';
 import * as p from '@clack/prompts';
+import { truncateText } from '@platform/utils';
 import { createCliContext, getDefaultEmail } from '../../lib/cli-context.js';
 
 /**
@@ -79,7 +80,7 @@ export const gmailCommand = command({
                 p.log.error('An error occurred during ingestion.');
             },
             onComplete: ({ processedItems }) => {
-                processedItems.map(item => p.note(item.rawContent.slice(0, 280)));
+                processedItems.map(item => p.note(truncateText(item.rawContent, 300)));
             }
         });
 

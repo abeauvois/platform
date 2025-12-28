@@ -35,6 +35,7 @@
         "@platform/db": "workspace:*",
         "@platform/platform-domain": "workspace:*",
         "@platform/task": "workspace:*",
+        "@platform/utils": "workspace:*",
         "drizzle-orm": "^0.44.4",
         "hono": "^4.8.12",
         "pg": "^8.16.3",
@@ -164,6 +165,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@platform/task": "workspace:*",
+        "@platform/utils": "workspace:*",
       },
       "devDependencies": {
         "typescript": "^5.0.0",
@@ -186,6 +188,13 @@
       "dependencies": {
         "pg-boss": "^12.5.4",
       },
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
+    "packages/platform-utils": {
+      "name": "@platform/utils",
+      "version": "0.0.1",
       "devDependencies": {
         "typescript": "^5.0.0",
       },
@@ -443,6 +452,8 @@
     "@platform/trading-domain": ["@platform/trading-domain@workspace:packages/trading-domain"],
 
     "@platform/trading-sdk": ["@platform/trading-sdk@workspace:packages/trading-sdk"],
+
+    "@platform/utils": ["@platform/utils@workspace:packages/platform-utils"],
 
     "@poppinss/cliui": ["@poppinss/cliui@6.5.0", "", { "dependencies": { "@poppinss/colors": "^4.1.5", "cli-boxes": "^4.0.1", "cli-table3": "^0.6.5", "cli-truncate": "^5.1.0", "log-update": "^7.0.1", "pretty-hrtime": "^1.0.3", "string-width": "^8.1.0", "supports-color": "^10.2.2", "terminal-size": "^4.0.0", "wordwrap": "^1.0.0" } }, "sha512-Z1eJxk0k/JZvTjeL8RZ/K8SFfB7RIajoAzBFeOFBzJ8zM0sm9u7gWZS/q+8GChozcV20WdJNwSPrbq/BToJl0w=="],
 

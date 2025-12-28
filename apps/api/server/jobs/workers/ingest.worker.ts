@@ -23,6 +23,7 @@ import {
 import type { IngestRequest } from '../../validators/ingest.validator';
 import { GmailApiClient } from '../../infrastructure/GmailApiClient';
 import { InMemoryTimestampRepository } from '../../infrastructure/InMemoryTimestampRepository';
+import { truncateText } from '@platform/utils';
 
 // Singleton timestamp repository to persist state across jobs
 const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
@@ -72,7 +73,8 @@ function createGmailSourceReader(logger: ILogger): ISourceReader | undefined {
             );
 
             logger.info(`Found ${messages.length} Gmail messages`);
-            logger.info(messages.map(m => `- ${m.rawContent.slice(0, 280)} (${m.receivedAt.toISOString()})`).join('\n'));
+            logger.info(messages.map(m => truncateText(m.rawContent, 380)).join('\n'));
+            logger.info('\n');
 
             // Save current timestamp for next run
             await gmailTimestampRepo.saveLastExecutionTime(new Date());

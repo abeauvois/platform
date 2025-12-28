@@ -1,3 +1,4 @@
+import { truncateText } from '@platform/utils';
 import { Bookmark } from '../../../domain/entities/Bookmark';
 import { IContentAnalyser } from '../../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../../domain/ports/ILogger';
@@ -29,7 +30,7 @@ export class AnalysisStep implements IWorkflowStep<Bookmark> {
 
         for (let i = 0; i < context.items.length; i++) {
             const bookmark = context.items[i];
-            const truncatedUrl = this.truncateUrl(bookmark.url);
+            const truncatedUrl = truncateText(bookmark.url, ExtractLinksConfig.LINK.MAX_LOG_LENGTH);
             this.logger.info(`  [${i + 1}/${context.items.length}] Analyzing: ${truncatedUrl}`);
 
             try {
@@ -53,8 +54,4 @@ export class AnalysisStep implements IWorkflowStep<Bookmark> {
         };
     }
 
-    private truncateUrl(url: string): string {
-        const maxLength = ExtractLinksConfig.LINK.MAX_LOG_LENGTH;
-        return url.length > maxLength ? url.slice(0, maxLength - 3) + '...' : url;
-    }
 }
