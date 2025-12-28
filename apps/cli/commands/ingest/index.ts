@@ -1,19 +1,19 @@
 import { command, cli } from 'cleye';
-import { sourceCommand } from './source.js';
-import { listGmailCommand } from './list-gmail-command.js';
+import { sourceCommand } from './source';
+import { ingestGmailCommand } from './ingest-gmail-command.js';
 
 /**
- * List command - List and manage platform data
+ * ingest command - ingest and manage platform data
  *
  * Usage:
- *   cli list source gmail [options]
+ *   cli ingest source gmail [options]
  */
-export const listCommand = command(
+export const ingestCommand = command(
     {
-        name: 'list',
+        name: 'ingest',
         commands: [sourceCommand],
         help: {
-            description: 'List from platform data sources',
+            description: 'ingest and manage platform data',
         },
     },
     argv => {
@@ -31,7 +31,7 @@ export const listCommand = command(
 
                     cli(
                         {
-                            commands: [listGmailCommand],
+                            commands: [ingestGmailCommand],
                         },
                         undefined,
                         args

@@ -1,15 +1,15 @@
 import { command } from 'cleye';
-import { listGmailCommand } from './list-gmail-command.js';
+import { ingestGmailCommand } from './ingest-gmail-command.js';
 
 /**
  * Source command - Manage data sources for ingestion
  *
  * Usage:
- *   cli list source gmail [options]
+ *   cli ingest source gmail [options]
  */
 export const sourceCommand = command({
     name: 'source',
-    commands: [listGmailCommand],
+    commands: [ingestGmailCommand],
     help: {
         description: 'Manage data sources for ingestion',
     },

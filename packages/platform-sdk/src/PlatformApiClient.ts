@@ -3,6 +3,7 @@ import { AuthClient } from './clients/AuthClient.js';
 import { BookmarkClient } from './clients/BookmarkClient.js';
 import { ConfigClient } from './clients/ConfigClient.js';
 import { IngestClient } from './clients/IngestClient.js';
+import { SourcesClient } from './clients/SourcesClient.js';
 import type { BaseClient } from './clients/BaseClient.js';
 
 interface PlatformApiClientConfig {
@@ -84,6 +85,7 @@ export class PlatformApiClient {
     readonly bookmarks: BookmarkClient;
     readonly config: ConfigClient;
     readonly ingest: IngestClient;
+    readonly sources: SourcesClient;
 
     private readonly clients: BaseClient[];
     private readonly authClient: AuthClient;
@@ -99,8 +101,9 @@ export class PlatformApiClient {
         this.bookmarks = new BookmarkClient(clientConfig);
         this.config = new ConfigClient(clientConfig);
         this.ingest = new IngestClient(clientConfig);
+        this.sources = new SourcesClient(clientConfig);
 
-        this.clients = [this.authClient, this.bookmarks, this.config, this.ingest];
+        this.clients = [this.authClient, this.bookmarks, this.config, this.ingest, this.sources];
         this.auth = new SyncedAuthClient(this.authClient, this.clients);
     }
 

@@ -5,6 +5,7 @@ import { auth } from './lib/auth';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { ingest } from './routes/ingest.routes';
+import { sources } from './routes/sources.routes';
 import { initBoss, stopBoss, createQueue } from '@platform/task';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
@@ -35,7 +36,8 @@ const router = app
   .on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
   .route('/api/bookmarks', bookmarks)
   .route('/api/config', config)
-  .route('/api/ingest', ingest);
+  .route('/api/ingest', ingest)
+  .route('/api/sources', sources);
 
 export type AppType = typeof router;
 

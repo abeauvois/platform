@@ -13,8 +13,11 @@ export {
     BookmarkClient,
     ConfigClient,
     IngestClient,
+    SourcesClient,
     type BaseClientConfig,
     type Bookmark,
+    type GmailReadOptions,
+    type SourceContentItem,
 } from './clients/index.js';
 
 // Config Providers

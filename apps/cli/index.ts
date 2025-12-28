@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
 import { cli } from 'cleye';
-import { personalCommand } from './commands/personal.js';
 import { listCommand } from './commands/list/index.js';
+import { ingestCommand } from './commands/ingest/index.js';
 
 /**
  * CLI Entry Point: Platform CLI
@@ -22,7 +22,7 @@ cli({
         },
     },
 
-    commands: [personalCommand, listCommand],
+    commands: [listCommand, ingestCommand],
 
     help: {
         description: 'Platform CLI for managing personal data',

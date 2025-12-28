@@ -9,7 +9,7 @@ import { createCliContext, getDefaultEmail } from '../../lib/cli-context.js';
  * Usage:
  *   cli list source gmail --filter=email@example.com --limit-days=7
  */
-export const gmailCommand = command({
+export const ingestGmailCommand = command({
     name: 'gmail',
     flags: {
         filter: {
@@ -34,7 +34,8 @@ export const gmailCommand = command({
         description: 'Trigger Gmail ingestion workflow',
     },
 }, async (argv) => {
-    p.intro('Gmail Source Ingestion');
+    console.log("🚀 ~ argv:", argv)
+    p.intro('Gmail Source Ingestion as base content');
 
     try {
         // Create authenticated CLI context (handles auth, API client, and config)
@@ -85,7 +86,7 @@ export const gmailCommand = command({
                 p.log.error('An error occurred during ingestion.');
             },
             onComplete: ({ processedItems }) => {
-                processedItems.map(item => p.note(truncateText(item.rawContent, 300)));
+                processedItems.forEach(item => p.note(truncateText(item.rawContent, 300)));
             }
         });
 
