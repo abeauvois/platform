@@ -36,23 +36,26 @@ export interface IExportService {
 }
 
 /**
- * Extract step - fetches items from the source (Gmail, etc.)
+ * Read step - fetches items from the source (Gmail, etc.)
  */
-export class ExtractStep implements IWorkflowStep<BaseContent> {
-    readonly name = 'extract';
+export class ReadStep implements IWorkflowStep<BaseContent> {
+    readonly name = 'read';
 
     constructor(
         private readonly preset: string,
         private readonly filter: IngestRequest['filter'],
         private readonly logger: ILogger,
-        private readonly sourceReader?: ISourceReader
+        private readonly sourceReader: ISourceReader
     ) { }
 
     async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
-        this.logger.info(`Extracting items from ${this.preset} source...`);
+
+        this.logger.info(`Reading items from ${this.preset} source...`);
 
         // Fetch items from source
-        const items = await this.fetchFromSource();
+        const items = await this.sourceReader.read({
+            filter: this.filter,
+        });
 
         // Notify progress for each item
         for (let i = 0; i < items.length; i++) {
@@ -67,25 +70,15 @@ export class ExtractStep implements IWorkflowStep<BaseContent> {
             }
         }
 
-        this.logger.info(`Extracted ${items.length} items`);
+        this.logger.info(`Readed ${items.length} items`);
 
         return {
             context: { ...context, items },
             continue: true,
-            message: `Extracted ${items.length} items from ${this.preset}`,
+            message: `Readed ${items.length} items from ${this.preset}`,
         };
     }
 
-    private async fetchFromSource(): Promise<BaseContent[]> {
-        // Use injected source reader if available
-        if (this.sourceReader) {
-            return await this.sourceReader.read({
-                filter: this.filter,
-            });
-        }
-
-        throw new Error('No source reader configured for extraction');
-    }
 }
 
 /**

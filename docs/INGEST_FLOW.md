@@ -1,6 +1,6 @@
-# Gmail Ingest Flow
+# Ingest Flow
 
-This document describes the data flow for Gmail ingestion from CLI to background task.
+This document describes the data flow for content ingestion from CLI to background task.
 
 ## Architecture Diagram
 
@@ -28,8 +28,8 @@ This document describes the data flow for Gmail ingestion from CLI to background
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
 │  │  IngestWorkflow.execute()                                           │        │
 │  │  const { preset, options, logger } = this.config;                   │        │
-│  │  • POST /api/ingest → startJob()                                    │        │
-│  │  • GET /api/ingest/:taskId → pollJobStatus() (loops until done)     │        │
+│  │  • POST /api/ingest → startTask()                                   │        │
+│  │  • GET /api/ingest/:taskId → pollTaskStatus() (loops until done)    │        │
 │  │  • Fires hooks: onStart, onItemProcessed, onComplete, onError       │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
@@ -55,12 +55,12 @@ This document describes the data flow for Gmail ingestion from CLI to background
 │  apps/api/server/routes/ingest.routes.ts                                        │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
 │  │  POST /api/ingest                                                   │        │
-│  │  • Creates taskId                                                   │        │
-│  │  • Enqueues job to pg-boss queue                                    │        │
+│  │  • Creates taskId via DataIngestionService                          │        │
+│  │  • Enqueues task to pg-boss queue                                   │        │
 │  │  • Returns { taskId, status: 'pending' }                            │        │
 │  │                                                                     │        │
 │  │  GET /api/ingest/:taskId                                            │        │
-│  │  • Returns job status + progress + result                           │        │
+│  │  • Returns task status + progress + result                          │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 └─────────────────────────────────┼───────────────────────────────────────────────┘
@@ -70,20 +70,20 @@ This document describes the data flow for Gmail ingestion from CLI to background
 │                           BACKGROUND WORKER                                     │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│  apps/api/server/jobs/workers/ingest.worker.ts                                  │
+│  apps/api/server/tasks/workers/ingest.worker.ts                                 │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  processIngestJob()                                                 │        │
+│  │  processIngestTask()                                                │        │
 │  │  • Gets SourceReader for preset (e.g., createGmailSourceReader)     │        │
 │  │  • Builds WorkflowBuilder with steps:                               │        │
-│  │      ExtractStep → AnalyzeStep → EnrichStep → ExportStep            │        │
-│  │  • Converts Bookmark[] → ProcessedItem[] via bookmarkToProcessedItem│        │
+│  │      ReadStep → AnalyzeStep → EnrichStep → ExportStep               │        │
+│  │  • Converts BaseContent[] → ProcessedItem[]                         │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
-│  createGmailSourceReader()                                                      │
+│  apps/api/server/tasks/workers/presets.ts                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  ISourceReader.ingest(config)                                       │        │
-│  │  • Calls gmailClient.fetchMessagesSince(since, email, withUrl)      │        │
-│  │  • Converts GmailMessage[] → BaseContent[]                          │        │
+│  │  Preset configurations (gmail, full, quick, analyzeOnly, etc.)      │        │
+│  │  • createSourceReader() - returns ISourceReader for the preset      │        │
+│  │  • createSteps() - returns workflow steps for the preset            │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 └─────────────────────────────────┼───────────────────────────────────────────────┘
@@ -103,6 +103,13 @@ This document describes the data flow for Gmail ingestion from CLI to background
 │  │  • Returns GmailMessage[]                                           │        │
 │  └─────────────────────────────────────────────────────────────────────┘        │
 │                                                                                 │
+│  apps/api/server/infrastructure/DrizzleIngestionTaskRepository.ts               │
+│  ┌─────────────────────────────────────────────────────────────────────┐        │
+│  │  DrizzleIngestionTaskRepository implements IIngestionTaskRepository │        │
+│  │  • Persists task state to PostgreSQL via Drizzle ORM                │        │
+│  │  • Maps domain (taskId) ↔ database (id, pgBossJobId)                │        │
+│  └─────────────────────────────────────────────────────────────────────┘        │
+│                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -115,7 +122,7 @@ User CLI Input
 IngestFilter { email, limitDays, withUrl }
      │
      ▼
-POST /api/ingest ──► pg-boss queue ──► Worker picks up job
+POST /api/ingest ──► pg-boss queue ──► Worker picks up task
      │                                        │
      │                                        ▼
      │                              GmailApiClient.fetchMessagesSince()
@@ -124,13 +131,13 @@ POST /api/ingest ──► pg-boss queue ──► Worker picks up job
      │                              GmailMessage[] → BaseContent[]
      │                                        │
      │                                        ▼
-     │                              WorkflowBuilder (Extract→Analyze→Enrich→Export)
+     │                              WorkflowBuilder (Read→Analyze→Enrich→Export)
      │                                        │
      │                                        ▼
-     │                              Bookmark[] → ProcessedItem[]
+     │                              BaseContent[] → ProcessedItem[]
      │                                        │
      ▼                                        ▼
-GET /api/ingest/:taskId ◄──────── Job status + result stored
+GET /api/ingest/:taskId ◄──────── Task status + result stored
      │
      ▼
 SDK polls until completed, fires onComplete({ processedItems })
@@ -164,6 +171,17 @@ interface ProcessedItem {
 }
 ```
 
+## Available Presets
+
+| Preset | Description | Steps |
+|--------|-------------|-------|
+| `gmail` | Gmail ingestion | Read → Analyze → Enrich → Export |
+| `full` | Full workflow with all steps | Read → Analyze → Enrich → Export |
+| `quick` | Skip enrichment | Read → Analyze → Export |
+| `analyzeOnly` | Only extract and analyze | Read → Analyze |
+| `twitterFocus` | Always include Twitter enrichment | Read → Analyze → Enrich → Export |
+| `csvOnly` | Force CSV export only | Read → Analyze → Enrich → Export (CSV) |
+
 ## CLI Usage
 
 ```bash
@@ -182,3 +200,20 @@ bun run cli list source gmail --with-url
 # Combined filters
 bun run cli list source gmail -f newsletter@example.com -l 7 -u
 ```
+
+## Hexagonal Architecture Layers
+
+The ingestion flow follows hexagonal architecture:
+
+1. **Domain Layer** (`@platform/platform-domain`)
+   - `DataIngestionService` - orchestrates ingestion
+   - `IngestionTask` - task entity
+   - `IIngestionTaskRepository` - port for task persistence
+
+2. **Application Layer** (`tasks/workers/`)
+   - `presets.ts` - workflow configurations
+   - `workflow.steps.ts` - step implementations
+
+3. **Infrastructure Layer** (`infrastructure/`)
+   - `GmailApiClient` - Gmail API adapter
+   - `DrizzleIngestionTaskRepository` - database adapter

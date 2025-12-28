@@ -2,13 +2,12 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { auth } from './lib/auth';
-import { todos } from './routes/todo.routes';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { ingest } from './routes/ingest.routes';
 import { initBoss, stopBoss, createQueue } from '@platform/task';
-import { registerAllWorkers } from './jobs/workers';
-import { QUEUE_NAMES } from './jobs/types';
+import { registerAllWorkers } from './tasks/workers';
+import { QUEUE_NAMES } from './tasks/types';
 import { DrizzleIngestionTaskRepository } from './infrastructure/DrizzleIngestionTaskRepository';
 
 const app = new Hono();
@@ -34,7 +33,6 @@ const router = app
   )
   .get('/api/health', (c) => c.json({ status: 'ok' }))
   .on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
-  .route('/api/todos', todos)
   .route('/api/bookmarks', bookmarks)
   .route('/api/config', config)
   .route('/api/ingest', ingest);

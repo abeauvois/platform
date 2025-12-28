@@ -61,7 +61,7 @@ The API server (`/apps/api`) is the single source of truth for configuration. En
 
 ### Task Abstraction Pattern
 
-Background jobs follow hexagonal architecture with a unified "Task" concept:
+Background tasks follow hexagonal architecture with a unified "Task" concept:
 
 - **Domain**: Uses `taskId`, `TaskStatus`, `IngestionTask` (not "job" terminology)
 - **Ports**: `IBackgroundTaskRunner`, `IIdGenerator` in `@platform/task`
@@ -72,6 +72,27 @@ Background jobs follow hexagonal architecture with a unified "Task" concept:
 // Domain service expresses intent, not implementation
 const task = await ingestionService.startIngestion(userId, request);
 // Returns IngestionTask with taskId, not "jobId"
+```
+
+### API Server Structure
+
+The API server (`/apps/api/server`) follows hexagonal architecture:
+
+```
+/apps/api/server/
+├── infrastructure/          # Adapters implementing domain ports
+│   ├── DrizzleIngestionTaskRepository.ts   # IIngestionTaskRepository
+│   ├── GmailApiClient.ts                   # IEmailClient
+│   ├── InMemoryBookmarkRepository.ts       # ILinkRepository
+│   └── InMemoryTimestampRepository.ts      # ITimestampRepository
+├── tasks/                   # Background task workers (pg-boss)
+│   ├── types.ts             # Task payload/result types
+│   └── workers/             # Worker implementations
+│       ├── ingest.worker.ts # Ingestion workflow worker
+│       ├── presets.ts       # Workflow preset configurations
+│       └── workflow.steps.ts # Workflow step implementations
+├── routes/                  # HTTP API adapters
+└── validators/              # Request validation (Zod)
 ```
 
 ## Test-Driven Development (TDD) Requirements

@@ -116,7 +116,7 @@ export interface IWorkflow<T> {
  * @example
  * ```typescript
  * const workflow = new WorkflowBuilder<MyItem>(logger)
- *     .addStep(new ExtractStep())
+ *     .addStep(new ReadStep())
  *     .addStep(new ProcessStep())
  *     .addStep(new ExportStep())
  *     .build();
@@ -128,7 +128,7 @@ export class WorkflowBuilder<T> {
     protected steps: IWorkflowStep<T>[] = [];
     protected hooks: WorkflowLifecycleHooks<T> = {};
 
-    constructor(protected readonly logger: ILogger) {}
+    constructor(protected readonly logger: ILogger) { }
 
     /**
      * Register a callback to be called before workflow execution starts

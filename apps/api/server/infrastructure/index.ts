@@ -4,3 +4,4 @@ export {
     timestampRepository,
     type ITimestampRepository,
 } from './InMemoryTimestampRepository';
+export { InMemoryBookmarkRepository } from './InMemoryBookmarkRepository';

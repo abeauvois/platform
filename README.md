@@ -65,10 +65,19 @@ The core domain follows hexagonal architecture:
 
 | App | Port | Purpose |
 |-----|------|---------|
-| api | 3000 | Central platform server (auth, todos, bookmarks, config) |
+| api | 3000 | Central platform server (auth, todos, bookmarks, config, ingest) |
 | dashboard | 5000 | React frontend for the platform |
 | trading server | 3001 | Trading-specific APIs (Binance integration) |
 | trading client | 5001 | Connects to both API server (auth) and trading server |
+
+### API Server Structure
+
+The API server follows hexagonal architecture with clear separation:
+
+- `infrastructure/` - Adapters implementing domain ports (repositories, API clients)
+- `tasks/` - Background task workers (pg-boss based)
+- `routes/` - HTTP API endpoints
+- `validators/` - Request validation schemas
 
 ### Configuration
 

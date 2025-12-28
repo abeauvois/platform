@@ -9,7 +9,7 @@ import { GmailApiClient } from '../../infrastructure/GmailApiClient';
 import { InMemoryTimestampRepository } from '../../infrastructure/InMemoryTimestampRepository';
 import { truncateText } from '@platform/utils';
 import type { IngestRequest } from '../../validators/ingest.validator';
-import { ExtractStep, AnalyzeStep, EnrichStep, ExportStep } from './workflow.steps';
+import { ReadStep, AnalyzeStep, EnrichStep, ExportStep } from './workflow.steps';
 
 // Singleton timestamp repository to persist state across jobs
 const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
@@ -108,7 +108,7 @@ function createDefaultSteps(config: StepFactoryConfig): IWorkflowStep<BaseConten
     const steps: IWorkflowStep<BaseContent>[] = [];
 
     // Extract step is always required
-    steps.push(new ExtractStep('default', config.filter, config.logger, config.sourceReader));
+    steps.push(new ReadStep('default', config.filter, config.logger, config.sourceReader));
 
     // Conditional analysis step
     if (!config.skipAnalysis) {
@@ -135,7 +135,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         createSourceReader: createGmailSourceReader,
         createSteps: (config) => {
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ExtractStep('gmail', config.filter, config.logger, config.sourceReader));
+            steps.push(new ReadStep('gmail', config.filter, config.logger, config.sourceReader));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
             if (!config.skipTwitter) steps.push(new EnrichStep(config.logger));
             steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
@@ -155,7 +155,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         createSteps: (config) => {
             // Quick preset skips enrichment
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ExtractStep('quick', config.filter, config.logger, config.sourceReader));
+            steps.push(new ReadStep('quick', config.filter, config.logger, config.sourceReader));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
             steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
             return steps;
@@ -168,7 +168,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         createSteps: (config) => {
             // Only extract and analyze, no export
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ExtractStep('analyzeOnly', config.filter, config.logger, config.sourceReader));
+            steps.push(new ReadStep('analyzeOnly', config.filter, config.logger, config.sourceReader));
             steps.push(new AnalyzeStep(config.logger));
             return steps;
         },
@@ -180,7 +180,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         createSteps: (config) => {
             // Always include enrichment for Twitter focus
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ExtractStep('twitterFocus', config.filter, config.logger, config.sourceReader));
+            steps.push(new ReadStep('twitterFocus', config.filter, config.logger, config.sourceReader));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
             steps.push(new EnrichStep(config.logger)); // Always enrich for Twitter
             steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
@@ -193,7 +193,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         createSourceReader: () => undefined,
         createSteps: (config) => {
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ExtractStep('csvOnly', config.filter, config.logger, config.sourceReader));
+            steps.push(new ReadStep('csvOnly', config.filter, config.logger, config.sourceReader));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
             if (!config.skipTwitter) steps.push(new EnrichStep(config.logger));
             steps.push(new ExportStep(true, config.logger)); // Force CSV only

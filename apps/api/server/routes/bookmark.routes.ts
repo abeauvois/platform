@@ -3,7 +3,7 @@ import type { HonoEnv } from '../types'
 import { createBookmarkValidator } from '../validators/create-bookmark.validator'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 import { Bookmark, GetBookmarksByUserIdService } from '@platform/platform-domain'
-import { InMemoryBookmarkRepository } from '../repositories/InMemoryBookmarkRepository'
+import { InMemoryBookmarkRepository } from '../infrastructure/InMemoryBookmarkRepository'
 
 const repository = new InMemoryBookmarkRepository()
 const getBookmarksByUserIdService = new GetBookmarksByUserIdService(repository)
