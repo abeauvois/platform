@@ -70,7 +70,12 @@ export const gmailCommand = command({
         p.note(configLines.join('\n'), 'Configuration');
 
         // Create and execute workflow
-        const workflow = ctx.apiClient.ingest.create('gmail', { filter });
+        const workflow = ctx.apiClient.ingest.create('gmail', {
+            filter,
+            skipAnalysis: false,
+            skipTwitter: true
+        }
+        );
 
         await workflow.execute({
             onItemProcessed: ({ index, total }) => {

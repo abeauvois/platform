@@ -10,6 +10,7 @@
 export const SOURCE_ADAPTERS = [
     'Gmail',
     'Outlook',
+    'ChromeBookmarks',
     'EmlFile',
     'ZipFile',
     'Directory',

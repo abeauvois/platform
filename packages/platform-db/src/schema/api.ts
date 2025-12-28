@@ -1,7 +1,6 @@
 import {
     pgTable,
     timestamp,
-    boolean,
     uuid,
     varchar,
     text,
@@ -10,20 +9,23 @@ import {
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 
-// Shared application tables
-// These tables are used across multiple apps in the monorepo
-
-export const todos = pgTable('todos', {
-    id: uuid().primaryKey().defaultRandom(),
+/**
+ * Bookmarks table
+ * Stores user bookmarks with metadata and analysis results
+ */
+export const bookmarks = pgTable('bookmarks', {
+    id: varchar('id', { length: 100 }).primaryKey(),
     userId: text('user_id')
         .notNull()
         .references(() => user.id, { onDelete: 'cascade' }),
-    title: varchar({ length: 500 }).notNull(),
-    subtitle: varchar({ length: 500 }),
-    description: varchar({ length: 1000 }),
-    completed: boolean().default(false),
-    createdAt: timestamp({ withTimezone: true }).defaultNow(),
-    updatedAt: timestamp({ withTimezone: true }).defaultNow(),
+    url: text('url').notNull(),
+    sourceAdapter: varchar('source_adapter', { length: 50 }).notNull().default('None'),
+    tags: jsonb('tags').$type<string[]>().notNull().default([]),
+    summary: text('summary').notNull().default(''),
+    rawContent: text('raw_content').notNull().default(''),
+    contentType: varchar('content_type', { length: 50 }).notNull().default('unknown'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**

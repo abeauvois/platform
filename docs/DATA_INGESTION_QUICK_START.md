@@ -149,7 +149,7 @@ export class TwitterDataSource extends StructuredDataSource<
   Tweet,
   BaseContent
 > {
-  constructor(private twitterClient: ITwitterClient, logger: ILogger) {
+  constructor(private rateLimitedClient: IRateLimitedClient, logger: ILogger) {
     super(SourceAdapter.Twitter, logger);
   }
 
@@ -161,7 +161,7 @@ export class TwitterDataSource extends StructuredDataSource<
 
   protected async fetchRaw(config: IngestionConfig): Promise<Tweet[]> {
     const apiConfig = config as ApiIngestionConfig;
-    return await this.twitterClient.fetchTweets(
+    return await this.rateLimitedClient.fetchTweets(
       apiConfig.since,
       apiConfig.filters
     );
@@ -189,7 +189,7 @@ export class TwitterDataSource extends StructuredDataSource<
 ```typescript
 describe("TwitterDataSource", () => {
   test("should fetch and normalize tweets", async () => {
-    const mockClient = new MockTwitterClient();
+    const mockClient = new MockRateLimitedClient();
     const dataSource = new TwitterDataSource(mockClient, logger);
 
     const config: ApiIngestionConfig = {

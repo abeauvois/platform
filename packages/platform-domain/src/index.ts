@@ -18,6 +18,7 @@ export * from './domain/ports/IConfigProvider'
 export * from './domain/ports/ILinkRepository'
 export * from './domain/ports/ILogger'
 export * from './domain/ports/IIngestionTaskRepository'
+export * from './domain/ports/IRateLimitedClient'
 export * from './domain/ports/ISourceReader'
 
 // Application Services

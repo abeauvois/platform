@@ -20,10 +20,10 @@ export interface IContentAnalyser {
 }
 
 /**
- * Port: Twitter client interface for fetching tweet content
+ * Port: Rate-limited client interface for fetching content with rate limiting
  */
-export interface ITwitterClient {
-    fetchTweetContent(url: string): Promise<string | null>;
+export interface IRateLimitedClient {
+    fetchContent(url: string): Promise<string | null>;
     isRateLimited(): boolean;
 }
 
@@ -45,12 +45,21 @@ export class ReadStep implements IWorkflowStep<BaseContent> {
         private readonly preset: string,
         private readonly filter: IngestRequest['filter'],
         private readonly logger: ILogger,
-        private readonly sourceReader: ISourceReader
+        private readonly sourceReader?: ISourceReader
     ) { }
 
     async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
 
         this.logger.info(`Reading items from ${this.preset} source...`);
+
+        if (!this.sourceReader) {
+            this.logger.warning('No source reader configured, returning empty items');
+            return {
+                context: { ...context, items: [] },
+                continue: true,
+                message: `No source reader configured for ${this.preset}`,
+            };
+        }
 
         // Fetch items from source
         const items = await this.sourceReader.read({
@@ -166,7 +175,7 @@ export class EnrichStep implements IWorkflowStep<BaseContent> {
 
     constructor(
         private readonly logger: ILogger,
-        private readonly twitterClient?: ITwitterClient,
+        private readonly rateLimitedClient?: IRateLimitedClient,
         private readonly contentAnalyser?: IContentAnalyser
     ) { }
 
@@ -233,33 +242,33 @@ export class EnrichStep implements IWorkflowStep<BaseContent> {
     }
 
     private async enrichTwitterItem(item: BaseContent): Promise<BaseContent> {
-        // Use injected Twitter client if available
-        if (this.twitterClient) {
-            if (this.twitterClient.isRateLimited()) {
+        // Use injected rate-limited client if available
+        if (this.rateLimitedClient) {
+            if (this.rateLimitedClient.isRateLimited()) {
                 this.logger.warning(`Rate limited, skipping enrichment for ${item.url}`);
                 return item;
             }
 
-            const tweetContent = await this.twitterClient.fetchTweetContent(item.url);
-            if (tweetContent) {
-                // Re-analyze with tweet context if content analyser is available
+            const content = await this.rateLimitedClient.fetchContent(item.url);
+            if (content) {
+                // Re-analyze with fetched content if content analyser is available
                 if (this.contentAnalyser) {
-                    const analysis = await this.contentAnalyser.analyze(item.url, tweetContent);
+                    const analysis = await this.contentAnalyser.analyze(item.url, content);
                     return item.withCategorization(analysis.tags, analysis.summary);
                 }
                 // Otherwise just add the enriched tag
                 return item.withCategorization(
                     [...item.tags, 'enriched'],
-                    `${item.summary} - Tweet: ${tweetContent.substring(0, 100)}...`
+                    `${item.summary} - Content: ${content.substring(0, 100)}...`
                 );
             }
         }
 
         // Fallback: mark as enriched without actual content
-        this.logger.debug('No Twitter client configured, using placeholder enrichment');
+        this.logger.debug('No rate-limited client configured, using placeholder enrichment');
         return item.withCategorization(
             [...item.tags, 'enriched'],
-            item.summary + ' (with tweet content)'
+            item.summary + ' (with fetched content)'
         );
     }
 }

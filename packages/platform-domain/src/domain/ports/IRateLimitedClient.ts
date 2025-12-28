@@ -1,13 +1,13 @@
 /**
- * Port: Defines interface for scraping tweet content
+ * Port: Defines interface for rate-limited content fetching
  */
-export interface ITwitterClient {
+export interface IRateLimitedClient {
     /**
-     * Fetches tweet content from a Twitter/X URL
-     * @param url The tweet URL (twitter.com or x.com)
-     * @returns Tweet content/text if successful, null otherwise
+     * Fetches content from a URL
+     * @param url The URL to fetch content from
+     * @returns Content if successful, null otherwise
      */
-    fetchTweetContent(url: string): Promise<string | null>;
+    fetchContent(url: string): Promise<string | null>;
 
     /**
      * Get the rate limit reset time in milliseconds

@@ -20,7 +20,7 @@ import { resolve } from 'node:path'
  *
  * 3. Development Server Proxy (Hybrid Backend):
  *    - Trading APIs (/api/trading/*) -> Trading server (port 3001)
- *    - Auth & shared APIs (/api/auth/*, /api/bookmarks/*, /api/todos/*) -> Platform API (port 3000)
+ *    - Auth & shared APIs (/api/auth/*, /api/bookmarks/*) -> Platform API (port 3000)
  *
  * 4. Testing:
  *    - Uses jsdom environment for browser-like testing
@@ -60,11 +60,6 @@ export default defineConfig({
         secure: false,
       },
       '/api/bookmarks': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/api/todos': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,

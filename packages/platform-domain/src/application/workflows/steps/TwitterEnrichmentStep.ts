@@ -2,7 +2,7 @@ import { truncateText } from '@platform/utils';
 import { Bookmark } from '../../../domain/entities/Bookmark';
 import { IContentAnalyser } from '../../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../../domain/ports/ILogger';
-import { ITwitterClient } from '../../../domain/ports/ITwitterClient';
+import { IRateLimitedClient } from '../../../domain/ports/IRateLimitedClient';
 import { ExtractLinksConfig } from '../../config/ExtractLinksConfig';
 import { QueuedLink } from '../../QueuedLink.types';
 import { IWorkflowStep, StepResult, WorkflowContext } from '../IWorkflowStep';
@@ -14,7 +14,7 @@ export class TwitterEnrichmentStep implements IWorkflowStep<Bookmark> {
     readonly name = 'twitter-enrichment';
 
     constructor(
-        private readonly tweetClient: ITwitterClient,
+        private readonly rateLimitedClient: IRateLimitedClient,
         private readonly linkAnalyzer: IContentAnalyser,
         private readonly logger: ILogger
     ) {}
@@ -42,13 +42,13 @@ export class TwitterEnrichmentStep implements IWorkflowStep<Bookmark> {
             this.logger.info(`  Fetching tweet: ${truncatedUrl}`);
 
             try {
-                const tweetContent = await this.tweetClient.fetchTweetContent(bookmark.url);
+                const content = await this.rateLimitedClient.fetchContent(bookmark.url);
 
-                if (tweetContent) {
-                    this.logger.info(`    ✓ Tweet content retrieved`);
-                    const analysis = await this.linkAnalyzer.analyze(bookmark.url, tweetContent);
+                if (content) {
+                    this.logger.info(`    ✓ Content retrieved`);
+                    const analysis = await this.linkAnalyzer.analyze(bookmark.url, content);
                     enrichedBookmarks[i] = bookmark.withCategorization(analysis.tags, analysis.summary);
-                } else if (this.tweetClient.isRateLimited()) {
+                } else if (this.rateLimitedClient.isRateLimited()) {
                     retryQueue.push({ link: bookmark, index: i, attempts: 0 });
                     this.logger.warning(`    ⚠️  Rate limited, queued for retry`);
                 }

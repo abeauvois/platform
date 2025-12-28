@@ -4,7 +4,7 @@ import { z } from 'zod';
 /**
  * Workflow presets available for ingestion
  */
-const workflowPresets = ['full', 'quick', 'analyzeOnly', 'twitterFocus', 'csvOnly', 'gmail'] as const;
+const workflowPresets = ['gmail', 'bookmark', 'analyzeOnly', 'twitterFocus', 'csvOnly', 'gmail'] as const;
 
 /**
  * Schema for ingest filter options

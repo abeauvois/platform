@@ -1,18 +1,7 @@
-import {
-    BaseContent,
-    type ILogger,
-    type ISourceReader,
-    type IWorkflowStep,
-    type SourceReaderConfig,
-} from '@platform/platform-domain';
-import { GmailApiClient } from '../../infrastructure/GmailApiClient';
-import { InMemoryTimestampRepository } from '../../infrastructure/InMemoryTimestampRepository';
-import { truncateText } from '@platform/utils';
+import { BaseContent, type ILogger, type ISourceReader, type IWorkflowStep } from '@platform/platform-domain';
+import { createGmailSourceReader, createBookmarkSourceReader } from '../../infrastructure/source-readers';
 import type { IngestRequest } from '../../validators/ingest.validator';
 import { ReadStep, AnalyzeStep, EnrichStep, ExportStep } from './workflow.steps';
-
-// Singleton timestamp repository to persist state across jobs
-const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
 
 /**
  * Configuration for creating workflow steps
@@ -33,72 +22,6 @@ export interface PresetConfig {
     name: string;
     createSourceReader: (logger: ILogger) => ISourceReader | undefined;
     createSteps: (config: StepFactoryConfig) => IWorkflowStep<BaseContent>[];
-}
-
-/**
- * Create a Gmail source reader that fetches real Gmail messages
- */
-function createGmailSourceReader(logger: ILogger): ISourceReader | undefined {
-    const clientId = process.env.GMAIL_CLIENT_ID;
-    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
-
-    if (!clientId || !clientSecret || !refreshToken) {
-        logger.warning('Gmail credentials not configured. Set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REFRESH_TOKEN');
-        return undefined;
-    }
-
-    const gmailClient = new GmailApiClient({
-        clientId,
-        clientSecret,
-        refreshToken,
-    });
-
-    return {
-        async read(config: SourceReaderConfig): Promise<BaseContent[]> {
-            logger.info('Fetching Gmail messages...');
-
-            // Calculate since timestamp
-            let sinceDate: Date;
-            const lastExecution = await gmailTimestampRepo.getLastExecutionTime();
-
-            if (config.filter?.limitDays) {
-                sinceDate = new Date(Date.now() - config.filter.limitDays * 24 * 60 * 60 * 1000);
-            } else if (lastExecution) {
-                sinceDate = lastExecution;
-            } else {
-                // Default: last 7 days for first run
-                sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-            }
-
-            logger.info(`Fetching messages since ${sinceDate.toISOString()}`);
-
-            const messages = await gmailClient.fetchMessagesSince(
-                sinceDate,
-                config.filter?.email,
-                config.filter?.withUrl
-            );
-
-            logger.info(`Found ${messages.length} Gmail messages`);
-            logger.info(messages.map(m => truncateText(m.rawContent, 380)).join('\n'));
-            logger.info('\n');
-
-            // Save current timestamp for next run
-            await gmailTimestampRepo.saveLastExecutionTime(new Date());
-
-            // Convert GmailMessage to BaseContent
-            return messages.map(message => new BaseContent(
-                message.rawContent || message.snippet,
-                'Gmail',
-                [],
-                message.subject,
-                message.rawContent,
-                message.receivedAt,
-                message.receivedAt,
-                'email'
-            ));
-        },
-    };
 }
 
 /**
@@ -137,8 +60,18 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
             const steps: IWorkflowStep<BaseContent>[] = [];
             steps.push(new ReadStep('gmail', config.filter, config.logger, config.sourceReader));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
+            return steps;
+        },
+    },
+    bookmark: {
+        name: 'bookmark',
+        createSourceReader: createBookmarkSourceReader,
+        createSteps: (config) => {
+            const steps: IWorkflowStep<BaseContent>[] = [];
+            steps.push(new ReadStep('bookmark', config.filter, config.logger, config.sourceReader));
+            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
             if (!config.skipTwitter) steps.push(new EnrichStep(config.logger));
-            steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
+            // steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
             return steps;
         },
     },
@@ -147,19 +80,6 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         name: 'full',
         createSourceReader: () => undefined, // Uses sample data or throws
         createSteps: createDefaultSteps,
-    },
-
-    quick: {
-        name: 'quick',
-        createSourceReader: () => undefined,
-        createSteps: (config) => {
-            // Quick preset skips enrichment
-            const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep('quick', config.filter, config.logger, config.sourceReader));
-            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
-            steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
-            return steps;
-        },
     },
 
     analyzeOnly: {
@@ -194,8 +114,6 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
         createSteps: (config) => {
             const steps: IWorkflowStep<BaseContent>[] = [];
             steps.push(new ReadStep('csvOnly', config.filter, config.logger, config.sourceReader));
-            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
-            if (!config.skipTwitter) steps.push(new EnrichStep(config.logger));
             steps.push(new ExportStep(true, config.logger)); // Force CSV only
             return steps;
         },

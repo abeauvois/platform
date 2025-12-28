@@ -8,6 +8,13 @@
       "when": 1764343384817,
       "tag": "0000_safe_beyonder",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766942029176,
+      "tag": "0001_omniscient_daredevil",
+      "breakpoints": true
     }
   ]
 }
