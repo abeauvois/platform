@@ -74,16 +74,18 @@ This document describes the data flow for content workflows from CLI to backgrou
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
 │  │  processWorkflowTask()                                              │        │
 │  │  • Gets SourceReader for preset (e.g., createGmailSourceReader)     │        │
-│  │  • Builds WorkflowBuilder with steps:                               │        │
-│  │      ReadStep → AnalyzeStep → EnrichStep → ExportStep               │        │
+│  │  • Builds WorkflowBuilder with dynamic steps based on config        │        │
 │  │  • Converts BaseContent[] → ProcessedItem[]                         │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 │  apps/api/server/tasks/workers/presets.ts                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
-│  │  Preset configurations (gmail, full, quick, analyzeOnly, etc.)      │        │
+│  │  Preset configurations (gmail, bookmark, analyzeOnly, etc.)         │        │
 │  │  • createSourceReader() - returns ISourceReader for the preset      │        │
-│  │  • createSteps() - returns workflow steps for the preset            │        │
+│  │  • createSteps(config) - dynamically builds steps based on:         │        │
+│  │      - saveTo: 'database' → adds SaveToDatabaseStep                 │        │
+│  │      - saveTo: undefined → adds ExportStep (default)                │        │
+│  │      - skipAnalysis: true → skips AnalyzeStep                       │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 └─────────────────────────────────┼───────────────────────────────────────────────┘
@@ -131,7 +133,7 @@ POST /api/workflows ──► pg-boss queue ──► Worker picks up task
      │                              GmailMessage[] → BaseContent[]
      │                                        │
      │                                        ▼
-     │                              WorkflowBuilder (Read→Analyze→Enrich→Export)
+     │                              WorkflowBuilder (dynamic steps based on config)
      │                                        │
      │                                        ▼
      │                              BaseContent[] → ProcessedItem[]
@@ -173,14 +175,33 @@ interface ProcessedItem {
 
 ## Available Presets
 
-| Preset | Description | Steps |
-|--------|-------------|-------|
-| `gmail` | Gmail workflow | Read → Analyze → Enrich → Export |
-| `full` | Full workflow with all steps | Read → Analyze → Enrich → Export |
-| `quick` | Skip enrichment | Read → Analyze → Export |
-| `analyzeOnly` | Only extract and analyze | Read → Analyze |
-| `twitterFocus` | Always include Twitter enrichment | Read → Analyze → Enrich → Export |
-| `csvOnly` | Force CSV export only | Read → Analyze → Enrich → Export (CSV) |
+Presets define base step configurations, but actual steps are dynamically determined based on runtime options like `saveTo` and `skipAnalysis`.
+
+| Preset | Description | Base Steps | Dynamic Behavior |
+|--------|-------------|------------|------------------|
+| `gmail` | Gmail workflow | Read → Analyze | `saveTo=database` → SaveToDatabase, else → Export |
+| `bookmark` | Bookmark workflow | Read → Analyze → Enrich | Enriches Twitter links |
+| `analyzeOnly` | Only extract and analyze | Read → Analyze | No export step |
+| `twitterFocus` | Always include Twitter enrichment | Read → Analyze → Enrich → Export | Always enriches |
+| `csvOnly` | Force CSV export only | Read → Export (CSV) | Skips analysis |
+
+### Dynamic Step Selection (Gmail Preset Example)
+
+```
+createSteps(config) {
+    steps = [ReadStep]
+
+    if (!config.skipAnalysis)
+        steps.push(AnalyzeStep)
+
+    if (config.saveTo === 'database')
+        steps.push(SaveToDatabaseStep)    // Save to PostgreSQL
+    else if (!config.saveTo)
+        steps.push(ExportStep)            // Export to CSV/Notion
+
+    return steps
+}
+```
 
 ## CLI Usage
 
@@ -224,11 +245,19 @@ The workflow follows hexagonal architecture:
    - `BackgroundTaskService` - orchestrates background tasks
    - `BackgroundTask` - task entity
    - `IBackgroundTaskRepository` - port for task persistence
+   - `Bookmark` - bookmark entity for database saves
 
 2. **Application Layer** (`tasks/workers/`)
-   - `presets.ts` - workflow configurations
-   - `workflow.steps.ts` - step implementations
+   - `presets.ts` - workflow configurations with dynamic step factories
+   - `workflow.steps.ts` - step implementations:
+     - `ReadStep` - fetches items from source
+     - `AnalyzeStep` - AI-powered content analysis
+     - `EnrichStep` - Twitter link enrichment
+     - `ExportStep` - CSV/Notion export
+     - `SaveToDatabaseStep` - saves to PostgreSQL via bookmark repository
 
 3. **Infrastructure Layer** (`infrastructure/`)
    - `GmailApiClient` - Gmail API adapter
-   - `DrizzleBackgroundTaskRepository` - database adapter
+   - `DrizzleBackgroundTaskRepository` - task persistence adapter
+   - `DrizzleBookmarkRepository` - bookmark persistence adapter
+   - `InMemoryBookmarkRepository` - in-memory adapter for testing

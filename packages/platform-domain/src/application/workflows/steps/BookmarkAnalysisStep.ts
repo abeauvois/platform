@@ -8,13 +8,13 @@ import { IWorkflowStep, StepResult, WorkflowContext } from '../IWorkflowStep';
 /**
  * Workflow step that analyzes bookmarks with AI (without Twitter enrichment)
  */
-export class AnalysisStep implements IWorkflowStep<Bookmark> {
+export class BookmarkAnalysisStep implements IWorkflowStep<Bookmark> {
     readonly name = 'analysis';
 
     constructor(
         private readonly linkAnalyzer: IContentAnalyser,
         private readonly logger: ILogger
-    ) {}
+    ) { }
 
     async execute(context: WorkflowContext<Bookmark>): Promise<StepResult<Bookmark>> {
         if (context.items.length === 0) {

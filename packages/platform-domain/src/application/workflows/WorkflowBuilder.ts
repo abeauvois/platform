@@ -175,7 +175,7 @@ export class WorkflowBuilder<T> {
     /**
      * Conditionally add steps
      * @example
-     * builder.when(includeAnalysis, b => b.addStep(new AnalysisStep()))
+     * builder.when(includeAnalysis, b => b.addStep(new BookmarkAnalysisStep()))
      */
     when(condition: boolean, configure: (builder: this) => this): this {
         if (condition) {

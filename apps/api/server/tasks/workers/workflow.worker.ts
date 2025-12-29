@@ -77,6 +77,7 @@ async function processWorkflowTask(
         csvOnly: request.csvOnly,
         saveTo: request.saveTo,
         sourceReader,
+        userId,
     });
 
     // Track the final result via onComplete hook

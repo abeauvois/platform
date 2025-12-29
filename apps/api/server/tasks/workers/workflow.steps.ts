@@ -6,6 +6,7 @@ import {
     type ISourceReader,
     type SourceReaderConfig,
     BaseContent,
+    Bookmark,
 } from '@platform/platform-domain';
 import type { WorkflowRequest } from '../../validators/workflow.validator';
 
@@ -270,6 +271,80 @@ export class EnrichStep implements IWorkflowStep<BaseContent> {
             [...item.tags, 'enriched'],
             item.summary + ' (with fetched content)'
         );
+    }
+}
+
+/**
+ * Port: Bookmark repository interface for saving to database
+ */
+export interface ILinkRepository {
+    saveMany(links: import('@platform/platform-domain').Bookmark[]): Promise<import('@platform/platform-domain').Bookmark[]>;
+}
+
+/**
+ * Save to database step - saves items as bookmarks
+ */
+export class SaveToDatabaseStep implements IWorkflowStep<BaseContent> {
+    readonly name = 'saveToDatabase';
+
+    constructor(
+        private readonly userId: string,
+        private readonly logger: ILogger,
+        private readonly bookmarkRepository?: ILinkRepository
+    ) {}
+
+    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
+        if (context.items.length === 0) {
+            return { context, continue: true, message: 'No items to save' };
+        }
+
+        this.logger.info(`Saving ${context.items.length} items to database...`);
+
+        if (!this.bookmarkRepository) {
+            this.logger.warning('No bookmark repository configured, skipping database save');
+            return { context, continue: true, message: 'No repository configured' };
+        }
+
+        try {
+            // Convert BaseContent to Bookmark
+            const bookmarks = context.items.map(item => new Bookmark(
+                item.url,
+                item.sourceAdapter,
+                item.tags,
+                item.summary,
+                item.rawContent,
+                item.createdAt,
+                item.updatedAt,
+                item.contentType,
+                this.userId
+            ));
+
+            // Save to database
+            await this.bookmarkRepository.saveMany(bookmarks);
+            this.logger.info(`Saved ${bookmarks.length} bookmarks to database`);
+
+            // Notify progress for each item
+            for (let i = 0; i < context.items.length; i++) {
+                if (context.onItemProcessed) {
+                    await context.onItemProcessed({
+                        item: context.items[i],
+                        index: i,
+                        total: context.items.length,
+                        stepName: this.name,
+                        success: true,
+                    });
+                }
+            }
+        } catch (error) {
+            this.logger.error(`Failed to save to database: ${error}`);
+            // Continue workflow despite save failure
+        }
+
+        return {
+            context,
+            continue: true,
+            message: `Saved ${context.items.length} items to database`,
+        };
     }
 }
 

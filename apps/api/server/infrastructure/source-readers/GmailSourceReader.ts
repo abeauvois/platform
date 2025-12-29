@@ -2,6 +2,7 @@ import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig 
 import { truncateText } from '@platform/utils';
 import { GmailApiClient } from '../GmailApiClient';
 import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository';
+import { UrlExtractor } from '../UrlExtractor';
 
 // Singleton timestamp repository to persist state across jobs
 const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
@@ -60,12 +61,13 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
             await gmailTimestampRepo.saveLastExecutionTime(new Date());
 
             const today = new Date(Date.now());
+            const urlExtractor = new UrlExtractor();
 
             // Convert GmailMessage to BaseContent
             return messages.map(
                 (message) =>
                     new BaseContent(
-                        message.rawContent || message.snippet,
+                        urlExtractor.extractFirst(message.rawContent) || message.id,
                         'Gmail',
                         [],
                         message.subject,

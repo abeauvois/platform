@@ -1,6 +1,7 @@
 import { google, gmail_v1 } from 'googleapis';
 import { GmailMessage } from '@platform/platform-domain';
 import { truncateText } from '@platform/utils';
+import { type IUrlExtractor, UrlExtractor } from './UrlExtractor.js';
 
 /**
  * Port: IEmailClient interface
@@ -16,33 +17,6 @@ export interface GmailCredentials {
     refreshToken: string;
 }
 
-/**
- * Normalized headers extracted from Gmail message
- */
-interface NormalizedHeaders {
-    subject: string;
-    from: string;
-    to: string;
-    date: string;
-    receivedAt: Date;
-    url: string;
-}
-
-/**
- * Normalized message content
- */
-interface NormalizedContent {
-    body: string;
-    rawContent: string;
-    snippet: string;
-}
-
-/** Headers to preserve in the raw content summary */
-const PRESERVED_HEADERS = ['from', 'to', 'subject', 'date', 'url'] as const;
-
-/** URL regex pattern for detecting HTTP/HTTPS URLs */
-const URL_REGEX = /(https?:\/\/[^\s<>"')\]]+)/g;
-
 /** Maximum length for subject before truncation */
 const MAX_SUBJECT_LENGTH = 100;
 
@@ -52,8 +26,9 @@ const MAX_SUBJECT_LENGTH = 100;
  */
 export class GmailApiClient implements IEmailClient {
     private readonly gmail: gmail_v1.Gmail;
+    private readonly urlExtractor: IUrlExtractor;
 
-    constructor(credentials: GmailCredentials) {
+    constructor(credentials: GmailCredentials, urlExtractor: IUrlExtractor = new UrlExtractor()) {
         const oauth2Client = new google.auth.OAuth2(
             credentials.clientId,
             credentials.clientSecret
@@ -64,6 +39,7 @@ export class GmailApiClient implements IEmailClient {
         });
 
         this.gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+        this.urlExtractor = urlExtractor;
     }
 
     /**
@@ -90,7 +66,7 @@ export class GmailApiClient implements IEmailClient {
 
                 const fullMessage = await this.fetchMessageDetails(msg.id);
                 if (fullMessage) {
-                    if (withUrl && !this.containsUrl(fullMessage.rawContent)) {
+                    if (withUrl && !this.urlExtractor.containsUrl(fullMessage.rawContent)) {
                         continue;
                     }
                     messages.push(fullMessage);
@@ -119,95 +95,51 @@ export class GmailApiClient implements IEmailClient {
     }
 
     /**
-     * Check if content contains a URL
+     * Get header value by name (case-insensitive)
      */
-    private containsUrl(content: string): boolean {
-        return URL_REGEX.test(content);
+    private getHeader(headers: gmail_v1.Schema$MessagePartHeader[], name: string): string {
+        const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
+        return header?.value || '';
     }
 
     /**
-     * Extract first URL from content
+     * Build LLM-friendly raw content from message parts
      */
-    private extractUrl(content: string): string {
-        // Reset regex lastIndex before using
-        URL_REGEX.lastIndex = 0;
-        const match = URL_REGEX.exec(content);
-        return match ? match[0] : '';
-    }
+    private buildRawContent(
+        headers: gmail_v1.Schema$MessagePartHeader[],
+        payload: gmail_v1.Schema$MessagePart | undefined
+    ): { rawContent: string; subject: string } {
+        const from = this.getHeader(headers, 'From');
+        const to = this.getHeader(headers, 'To');
+        const date = this.getHeader(headers, 'Date');
+        let subject = this.getHeader(headers, 'Subject');
 
-    /**
-     * Normalize headers from Gmail message payload
-     * Extracts and structures relevant headers into a consistent format
-     */
-    private normalizeHeaders(headers: gmail_v1.Schema$MessagePartHeader[]): NormalizedHeaders {
-        const getHeader = (name: string): string => {
-            const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
-            return header?.value || '';
-        };
-
-        const subject = getHeader('Subject');
-        const from = getHeader('From');
-        const to = getHeader('To');
-        const dateStr = getHeader('Date');
-        const receivedAt = dateStr ? new Date(dateStr) : new Date();
-
-        // Extract URL from subject if present
-        const urlFromSubject = this.extractUrl(subject);
-
-        return {
-            subject,
-            from,
-            to,
-            date: dateStr,
-            receivedAt,
-            url: urlFromSubject,
-        };
-    }
-
-    /**
-     * Normalize body content and extract URL if not already found in headers
-     * @param payload - Gmail message payload
-     * @param headers - Already normalized headers (may be mutated to add URL and truncate subject)
-     */
-    private normalizeBody(
-        payload: gmail_v1.Schema$MessagePart | undefined,
-        headers: NormalizedHeaders,
-        snippet: string
-    ): NormalizedContent {
+        // Extract and decode body
         let body = this.extractBodyContent(payload);
 
-        // If no URL found in subject, try to extract from body
-        if (!headers.url) {
-            headers.url = this.extractUrl(body);
+        // Extract URL from subject first, then body
+        const url = this.urlExtractor.extractFirst(subject) || this.urlExtractor.extractFirst(body);
+
+        // Handle long subjects
+        let subjectForContent = subject;
+        if (subject.length > MAX_SUBJECT_LENGTH) {
+            body = `[Full Subject]: ${subject}\n\n${body}`;
+            subject = truncateText(subject, MAX_SUBJECT_LENGTH);
+            subjectForContent = subject;
         }
 
-        // If subject is too long, prepend full subject to body and truncate the header
-        const originalSubject = headers.subject;
-        if (originalSubject.length > MAX_SUBJECT_LENGTH) {
-            body = `[Full Subject]: ${originalSubject}\n\n${body}`;
-            headers.subject = truncateText(originalSubject, MAX_SUBJECT_LENGTH);
-        }
-
-        // Build header summary for raw content
-        const headerEntries: Array<{ name: string; value: string }> = [
-            { name: 'from', value: headers.from },
-            { name: 'to', value: headers.to },
-            { name: 'subject', value: headers.subject },
-            { name: 'date', value: headers.date },
-            { name: 'url', value: headers.url },
-        ];
-
-        const headerSummary = headerEntries
-            .filter(h => h.value && PRESERVED_HEADERS.includes(h.name as typeof PRESERVED_HEADERS[number]))
-            .map(h => `${h.name}: ${h.value}`)
-            .join('\n');
-
-        const rawContent = headerSummary + '\n' + body;
+        // Build header summary
+        const headerLines = [
+            from && `from: ${from}`,
+            to && `to: ${to}`,
+            subjectForContent && `subject: ${subjectForContent}`,
+            date && `date: ${date}`,
+            url && `url: ${url}`,
+        ].filter(Boolean).join('\n');
 
         return {
-            body,
-            rawContent,
-            snippet,
+            rawContent: headerLines + '\n' + body,
+            subject,
         };
     }
 
@@ -225,21 +157,20 @@ export class GmailApiClient implements IEmailClient {
             const message = response.data;
             if (!message) return null;
 
-            const rawHeaders = message.payload?.headers || [];
-            const headers = this.normalizeHeaders(rawHeaders);
-            const content = this.normalizeBody(
-                message.payload,
-                headers,
-                message.snippet || ''
-            );
+            const headers = message.payload?.headers || [];
+            const from = this.getHeader(headers, 'From');
+            const to = this.getHeader(headers, 'To');
+            const date = this.getHeader(headers, 'Date');
+            const { rawContent, subject } = this.buildRawContent(headers, message.payload);
 
             return new GmailMessage(
                 messageId,
-                headers.subject,
-                headers.from,
-                headers.receivedAt,
-                content.snippet,
-                content.rawContent
+                subject,
+                from,
+                to,
+                date ? new Date(date) : new Date(),
+                message.snippet || '',
+                rawContent
             );
         } catch (error) {
             console.error(`Failed to fetch message ${messageId}:`, error);

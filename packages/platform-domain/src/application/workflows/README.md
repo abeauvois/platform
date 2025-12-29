@@ -15,54 +15,57 @@ IWorkflowStep<Bookmark>      (Concrete steps)
 ## Quick Start
 
 ```typescript
-import { LinkExtractionFactory } from '../../infrastructure/factories/LinkExtractionFactory';
+import { LinkExtractionFactory } from "../../infrastructure/factories/LinkExtractionFactory";
 
 const factory = new LinkExtractionFactory(config, logger);
 
 // Use a preset
-const workflow = factory.createPreset('quick');
+const workflow = factory.createPreset("quick");
 await workflow.execute(inputPath, outputPath);
 
 // Or build a custom workflow
-const workflow = factory.builder()
-    .extract()
-    .analyze()
-    .exportTo({ csv: true })
-    .build();
+const workflow = factory
+  .builder()
+  .extract()
+  .analyze()
+  .exportTo({ csv: true })
+  .build();
 await workflow.execute(inputPath, outputPath);
 ```
 
 ## Available Presets
 
-| Preset | Steps | Use Case |
-|--------|-------|----------|
-| `full` | Extract → Analyze → Twitter → Retry → Export (CSV + Notion) | Complete processing |
-| `quick` | Extract → Export (CSV) | Fast extraction, no AI |
-| `analyzeOnly` | Extract → Analyze → Export | AI analysis, no Twitter |
-| `twitterFocus` | Extract → Twitter → Retry → Export | Twitter-heavy sources |
-| `csvOnly` | Extract → Analyze → Export (CSV) | No Notion integration |
+| Preset         | Steps                                                       | Use Case                |
+| -------------- | ----------------------------------------------------------- | ----------------------- |
+| `full`         | Extract → Analyze → Twitter → Retry → Export (CSV + Notion) | Complete processing     |
+| `quick`        | Extract → Export (CSV)                                      | Fast extraction, no AI  |
+| `analyzeOnly`  | Extract → Analyze → Export                                  | AI analysis, no Twitter |
+| `twitterFocus` | Extract → Twitter → Retry → Export                          | Twitter-heavy sources   |
+| `csvOnly`      | Extract → Analyze → Export (CSV)                            | No Notion integration   |
 
 ## Building Custom Workflows
 
 ```typescript
-const workflow = factory.builder()
-    .extract()                              // Required: extract from source
-    .analyze()                              // Optional: AI categorization
-    .enrichTwitter()                        // Optional: Twitter content
-    .withRetry()                            // Optional: retry rate-limited links
-    .exportTo({ csv: true, notion: false }) // Required: export results
-    .build();
+const workflow = factory
+  .builder()
+  .extract() // Required: extract from source
+  .analyze() // Optional: AI categorization
+  .enrichTwitter() // Optional: Twitter content
+  .withRetry() // Optional: retry rate-limited links
+  .exportTo({ csv: true, notion: false }) // Required: export results
+  .build();
 ```
 
 ### Conditional Steps
 
 ```typescript
-const workflow = factory.builder()
-    .extract()
-    .when(includeAnalysis, b => b.analyze())
-    .when(includeTwitter, b => b.enrichTwitter().withRetry())
-    .exportTo({ csv: true })
-    .build();
+const workflow = factory
+  .builder()
+  .extract()
+  .when(includeAnalysis, (b) => b.analyze())
+  .when(includeTwitter, (b) => b.enrichTwitter().withRetry())
+  .exportTo({ csv: true })
+  .build();
 ```
 
 ## Custom Steps
@@ -96,24 +99,27 @@ const workflow = factory.builder()
 The base `WorkflowBuilder<T>` can be extended for any entity type:
 
 ```typescript
-import { WorkflowBuilder, IWorkflowStep } from './WorkflowBuilder';
+import { WorkflowBuilder, IWorkflowStep } from "./WorkflowBuilder";
 
-interface MyEntity { id: string; data: string; }
+interface MyEntity {
+  id: string;
+  data: string;
+}
 
 class MyEntityBuilder extends WorkflowBuilder<MyEntity> {
-    constructor(logger: ILogger) {
-        super(logger);
-    }
+  constructor(logger: ILogger) {
+    super(logger);
+  }
 
-    load(): this {
-        this.addStep(new LoadStep());
-        return this;
-    }
+  load(): this {
+    this.addStep(new LoadStep());
+    return this;
+  }
 
-    process(): this {
-        this.addStep(new ProcessStep());
-        return this;
-    }
+  process(): this {
+    this.addStep(new ProcessStep());
+    return this;
+  }
 }
 ```
 
@@ -124,7 +130,7 @@ LinkExtractionBuilder
     │
     ├── ExtractionStep ──► context.items populated
     │
-    ├── AnalysisStep ────► items enriched with AI tags/summary
+    ├── BookmarkAnalysisStep ────► items enriched with AI tags/summary
     │
     ├── TwitterEnrichmentStep ──► Twitter links enriched
     │   └── stores retry queue in context.metadata

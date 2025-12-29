@@ -1,6 +1,7 @@
 import { BaseContent, type ILogger, type ISourceReader, type IWorkflowStep } from '@platform/platform-domain';
 import { createGmailSourceReader, createBookmarkSourceReader } from '../../infrastructure/source-readers';
-import { ReadStep, AnalyzeStep, EnrichStep, ExportStep } from './workflow.steps';
+import { DrizzleBookmarkRepository } from '../../infrastructure/DrizzleBookmarkRepository';
+import { ReadStep, AnalyzeStep, EnrichStep, ExportStep, SaveToDatabaseStep } from './workflow.steps';
 import { WorkflowRequest, SAVE_TO_DESTINATIONS } from '@/validators/workflow.validator';
 
 /**
@@ -19,6 +20,7 @@ export interface StepFactoryConfig {
     csvOnly?: boolean;
     saveTo?: SaveToDestination;
     sourceReader?: ISourceReader;
+    userId?: string;
 }
 
 /**
@@ -41,6 +43,14 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
             const steps: IWorkflowStep<BaseContent>[] = [];
             steps.push(new ReadStep('gmail', config.filter, config.logger, config.sourceReader));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
+
+            // Handle saveTo destinations
+            if (config.saveTo === 'database') {
+                const bookmarkRepository = new DrizzleBookmarkRepository();
+                steps.push(new SaveToDatabaseStep(config.userId!, config.logger, bookmarkRepository));
+            } else if (!config.saveTo) {
+                steps.push(new ExportStep(false, config.logger));
+            }
             return steps;
         },
     },

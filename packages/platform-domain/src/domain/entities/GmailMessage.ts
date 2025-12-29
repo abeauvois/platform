@@ -9,6 +9,7 @@ export class GmailMessage {
     public readonly id: string;
     public readonly subject: string;
     public readonly from: string;
+    public readonly to: string;
     public readonly receivedAt: Date;
     public readonly snippet: string;
     public readonly rawContent: string;
@@ -17,6 +18,7 @@ export class GmailMessage {
         id: string,
         subject: string,
         from: string,
+        to: string,
         receivedAt: Date,
         snippet: string,
         rawContent: string
@@ -24,6 +26,7 @@ export class GmailMessage {
         this.id = id;
         this.subject = subject;
         this.from = from;
+        this.to = to;
         this.receivedAt = receivedAt;
         this.snippet = snippet;
         this.rawContent = rawContent;
