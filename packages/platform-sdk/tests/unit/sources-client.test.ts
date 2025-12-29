@@ -184,6 +184,7 @@ describe('SourcesClient', () => {
                 status: 500,
                 statusText: 'Internal Server Error',
                 headers: new Headers({ 'content-type': 'application/json' }),
+                text: async () => 'Internal Server Error',
             } as Response);
 
             const { SourcesClient } = await import('../../src/clients/SourcesClient.js');
@@ -193,7 +194,7 @@ describe('SourcesClient', () => {
                 logger: mockLogger,
             });
 
-            await expect(client.readGmail({})).rejects.toThrow('Request failed');
+            await expect(client.readGmail({})).rejects.toThrow('API request failed');
         });
     });
 });

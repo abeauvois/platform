@@ -37,8 +37,7 @@ export class WorkflowClient extends BaseClient {
             preset,
             options,
             logger: this.logger,
-            baseUrl: this.baseUrl,
-            sessionToken: this.sessionToken,
+            apiClient: this.apiClient,
         });
     }
 }

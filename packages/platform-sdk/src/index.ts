@@ -8,12 +8,14 @@ export { PlatformApiClient } from './PlatformApiClient.js';
 
 // Individual Clients
 export {
+    ApiClient,
     BaseClient,
     AuthClient,
     BookmarkClient,
     ConfigClient,
     WorkflowClient,
     SourcesClient,
+    type ApiClientConfig,
     type BaseClientConfig,
     type Bookmark,
     type GmailReadOptions,

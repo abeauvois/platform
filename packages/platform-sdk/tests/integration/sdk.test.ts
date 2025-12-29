@@ -108,7 +108,7 @@ describe.skipIf(!serverAvailable)('PlatformApiClient Integration Tests', () => {
 
         const preset = "gmail";
 
-        const workflow = platformClient.ingest.create(preset, {
+        const workflow = platformClient.workflow.create(preset, {
             filter: {
                 email: "abeauvois@gmail.com"
             },

@@ -6,6 +6,7 @@ import type {
     ILogger,
     ProcessedItem,
 } from './types.js';
+import type { ApiClient } from './clients/ApiClient.js';
 
 /**
  * API response when starting a workflow task
@@ -54,8 +55,7 @@ interface WorkflowConfig {
     preset: WorkflowPreset;
     options: WorkflowOptions;
     logger: ILogger;
-    baseUrl: string;
-    sessionToken?: string;
+    apiClient: ApiClient;
 }
 
 /**
@@ -118,38 +118,10 @@ export class Workflow implements IWorkflow {
     }
 
     /**
-     * Make an authenticated request to the API
-     */
-    private async apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        const { baseUrl, sessionToken } = this.config;
-
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            ...(options.headers as Record<string, string> || {}),
-        };
-
-        if (sessionToken) {
-            headers['Cookie'] = `better-auth.session_token=${sessionToken}`;
-        }
-
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-            ...options,
-            headers,
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorBody}`);
-        }
-
-        return await response.json() as T;
-    }
-
-    /**
      * Start the workflow task via API
      */
     private async startTask(): Promise<WorkflowTaskResponse> {
-        const { preset, options, logger } = this.config;
+        const { preset, options, logger, apiClient } = this.config;
 
         logger.info(`Starting ${preset} workflow via API`);
 
@@ -162,7 +134,7 @@ export class Workflow implements IWorkflow {
             saveTo: options.saveTo,
         };
 
-        return this.apiRequest<WorkflowTaskResponse>('/api/workflows', {
+        return apiClient.request<WorkflowTaskResponse>('/api/workflows', {
             method: 'POST',
             body: JSON.stringify(body),
         });
@@ -175,7 +147,7 @@ export class Workflow implements IWorkflow {
         taskId: string,
         onItemProcessed?: (info: import('./types.js').ItemProcessedInfo) => void | Promise<void>
     ): Promise<WorkflowTaskStatus> {
-        const { logger } = this.config;
+        const { logger, apiClient } = this.config;
         let attempts = 0;
         let lastMessage = '';
         let lastItemIndex = -1;
@@ -186,7 +158,7 @@ export class Workflow implements IWorkflow {
 
         try {
             while (attempts < this.maxPollAttempts) {
-                const status = await this.apiRequest<WorkflowTaskStatus>(`/api/workflows/${taskId}`);
+                const status = await apiClient.request<WorkflowTaskStatus>(`/api/workflows/${taskId}`);
                 logger.debug(status.itemProgress ?
                     `Task ${taskId} status: ${status.status}, step: ${status.currentStep}, item progress: ${status.itemProgress.current}/${status.itemProgress.total}` :
                     `Task ${taskId} status: ${status.status}, step: ${status.currentStep}`);

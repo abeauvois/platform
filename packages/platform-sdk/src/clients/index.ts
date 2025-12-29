@@ -1,3 +1,4 @@
+export { ApiClient, type ApiClientConfig } from './ApiClient.js';
 export { BaseClient, type BaseClientConfig } from './BaseClient.js';
 export { AuthClient } from './AuthClient.js';
 export { BookmarkClient, type Bookmark } from './BookmarkClient.js';
