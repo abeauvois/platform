@@ -7,6 +7,11 @@ import { z } from 'zod';
 const workflowPresets = ['gmail', 'bookmark', 'analyzeOnly', 'twitterFocus', 'csvOnly'] as const;
 
 /**
+ * Available destinations for saving processed items
+ */
+export const SAVE_TO_DESTINATIONS = ['console', 'database', 'csv', 'notion'] as const;
+
+/**
  * Schema for workflow filter options
  */
 const workflowFilterSchema = z.object({
@@ -24,6 +29,7 @@ export const workflowSchema = z.object({
     skipAnalysis: z.boolean().optional(),
     skipTwitter: z.boolean().optional(),
     csvOnly: z.boolean().optional(),
+    saveTo: z.enum(SAVE_TO_DESTINATIONS).optional(),
 });
 
 export type WorkflowRequest = z.infer<typeof workflowSchema>;

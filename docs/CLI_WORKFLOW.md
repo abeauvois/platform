@@ -12,9 +12,9 @@ This document describes the data flow for content workflows from CLI to backgrou
 │  apps/cli/commands/list/gmail.ts                                                │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
 │  │  gmailCommand                                                       │        │
-│  │  • Parses flags: --filter, --limitDays, --withUrl                   │        │
+│  │  • Parses flags: --filter, --limitDays, --withUrl, --saveTo         │        │
 │  │  • Creates filter: { email?, limitDays?, withUrl? }                 │        │
-│  │  • Calls: ctx.apiClient.workflow.create('gmail', { filter })        │        │
+│  │  • Calls: ctx.apiClient.workflow.create('gmail', { filter, saveTo })│        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 └─────────────────────────────────┼───────────────────────────────────────────────┘
@@ -49,7 +49,7 @@ This document describes the data flow for content workflows from CLI to backgrou
 │  apps/api/server/validators/workflow.validator.ts                               │
 │  ┌─────────────────────────────────────────────────────────────────────┐        │
 │  │  workflowSchema (Zod)                                               │        │
-│  │  • Validates: preset, filter { email?, limitDays?, withUrl? }       │        │
+│  │  • Validates: preset, filter, saveTo                                │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
 │                                 │                                               │
 │  apps/api/server/routes/workflow.routes.ts                                      │
@@ -185,7 +185,7 @@ interface ProcessedItem {
 ## CLI Usage
 
 ```bash
-# Basic Gmail workflow (last 7 days)
+# Basic Gmail workflow (last 7 days, output to console)
 bun run cli list source gmail
 
 # Filter by sender email
@@ -197,9 +197,24 @@ bun run cli list source gmail --limit-days=3
 # Only emails containing URLs
 bun run cli list source gmail --with-url
 
-# Combined filters
-bun run cli list source gmail -f newsletter@example.com -l 7 -u
+# Save to database instead of console
+bun run cli list source gmail --save-to=database
+
+# Save to CSV file
+bun run cli list source gmail --save-to=csv
+
+# Combined filters with save destination
+bun run cli list source gmail -f newsletter@example.com -l 7 -u -s database
 ```
+
+## Save Destinations
+
+| Destination | Description |
+|-------------|-------------|
+| `console` | Output to console (default) |
+| `database` | Save to PostgreSQL database |
+| `csv` | Export to CSV file |
+| `notion` | Save to Notion database |
 
 ## Hexagonal Architecture Layers
 

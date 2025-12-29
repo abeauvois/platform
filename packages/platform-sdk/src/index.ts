@@ -39,6 +39,7 @@ export type {
     ConfigKeysResponse,
     // Workflow types
     WorkflowPreset,
+    SaveToDestination,
     WorkflowFilter,
     WorkflowOptions,
     WorkflowHookInfo,
@@ -49,3 +50,6 @@ export type {
     IWorkflow,
     ILogger,
 } from './types.js';
+
+// Constants
+export { SAVE_TO_DESTINATIONS } from './types.js';

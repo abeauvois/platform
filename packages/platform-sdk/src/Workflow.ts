@@ -159,6 +159,7 @@ export class Workflow implements IWorkflow {
             skipAnalysis: options.skipAnalysis,
             skipTwitter: options.skipTwitter,
             csvOnly: options.csvOnly,
+            saveTo: options.saveTo,
         };
 
         return this.apiRequest<WorkflowTaskResponse>('/api/workflows', {
@@ -250,6 +251,9 @@ export class Workflow implements IWorkflow {
         }
         if (options.skipTwitter) {
             logger.info('Skipping Twitter enrichment');
+        }
+        if (options.saveTo) {
+            logger.info(`Saving to: ${options.saveTo}`);
         }
 
         // Start the task

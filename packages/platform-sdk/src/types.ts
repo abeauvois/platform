@@ -91,6 +91,12 @@ export interface ConfigKeysResponse {
 export type WorkflowPreset = 'full' | 'quick' | 'analyzeOnly' | 'twitterFocus' | 'csvOnly' | 'gmail';
 
 /**
+ * Available destinations for saving processed items
+ */
+export const SAVE_TO_DESTINATIONS = ['console', 'database', 'csv', 'notion'] as const;
+export type SaveToDestination = typeof SAVE_TO_DESTINATIONS[number];
+
+/**
  * Filter options for workflow
  */
 export interface WorkflowFilter {
@@ -114,6 +120,8 @@ export interface WorkflowOptions {
     skipTwitter?: boolean;
     /** Export to CSV only (no Notion) */
     csvOnly?: boolean;
+    /** Where to save processed items (default: 'console') */
+    saveTo?: SaveToDestination;
 }
 
 /**

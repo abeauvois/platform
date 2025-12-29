@@ -63,6 +63,11 @@ async function processWorkflowTask(
     // Create source reader from preset
     const sourceReader = preset.createSourceReader(logger);
 
+    // Log saveTo destination if specified
+    if (request.saveTo) {
+        logger.info(`Save destination: ${request.saveTo}`);
+    }
+
     // Create workflow steps from preset
     const steps = preset.createSteps({
         logger,
@@ -70,6 +75,7 @@ async function processWorkflowTask(
         skipAnalysis: request.skipAnalysis,
         skipTwitter: request.skipTwitter,
         csvOnly: request.csvOnly,
+        saveTo: request.saveTo,
         sourceReader,
     });
 

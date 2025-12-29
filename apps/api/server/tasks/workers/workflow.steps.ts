@@ -7,7 +7,7 @@ import {
     type SourceReaderConfig,
     BaseContent,
 } from '@platform/platform-domain';
-import type { IngestRequest } from '../../validators/ingest.validator';
+import type { WorkflowRequest } from '../../validators/workflow.validator';
 
 // Re-export for convenience
 export type { ISourceReader, SourceReaderConfig };
@@ -43,7 +43,7 @@ export class ReadStep implements IWorkflowStep<BaseContent> {
 
     constructor(
         private readonly preset: string,
-        private readonly filter: IngestRequest['filter'],
+        private readonly filter: WorkflowRequest['filter'],
         private readonly logger: ILogger,
         private readonly sourceReader?: ISourceReader
     ) { }

@@ -1,17 +1,23 @@
 import { BaseContent, type ILogger, type ISourceReader, type IWorkflowStep } from '@platform/platform-domain';
 import { createGmailSourceReader, createBookmarkSourceReader } from '../../infrastructure/source-readers';
-import type { IngestRequest } from '../../validators/ingest.validator';
 import { ReadStep, AnalyzeStep, EnrichStep, ExportStep } from './workflow.steps';
+import { WorkflowRequest, SAVE_TO_DESTINATIONS } from '@/validators/workflow.validator';
+
+/**
+ * SaveTo destination type
+ */
+export type SaveToDestination = typeof SAVE_TO_DESTINATIONS[number];
 
 /**
  * Configuration for creating workflow steps
  */
 export interface StepFactoryConfig {
     logger: ILogger;
-    filter?: IngestRequest['filter'];
+    filter?: WorkflowRequest['filter'];
     skipAnalysis?: boolean;
     skipTwitter?: boolean;
     csvOnly?: boolean;
+    saveTo?: SaveToDestination;
     sourceReader?: ISourceReader;
 }
 
@@ -25,34 +31,9 @@ export interface PresetConfig {
 }
 
 /**
- * Create default workflow steps based on configuration
- */
-function createDefaultSteps(config: StepFactoryConfig): IWorkflowStep<BaseContent>[] {
-    const steps: IWorkflowStep<BaseContent>[] = [];
-
-    // Extract step is always required
-    steps.push(new ReadStep('default', config.filter, config.logger, config.sourceReader));
-
-    // Conditional analysis step
-    if (!config.skipAnalysis) {
-        steps.push(new AnalyzeStep(config.logger));
-    }
-
-    // Conditional enrichment step
-    if (!config.skipTwitter) {
-        steps.push(new EnrichStep(config.logger));
-    }
-
-    // Export step is always added
-    steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
-
-    return steps;
-}
-
-/**
  * Registry of all available presets
  */
-export const presets: Record<IngestRequest['preset'], PresetConfig> = {
+export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
     gmail: {
         name: 'gmail',
         createSourceReader: createGmailSourceReader,
@@ -63,6 +44,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
             return steps;
         },
     },
+
     bookmark: {
         name: 'bookmark',
         createSourceReader: createBookmarkSourceReader,
@@ -74,12 +56,6 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
             // steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
             return steps;
         },
-    },
-
-    full: {
-        name: 'full',
-        createSourceReader: () => undefined, // Uses sample data or throws
-        createSteps: createDefaultSteps,
     },
 
     analyzeOnly: {
@@ -123,7 +99,7 @@ export const presets: Record<IngestRequest['preset'], PresetConfig> = {
 /**
  * Get preset configuration by name
  */
-export function getPreset(name: IngestRequest['preset']): PresetConfig {
+export function getPreset(name: WorkflowRequest['preset']): PresetConfig {
     const preset = presets[name];
     if (!preset) {
         throw new Error(`Unknown preset: ${name}`);
