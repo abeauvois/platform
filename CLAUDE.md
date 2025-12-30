@@ -314,7 +314,7 @@ bun run cli           # Run CLI
 bun run build         # Build library packages
 ```
 
-### Database
+### Database (in dev mode postgress deamon in a docker instance)
 
 ```bash
 bun run db:up         # Start PostgreSQL via Docker

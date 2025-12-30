@@ -8,6 +8,7 @@ import { SourceAdapter } from "./SourceAdapter";
 export class Bookmark implements BaseContent {
     constructor(
         public readonly url: string,
+        public readonly userId: string,
         public readonly sourceAdapter: SourceAdapter = 'None',
         public readonly tags: string[] = [],
         public readonly summary: string = '',
@@ -15,7 +16,6 @@ export class Bookmark implements BaseContent {
         public readonly createdAt: Date = new Date(),
         public readonly updatedAt: Date = new Date(),
         public readonly contentType: FileType = 'unknown',
-        public readonly userId?: string,
         public readonly id?: string
     ) { }
 
@@ -25,6 +25,7 @@ export class Bookmark implements BaseContent {
     withCategorization(tags: string[], summary: string): Bookmark {
         return new Bookmark(
             this.url,
+            this.userId,
             this.sourceAdapter,
             tags,
             summary,
@@ -32,7 +33,6 @@ export class Bookmark implements BaseContent {
             this.createdAt,
             new Date(), // Update the updatedAt timestamp
             this.contentType,
-            this.userId,
             this.id
         );
     }
@@ -43,6 +43,7 @@ export class Bookmark implements BaseContent {
     withUpdatedTimestamp(): Bookmark {
         return new Bookmark(
             this.url,
+            this.userId,
             this.sourceAdapter,
             this.tags,
             this.summary,
@@ -50,7 +51,6 @@ export class Bookmark implements BaseContent {
             this.createdAt,
             new Date(), // Update the updatedAt timestamp
             this.contentType,
-            this.userId,
             this.id
         );
     }

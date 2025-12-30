@@ -4,6 +4,7 @@ import type { BaseContent } from '../entities/BaseContent.js';
  * Configuration for reading content from a source
  */
 export interface SourceReaderConfig {
+    userId?: string;
     filter?: {
         email?: string;
         limitDays?: number;

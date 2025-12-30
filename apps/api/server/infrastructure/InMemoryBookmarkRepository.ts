@@ -25,6 +25,7 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         const id = link.id || `bookmark-${++this.idCounter}`;
         const bookmarkWithId = new Bookmark(
             link.url,
+            link.userId,
             link.sourceAdapter,
             link.tags,
             link.summary,
@@ -32,7 +33,6 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
             link.createdAt,
             link.updatedAt,
             link.contentType,
-            link.userId,
             id
         );
         this.links.set(bookmarkWithId.url, bookmarkWithId);
@@ -56,6 +56,7 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
 
         const updated = new Bookmark(
             updates.url ?? bookmark.url,
+            bookmark.userId,
             updates.sourceAdapter ?? bookmark.sourceAdapter,
             updates.tags ?? bookmark.tags,
             updates.summary ?? bookmark.summary,
@@ -63,7 +64,6 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
             bookmark.createdAt,
             new Date(),
             updates.contentType ?? bookmark.contentType,
-            bookmark.userId,
             bookmark.id
         );
 

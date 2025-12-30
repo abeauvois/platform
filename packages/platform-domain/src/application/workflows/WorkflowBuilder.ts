@@ -104,7 +104,7 @@ export interface WorkflowLifecycleHooks<T> {
  */
 export interface IWorkflow<T> {
     /** Execute the workflow */
-    execute(sourcePath: string, outputPath: string): Promise<void>;
+    execute(userId: string, sourcePath: string, outputPath: string): Promise<void>;
     /** Get the names of steps in this workflow */
     getStepNames(): string[];
 }
@@ -195,9 +195,9 @@ export class WorkflowBuilder<T> {
         return {
             getStepNames: () => steps.map(s => s.name),
 
-            execute: async (sourcePath: string, outputPath: string) => {
+            execute: async (userId: string, sourcePath: string, outputPath: string) => {
                 const startTime = Date.now();
-                let context: WorkflowContext<T> = createWorkflowContext<T>(sourcePath, outputPath);
+                let context: WorkflowContext<T> = createWorkflowContext<T>(userId, sourcePath, outputPath);
                 const executedStepNames: string[] = [];
                 let success = true;
 

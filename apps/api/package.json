@@ -11,9 +11,11 @@
     "db:seed": "bun run ./scripts/seed-local-db.script.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@hono/zod-validator": "^0.7.2",
     "@neondatabase/serverless": "^1.0.1",
     "@platform/auth": "workspace:*",
+    "@platform/cached-http-client": "workspace:*",
     "@platform/db": "workspace:*",
     "@platform/platform-domain": "workspace:*",
     "@platform/task": "workspace:*",

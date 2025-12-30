@@ -17,6 +17,7 @@ export class UrlExtractor implements IUrlExtractor {
      * Check if content contains a URL
      */
     containsUrl(content: string): boolean {
+        URL_REGEX.lastIndex = 0;
         return URL_REGEX.test(content);
     }
 

@@ -5,6 +5,7 @@ import type { WorkflowRequest } from '../validators/workflow.validator';
  */
 export const QUEUE_NAMES = {
     WORKFLOW: 'workflow',
+    BOOKMARK_ENRICHMENT: 'bookmark-enrichment',
 } as const;
 
 /**

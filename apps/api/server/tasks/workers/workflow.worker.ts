@@ -71,6 +71,7 @@ async function processWorkflowTask(
     // Create workflow steps from preset
     const steps = preset.createSteps({
         logger,
+        preset: request.preset,
         filter: request.filter,
         skipAnalysis: request.skipAnalysis,
         skipTwitter: request.skipTwitter,

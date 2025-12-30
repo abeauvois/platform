@@ -4,6 +4,58 @@ import { truncateText } from '@platform/utils';
 import { SAVE_TO_DESTINATIONS, type SaveToDestination } from '@platform/sdk';
 import { createCliContext, getDefaultEmail } from '../../lib/cli-context.js';
 
+type GmailFlags = {
+    filter?: string;
+    limitDays: number;
+    withUrl: boolean;
+    saveTo: string;
+};
+
+type GmailFilter = {
+    email?: string;
+    limitDays?: number;
+    withUrl?: boolean;
+};
+
+function buildGmailConfig(flags: GmailFlags, defaultEmail?: string): { filter: GmailFilter; saveTo: SaveToDestination } {
+    const filter: GmailFilter = {};
+
+    // Use provided filter, or fall back to config/user email
+    if (flags.filter) {
+        filter.email = flags.filter;
+    } else {
+        if (defaultEmail) {
+            filter.email = defaultEmail;
+        }
+    }
+
+    if (flags.limitDays) {
+        filter.limitDays = flags.limitDays;
+    }
+
+    if (flags.withUrl) {
+        filter.withUrl = flags.withUrl;
+    }
+
+    // Validate saveTo option
+    const saveTo = flags.saveTo as SaveToDestination;
+    if (!SAVE_TO_DESTINATIONS.includes(saveTo)) {
+        p.log.error(`Invalid saveTo value: ${saveTo}. Must be one of: ${SAVE_TO_DESTINATIONS.join(', ')}`);
+        process.exit(1);
+    }
+
+    // Display configuration
+    const configLines = [];
+    if (filter.email) {
+        configLines.push(`Filter: ${filter.email}`);
+    }
+    configLines.push(`Limit: ${filter.limitDays} days`);
+    configLines.push(`Save to: ${saveTo}`);
+    p.note(configLines.join('\n'), 'Configuration');
+
+    return { filter, saveTo };
+}
+
 /**
  * Gmail command - Trigger Gmail ingestion workflow
  *
@@ -46,51 +98,31 @@ export const ingestGmailCommand = command({
     try {
         // Create authenticated CLI context (handles auth, API client, and config)
         const ctx = await createCliContext();
+        const defaultEmail = getDefaultEmail(ctx);
+        const apiClient = ctx.apiClient
 
-        // Build filter options
-        const filter: { email?: string; limitDays?: number; withUrl?: boolean } = {};
+        const { filter, saveTo } = buildGmailConfig(argv.flags, defaultEmail);
 
-        // Use provided filter, or fall back to config/user email
-        if (argv.flags.filter) {
-            filter.email = argv.flags.filter;
-        } else {
-            const defaultEmail = getDefaultEmail(ctx);
-            if (defaultEmail) {
-                filter.email = defaultEmail;
-            }
+        let workflow;
+
+        if (saveTo === 'bookmarks') {
+
+            workflow = apiClient.workflow.create('bookmarkEnrichment', {
+                filter,
+                skipAnalysis: false,
+                skipTwitter: true,
+                saveTo,
+            })
         }
+        else {
 
-        if (argv.flags.limitDays) {
-            filter.limitDays = argv.flags.limitDays;
-        }
-
-        if (argv.flags.withUrl) {
-            filter.withUrl = argv.flags.withUrl;
-        }
-
-        // Validate and get saveTo option
-        const saveTo = argv.flags.saveTo as SaveToDestination;
-        if (!SAVE_TO_DESTINATIONS.includes(saveTo)) {
-            p.log.error(`Invalid saveTo value: ${saveTo}. Must be one of: ${SAVE_TO_DESTINATIONS.join(', ')}`);
-            process.exit(1);
-        }
-
-        // Display configuration
-        const configLines = [];
-        if (filter.email) {
-            configLines.push(`Filter: ${filter.email}`);
-        }
-        configLines.push(`Limit: ${filter.limitDays} days`);
-        configLines.push(`Save to: ${saveTo}`);
-        p.note(configLines.join('\n'), 'Configuration');
-
-        // Create and execute workflow
-        const workflow = ctx.apiClient.workflow.create('gmail', {
-            filter,
-            skipAnalysis: false,
-            skipTwitter: true,
-            saveTo,
-        });
+            workflow = apiClient.workflow.create('gmail', {
+                filter,
+                skipAnalysis: false,
+                skipTwitter: true,
+                saveTo,
+            })
+        };
 
         await workflow.execute({
             onItemProcessed: ({ index, total }) => {
@@ -100,7 +132,7 @@ export const ingestGmailCommand = command({
                 p.log.error('An error occurred during ingestion.');
             },
             onComplete: ({ processedItems }) => {
-                processedItems.forEach(item => p.note(truncateText(item.rawContent, 300)));
+                processedItems.forEach((item) => p.note(`${item.tags.join(',')} \n ${item.summary}`));
             }
         });
 

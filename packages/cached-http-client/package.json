@@ -1,5 +1,5 @@
 {
-  "name": "@myorg/cached-http-client",
+  "name": "@platform/cached-http-client",
   "version": "1.0.0",
   "description": "Generic HTTP client with caching, throttling, and retry logic",
   "type": "module",

@@ -113,18 +113,20 @@ export class GmailApiClient implements IEmailClient {
         const to = this.getHeader(headers, 'To');
         const date = this.getHeader(headers, 'Date');
         let subject = this.getHeader(headers, 'Subject');
+        let truncatedSubject = subject
 
         // Extract and decode body
         let body = this.extractBodyContent(payload);
 
         // Extract URL from subject first, then body
         const url = this.urlExtractor.extractFirst(subject) || this.urlExtractor.extractFirst(body);
+        const subjectHasUrl = this.urlExtractor.containsUrl(subject);
 
         // Handle long subjects
         let subjectForContent = subject;
         if (subject.length > MAX_SUBJECT_LENGTH) {
             body = `[Full Subject]: ${subject}\n\n${body}`;
-            subject = truncateText(subject, MAX_SUBJECT_LENGTH);
+            truncatedSubject = truncateText(subject, MAX_SUBJECT_LENGTH);
             subjectForContent = subject;
         }
 
@@ -139,7 +141,7 @@ export class GmailApiClient implements IEmailClient {
 
         return {
             rawContent: headerLines + '\n' + body,
-            subject,
+            subject: subjectHasUrl ? url : truncatedSubject,
         };
     }
 

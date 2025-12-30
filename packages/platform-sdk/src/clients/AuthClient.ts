@@ -44,7 +44,7 @@ export class AuthClient extends BaseClient {
             };
 
             // Set session token on the client instance
-            this.sessionToken = sessionToken;
+            this.setSessionToken(sessionToken);
 
             this.logger.info('Sign up successful');
             return authResponse;
@@ -91,7 +91,7 @@ export class AuthClient extends BaseClient {
             };
 
             // Set session token on the client instance
-            this.sessionToken = sessionToken;
+            this.setSessionToken(sessionToken);
 
             this.logger.info('Sign in successful');
             return authResponse;
@@ -110,14 +110,15 @@ export class AuthClient extends BaseClient {
     async signOut(): Promise<void> {
         this.logger.info('Signing out...');
 
+        const sessionToken = this.getSessionToken();
         try {
             // Attempt to notify server, but don't fail if it doesn't work
             await fetch(`${this.baseUrl}/api/auth/sign-out`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(this.sessionToken && {
-                        'Cookie': `better-auth.session_token=${this.sessionToken}`,
+                    ...(sessionToken && {
+                        'Cookie': `better-auth.session_token=${sessionToken}`,
                     }),
                 },
             });

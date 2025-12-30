@@ -28,14 +28,14 @@ export const bookmarks = new Hono<HonoEnv>()
 
       const bookmark = new Bookmark(
         url,
+        user.id,
         sourceAdapter,
         tags,
         summary,
         '', // rawContent
         new Date(), // createdAt
         new Date(), // updatedAt
-        'unknown', // contentType
-        user.id // userId
+        'unknown' // contentType
       )
 
       if (!bookmark.isValid()) {

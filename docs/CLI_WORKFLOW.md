@@ -83,7 +83,7 @@ This document describes the data flow for content workflows from CLI to backgrou
 │  │  Preset configurations (gmail, bookmark, analyzeOnly, etc.)         │        │
 │  │  • createSourceReader() - returns ISourceReader for the preset      │        │
 │  │  • createSteps(config) - dynamically builds steps based on:         │        │
-│  │      - saveTo: 'database' → adds SaveToDatabaseStep                 │        │
+│  │      - saveTo: 'database' → adds SaveToBookmarkStep                 │        │
 │  │      - saveTo: undefined → adds ExportStep (default)                │        │
 │  │      - skipAnalysis: true → skips AnalyzeStep                       │        │
 │  └──────────────────────────────┬──────────────────────────────────────┘        │
@@ -177,13 +177,13 @@ interface ProcessedItem {
 
 Presets define base step configurations, but actual steps are dynamically determined based on runtime options like `saveTo` and `skipAnalysis`.
 
-| Preset | Description | Base Steps | Dynamic Behavior |
-|--------|-------------|------------|------------------|
-| `gmail` | Gmail workflow | Read → Analyze | `saveTo=database` → SaveToDatabase, else → Export |
-| `bookmark` | Bookmark workflow | Read → Analyze → Enrich | Enriches Twitter links |
-| `analyzeOnly` | Only extract and analyze | Read → Analyze | No export step |
-| `twitterFocus` | Always include Twitter enrichment | Read → Analyze → Enrich → Export | Always enriches |
-| `csvOnly` | Force CSV export only | Read → Export (CSV) | Skips analysis |
+| Preset         | Description                       | Base Steps                       | Dynamic Behavior                                  |
+| -------------- | --------------------------------- | -------------------------------- | ------------------------------------------------- |
+| `gmail`        | Gmail workflow                    | Read → Analyze                   | `saveTo=database` → SaveToDatabase, else → Export |
+| `bookmark`     | Bookmark workflow                 | Read → Analyze → Enrich          | Enriches Twitter links                            |
+| `analyzeOnly`  | Only extract and analyze          | Read → Analyze                   | No export step                                    |
+| `twitterFocus` | Always include Twitter enrichment | Read → Analyze → Enrich → Export | Always enriches                                   |
+| `csvOnly`      | Force CSV export only             | Read → Export (CSV)              | Skips analysis                                    |
 
 ### Dynamic Step Selection (Gmail Preset Example)
 
@@ -195,7 +195,7 @@ createSteps(config) {
         steps.push(AnalyzeStep)
 
     if (config.saveTo === 'database')
-        steps.push(SaveToDatabaseStep)    // Save to PostgreSQL
+        steps.push(SaveToBookmarkStep)    // Save to PostgreSQL
     else if (!config.saveTo)
         steps.push(ExportStep)            // Export to CSV/Notion
 
@@ -230,12 +230,12 @@ bun run cli list source gmail -f newsletter@example.com -l 7 -u -s database
 
 ## Save Destinations
 
-| Destination | Description |
-|-------------|-------------|
-| `console` | Output to console (default) |
-| `database` | Save to PostgreSQL database |
-| `csv` | Export to CSV file |
-| `notion` | Save to Notion database |
+| Destination | Description                 |
+| ----------- | --------------------------- |
+| `console`   | Output to console (default) |
+| `database`  | Save to PostgreSQL database |
+| `csv`       | Export to CSV file          |
+| `notion`    | Save to Notion database     |
 
 ## Hexagonal Architecture Layers
 
@@ -254,7 +254,7 @@ The workflow follows hexagonal architecture:
      - `AnalyzeStep` - AI-powered content analysis
      - `EnrichStep` - Twitter link enrichment
      - `ExportStep` - CSV/Notion export
-     - `SaveToDatabaseStep` - saves to PostgreSQL via bookmark repository
+     - `SaveToBookmarkStep` - saves to PostgreSQL via bookmark repository
 
 3. **Infrastructure Layer** (`infrastructure/`)
    - `GmailApiClient` - Gmail API adapter

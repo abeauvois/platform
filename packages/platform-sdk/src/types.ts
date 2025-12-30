@@ -88,12 +88,12 @@ export interface ConfigKeysResponse {
 /**
  * Available workflow presets
  */
-export type WorkflowPreset = 'full' | 'quick' | 'analyzeOnly' | 'twitterFocus' | 'csvOnly' | 'gmail';
+export type WorkflowPreset = 'analyzeOnly' | 'twitterFocus' | 'csvOnly' | 'gmail' | 'bookmark' | 'bookmarkEnrichment';
 
 /**
  * Available destinations for saving processed items
  */
-export const SAVE_TO_DESTINATIONS = ['console', 'database', 'csv', 'notion'] as const;
+export const SAVE_TO_DESTINATIONS = ['console', 'database', 'csv', 'notion', 'bookmarks'] as const;
 export type SaveToDestination = typeof SAVE_TO_DESTINATIONS[number];
 
 /**

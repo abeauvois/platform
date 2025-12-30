@@ -1,7 +1,11 @@
 import { BaseContent, type ILogger, type ISourceReader, type IWorkflowStep } from '@platform/platform-domain';
 import { createGmailSourceReader, createBookmarkSourceReader } from '../../infrastructure/source-readers';
+import { createPendingContentSourceReader } from '../../infrastructure/source-readers/PendingContentSourceReader';
 import { DrizzleBookmarkRepository } from '../../infrastructure/DrizzleBookmarkRepository';
-import { ReadStep, AnalyzeStep, EnrichStep, ExportStep, SaveToDatabaseStep } from './workflow.steps';
+import { DrizzlePendingContentRepository } from '../../infrastructure/DrizzlePendingContentRepository';
+import { WebScraperAdapter } from '../../infrastructure/WebScraperAdapter';
+import { BookmarkEnricherAdapter } from '../../infrastructure/BookmarkEnricherAdapter';
+import { ReadStep, AnalyzeStep, EnrichStep, ExportStep, SaveToPendingContentStep, BookmarkEnrichmentStep } from './steps';
 import { WorkflowRequest, SAVE_TO_DESTINATIONS } from '@/validators/workflow.validator';
 
 /**
@@ -14,6 +18,7 @@ export type SaveToDestination = typeof SAVE_TO_DESTINATIONS[number];
  */
 export interface StepFactoryConfig {
     logger: ILogger;
+    preset: WorkflowRequest['preset'];
     filter?: WorkflowRequest['filter'];
     skipAnalysis?: boolean;
     skipTwitter?: boolean;
@@ -41,15 +46,16 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSourceReader: createGmailSourceReader,
         createSteps: (config) => {
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep('gmail', config.filter, config.logger, config.sourceReader));
-            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
+            steps.push(new ReadStep(config));
+            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config));
 
             // Handle saveTo destinations
             if (config.saveTo === 'database') {
-                const bookmarkRepository = new DrizzleBookmarkRepository();
-                steps.push(new SaveToDatabaseStep(config.userId!, config.logger, bookmarkRepository));
+                // Save to pending_content for later enrichment
+                const pendingContentRepository = new DrizzlePendingContentRepository();
+                steps.push(new SaveToPendingContentStep(config, pendingContentRepository));
             } else if (!config.saveTo) {
-                steps.push(new ExportStep(false, config.logger));
+                steps.push(new ExportStep(config));
             }
             return steps;
         },
@@ -60,10 +66,9 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSourceReader: createBookmarkSourceReader,
         createSteps: (config) => {
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep('bookmark', config.filter, config.logger, config.sourceReader));
-            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
-            if (!config.skipTwitter) steps.push(new EnrichStep(config.logger));
-            // steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
+            steps.push(new ReadStep(config));
+            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config));
+            if (!config.skipTwitter) steps.push(new EnrichStep(config));
             return steps;
         },
     },
@@ -74,8 +79,8 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSteps: (config) => {
             // Only extract and analyze, no export
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep('analyzeOnly', config.filter, config.logger, config.sourceReader));
-            steps.push(new AnalyzeStep(config.logger));
+            steps.push(new ReadStep(config));
+            steps.push(new AnalyzeStep(config));
             return steps;
         },
     },
@@ -86,10 +91,10 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSteps: (config) => {
             // Always include enrichment for Twitter focus
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep('twitterFocus', config.filter, config.logger, config.sourceReader));
-            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config.logger));
-            steps.push(new EnrichStep(config.logger)); // Always enrich for Twitter
-            steps.push(new ExportStep(config.csvOnly ?? false, config.logger));
+            steps.push(new ReadStep(config));
+            if (!config.skipAnalysis) steps.push(new AnalyzeStep(config));
+            steps.push(new EnrichStep(config)); // Always enrich for Twitter
+            steps.push(new ExportStep(config));
             return steps;
         },
     },
@@ -99,8 +104,43 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSourceReader: () => undefined,
         createSteps: (config) => {
             const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep('csvOnly', config.filter, config.logger, config.sourceReader));
-            steps.push(new ExportStep(true, config.logger)); // Force CSV only
+            steps.push(new ReadStep( config));
+            steps.push(new ExportStep({ ...config, csvOnly: true })); // Force CSV only
+            return steps;
+        },
+    },
+
+    bookmarkEnrichment: {
+        name: 'bookmarkEnrichment',
+        createSourceReader: createPendingContentSourceReader,
+        createSteps: (config) => {
+            const steps: IWorkflowStep<BaseContent>[] = [];
+
+            // Read pending content from database
+            steps.push(new ReadStep(config));
+
+            // Enrich: scrape URLs, extract links, analyze content, create bookmarks
+            const apiKey = process.env.ANTHROPIC_API_KEY;
+            if (!apiKey) {
+                config.logger.error('ANTHROPIC_API_KEY not configured for bookmark enrichment');
+                return steps;
+            }
+
+            const webScraper = new WebScraperAdapter(config.logger);
+            const bookmarkEnricher = new BookmarkEnricherAdapter(apiKey, config.logger);
+            const pendingContentRepository = new DrizzlePendingContentRepository();
+            const bookmarkRepository = new DrizzleBookmarkRepository();
+
+            steps.push(
+                new BookmarkEnrichmentStep(
+                    config,
+                    webScraper,
+                    bookmarkEnricher,
+                    pendingContentRepository,
+                    bookmarkRepository
+                )
+            );
+
             return steps;
         },
     },

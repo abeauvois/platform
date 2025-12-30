@@ -3,6 +3,7 @@
  * @typeParam T - The type of items being processed in the workflow
  */
 export interface WorkflowContext<T> {
+    userId: string;
     /** Source path for input (e.g., zip file or directory) */
     sourcePath?: string;
     /** Output path for export */
@@ -71,10 +72,12 @@ export interface IWorkflowStep<T> {
  * @typeParam T - The type of items being processed in the workflow
  */
 export function createWorkflowContext<T>(
+    userId: string,
     sourcePath?: string,
     outputPath?: string
 ): WorkflowContext<T> {
     return {
+        userId,
         sourcePath,
         outputPath,
         items: [],

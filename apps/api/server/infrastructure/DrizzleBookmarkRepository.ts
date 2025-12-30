@@ -120,6 +120,7 @@ export class DrizzleBookmarkRepository implements ILinkRepository {
     private toDomain(row: typeof bookmarks.$inferSelect): Bookmark {
         return new Bookmark(
             row.url,
+            row.userId,
             row.sourceAdapter as SourceAdapter,
             row.tags,
             row.summary,
@@ -127,7 +128,6 @@ export class DrizzleBookmarkRepository implements ILinkRepository {
             row.createdAt,
             row.updatedAt,
             row.contentType as FileType,
-            row.userId,
             row.id
         );
     }

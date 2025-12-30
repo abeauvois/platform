@@ -1,4 +1,4 @@
-# @myorg/cached-http-client
+# @platform/cached-http-client
 
 A generic, type-safe HTTP client with built-in caching, throttling, and retry logic for Node.js/Bun applications.
 
@@ -16,19 +16,19 @@ A generic, type-safe HTTP client with built-in caching, throttling, and retry lo
 
 ```bash
 # Using Bun
-bun add @myorg/cached-http-client
+bun add @platform/cached-http-client
 
 # Using npm
-npm install @myorg/cached-http-client
+npm install @platform/cached-http-client
 
 # Using yarn
-yarn add @myorg/cached-http-client
+yarn add @platform/cached-http-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { CachedHttpClient, type ILogger } from "@myorg/cached-http-client";
+import { CachedHttpClient, type ILogger } from "@platform/cached-http-client";
 
 // Implement the logger interface
 const logger: ILogger = {

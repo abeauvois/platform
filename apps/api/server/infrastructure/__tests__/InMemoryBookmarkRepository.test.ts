@@ -18,14 +18,14 @@ describe('InMemoryBookmarkRepository', () => {
         test('should save a bookmark and return it with generated id', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 ['tech'],
                 'Example site',
                 'Raw content here',
                 new Date(),
                 new Date(),
-                'article',
-                'user-123'
+                'article'
             );
 
             const saved = await repository.save(bookmark);
@@ -38,6 +38,7 @@ describe('InMemoryBookmarkRepository', () => {
         test('should preserve existing id if provided', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 ['tech'],
                 'Example site',
@@ -45,7 +46,6 @@ describe('InMemoryBookmarkRepository', () => {
                 new Date(),
                 new Date(),
                 'article',
-                'user-123',
                 'existing-id'
             );
 
@@ -57,7 +57,7 @@ describe('InMemoryBookmarkRepository', () => {
 
     describe('exists', () => {
         test('should return true for existing bookmark URL', async () => {
-            const bookmark = new Bookmark('https://example.com', 'Gmail');
+            const bookmark = new Bookmark('https://example.com', 'user-123', 'Gmail');
             await repository.save(bookmark);
 
             const exists = await repository.exists('https://example.com');
@@ -74,7 +74,7 @@ describe('InMemoryBookmarkRepository', () => {
 
     describe('findByUrl', () => {
         test('should find bookmark by URL', async () => {
-            const bookmark = new Bookmark('https://example.com', 'Gmail', ['tech']);
+            const bookmark = new Bookmark('https://example.com', 'user-123', 'Gmail', ['tech']);
             await repository.save(bookmark);
 
             const found = await repository.findByUrl('https://example.com');
@@ -95,6 +95,7 @@ describe('InMemoryBookmarkRepository', () => {
         test('should find bookmark by id', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 [],
                 '',
@@ -102,7 +103,6 @@ describe('InMemoryBookmarkRepository', () => {
                 new Date(),
                 new Date(),
                 'unknown',
-                'user-123',
                 'test-id'
             );
             await repository.save(bookmark);
@@ -123,8 +123,8 @@ describe('InMemoryBookmarkRepository', () => {
     describe('saveMany', () => {
         test('should save multiple bookmarks', async () => {
             const bookmarks = [
-                new Bookmark('https://example1.com', 'Gmail'),
-                new Bookmark('https://example2.com', 'Gmail'),
+                new Bookmark('https://example1.com', 'user-123', 'Gmail'),
+                new Bookmark('https://example2.com', 'user-123', 'Gmail'),
             ];
 
             const saved = await repository.saveMany(bookmarks);
@@ -145,6 +145,7 @@ describe('InMemoryBookmarkRepository', () => {
         test('should update bookmark if owned by user', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 ['old-tag'],
                 'Old summary',
@@ -152,7 +153,6 @@ describe('InMemoryBookmarkRepository', () => {
                 new Date(),
                 new Date(),
                 'article',
-                'user-123',
                 'bookmark-1'
             );
             await repository.save(bookmark);
@@ -170,6 +170,7 @@ describe('InMemoryBookmarkRepository', () => {
         test('should return null if not owned by user', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 [],
                 '',
@@ -177,7 +178,6 @@ describe('InMemoryBookmarkRepository', () => {
                 new Date(),
                 new Date(),
                 'article',
-                'user-123',
                 'bookmark-1'
             );
             await repository.save(bookmark);
@@ -202,6 +202,7 @@ describe('InMemoryBookmarkRepository', () => {
         test('should delete bookmark if owned by user', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 [],
                 '',
@@ -209,7 +210,6 @@ describe('InMemoryBookmarkRepository', () => {
                 new Date(),
                 new Date(),
                 'article',
-                'user-123',
                 'bookmark-1'
             );
             await repository.save(bookmark);
@@ -223,6 +223,7 @@ describe('InMemoryBookmarkRepository', () => {
         test('should return false if not owned by user', async () => {
             const bookmark = new Bookmark(
                 'https://example.com',
+                'user-123',
                 'Gmail',
                 [],
                 '',
@@ -230,7 +231,6 @@ describe('InMemoryBookmarkRepository', () => {
                 new Date(),
                 new Date(),
                 'article',
-                'user-123',
                 'bookmark-1'
             );
             await repository.save(bookmark);
@@ -244,8 +244,8 @@ describe('InMemoryBookmarkRepository', () => {
 
     describe('findAll', () => {
         test('should return all bookmarks', async () => {
-            await repository.save(new Bookmark('https://example1.com', 'Gmail'));
-            await repository.save(new Bookmark('https://example2.com', 'Gmail'));
+            await repository.save(new Bookmark('https://example1.com', 'user-123', 'Gmail'));
+            await repository.save(new Bookmark('https://example2.com', 'user-123', 'Gmail'));
 
             const all = await repository.findAll();
 
@@ -262,13 +262,13 @@ describe('InMemoryBookmarkRepository', () => {
     describe('findByUserId', () => {
         test('should return bookmarks for specific user', async () => {
             await repository.save(
-                new Bookmark('https://example1.com', 'Gmail', [], '', '', new Date(), new Date(), 'article', 'user-1')
+                new Bookmark('https://example1.com', 'user-1', 'Gmail', [], '', '', new Date(), new Date(), 'article')
             );
             await repository.save(
-                new Bookmark('https://example2.com', 'Gmail', [], '', '', new Date(), new Date(), 'article', 'user-2')
+                new Bookmark('https://example2.com', 'user-2', 'Gmail', [], '', '', new Date(), new Date(), 'article')
             );
             await repository.save(
-                new Bookmark('https://example3.com', 'Gmail', [], '', '', new Date(), new Date(), 'article', 'user-1')
+                new Bookmark('https://example3.com', 'user-1', 'Gmail', [], '', '', new Date(), new Date(), 'article')
             );
 
             const user1Bookmarks = await repository.findByUserId('user-1');
@@ -280,8 +280,8 @@ describe('InMemoryBookmarkRepository', () => {
 
     describe('clear', () => {
         test('should remove all bookmarks', async () => {
-            await repository.save(new Bookmark('https://example1.com', 'Gmail'));
-            await repository.save(new Bookmark('https://example2.com', 'Gmail'));
+            await repository.save(new Bookmark('https://example1.com', 'user-123', 'Gmail'));
+            await repository.save(new Bookmark('https://example2.com', 'user-123', 'Gmail'));
 
             await repository.clear();
 
@@ -294,10 +294,10 @@ describe('InMemoryBookmarkRepository', () => {
         test('should return correct count of bookmarks', async () => {
             expect(repository.getCount()).toBe(0);
 
-            await repository.save(new Bookmark('https://example1.com', 'Gmail'));
+            await repository.save(new Bookmark('https://example1.com', 'user-123', 'Gmail'));
             expect(repository.getCount()).toBe(1);
 
-            await repository.save(new Bookmark('https://example2.com', 'Gmail'));
+            await repository.save(new Bookmark('https://example2.com', 'user-123', 'Gmail'));
             expect(repository.getCount()).toBe(2);
         });
     });

@@ -40,11 +40,14 @@ export async function selectCommand(inputCsv?: string) {
 
             links = records.map((record: any) => new Bookmark(
                 record.url || record.link, // Handle both 'url' and 'link' column names
-                record.tag || '',
-                record.description || '',
-                record.sourceUri || '',
+                record.userId || 'cli-user',
+                record.sourceAdapter || 'Other',
+                record.tags ? JSON.parse(record.tags) : [],
+                record.summary || record.description || '',
+                record.rawContent || '',
                 record.createdAt ? new Date(record.createdAt) : new Date(),
-                record.updatedAt ? new Date(record.updatedAt) : new Date()
+                record.updatedAt ? new Date(record.updatedAt) : new Date(),
+                record.contentType || 'unknown'
             ));
 
             p.log.success(`Found ${links.length} links`);
@@ -60,9 +63,9 @@ export async function selectCommand(inputCsv?: string) {
             process.exit(0);
         }
 
-        // Group links by tag for better organization
+        // Group links by first tag for better organization
         const linksByTag = links.reduce((acc, link) => {
-            const tag = link.tag || 'untagged';
+            const tag = link.tags[0] || 'untagged';
             if (!acc[tag]) {
                 acc[tag] = [];
             }
@@ -126,7 +129,7 @@ export async function selectCommand(inputCsv?: string) {
                             }
                             return {
                                 value: links.indexOf(link),
-                                label: truncateText(link.description || link.url || 'No description', 60),
+                                label: truncateText(link.summary || link.url || 'No description', 60),
                                 hint: hostname
                             };
                         })
@@ -147,7 +150,7 @@ export async function selectCommand(inputCsv?: string) {
         // Display selected links with checkboxes and truncated URLs
         p.note(
             selectedLinks.map((link, i) =>
-                `☑ [${link.tag || 'untagged'}] ${truncateText(link.description || link.url, 60)}\n   ${truncateText(link.url, 80)}`
+                `☑ [${link.tags[0] || 'untagged'}] ${truncateText(link.summary || link.url, 60)}\n   ${truncateText(link.url, 80)}`
             ).join('\n\n'),
             `Selected ${selectedLinks.length} link${selectedLinks.length === 1 ? '' : 's'}`
         );
@@ -190,7 +193,7 @@ export async function selectCommand(inputCsv?: string) {
         } else if (action === 'display') {
             console.log('\n📋 Selected Links:\n');
             selectedLinks.forEach((link, i) => {
-                console.log(`${i + 1}. [${link.tag}] ${link.description || link.url}`);
+                console.log(`${i + 1}. [${link.tags[0] || 'untagged'}] ${link.summary || link.url}`);
                 console.log(`   🔗 ${link.url}`);
                 if (i < selectedLinks.length - 1) console.log('');
             });

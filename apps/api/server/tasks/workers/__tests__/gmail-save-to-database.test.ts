@@ -8,7 +8,8 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
 import { BaseContent, type ISourceReader, type ILogger, type WorkflowContext } from '@platform/platform-domain';
 import { InMemoryBookmarkRepository } from '../../../infrastructure/InMemoryBookmarkRepository';
-import { ReadStep, SaveToDatabaseStep } from '../workflow.steps';
+import { ReadStep, SaveToBookmarkStep } from '../steps';
+import type { StepFactoryConfig } from '../presets';
 
 /**
  * Mock source reader that returns test data
@@ -29,6 +30,17 @@ function createTestLogger(): ILogger {
         error: () => { },
         debug: () => { },
         await: () => ({ start: () => { }, update: () => { }, stop: () => { } }),
+    };
+}
+
+/**
+ * Create a test config for ReadStep
+ */
+function createReadStepConfig(sourceReader?: ISourceReader): StepFactoryConfig {
+    return {
+        logger: createTestLogger(),
+        preset: 'gmail',
+        sourceReader,
     };
 }
 
@@ -75,8 +87,8 @@ describe('Gmail Preset - Save to Database', () => {
         const mockSourceReader = createMockSourceReader(testItems);
 
         // Create steps directly (simulating gmail preset with saveTo='database')
-        const readStep = new ReadStep('gmail', undefined, logger, mockSourceReader);
-        const saveStep = new SaveToDatabaseStep('test-user-123', logger, bookmarkRepository);
+        const readStep = new ReadStep(createReadStepConfig(mockSourceReader));
+        const saveStep = new SaveToBookmarkStep('test-user-123', logger, bookmarkRepository);
 
         // Act - Execute all steps
         let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
@@ -106,23 +118,23 @@ describe('Gmail Preset - Save to Database', () => {
         expect(bookmark2?.tags).toEqual(['programming']);
     });
 
-    test('SaveToDatabaseStep has correct name', () => {
+    test('SaveToBookmarkStep has correct name', () => {
         // Verify step naming for workflow integration
-        const saveStep = new SaveToDatabaseStep('test-user', logger, bookmarkRepository);
+        const saveStep = new SaveToBookmarkStep('test-user', logger, bookmarkRepository);
         expect(saveStep.name).toBe('saveToDatabase');
     });
 
     test('ReadStep has correct name', () => {
         // Verify step naming for workflow integration
-        const readStep = new ReadStep('gmail', undefined, logger);
+        const readStep = new ReadStep(createReadStepConfig());
         expect(readStep.name).toBe('read');
     });
 
     test('should handle empty items gracefully', async () => {
         // Arrange
         const mockSourceReader = createMockSourceReader([]);
-        const readStep = new ReadStep('gmail', undefined, logger, mockSourceReader);
-        const saveStep = new SaveToDatabaseStep('test-user', logger, bookmarkRepository);
+        const readStep = new ReadStep(createReadStepConfig(mockSourceReader));
+        const saveStep = new SaveToBookmarkStep('test-user', logger, bookmarkRepository);
 
         // Act
         let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
@@ -150,8 +162,8 @@ describe('Gmail Preset - Save to Database', () => {
         );
 
         const mockSourceReader = createMockSourceReader([testItem]);
-        const readStep = new ReadStep('gmail', undefined, logger, mockSourceReader);
-        const saveStep = new SaveToDatabaseStep('user-with-full-data', logger, bookmarkRepository);
+        const readStep = new ReadStep(createReadStepConfig(mockSourceReader));
+        const saveStep = new SaveToBookmarkStep('user-with-full-data', logger, bookmarkRepository);
 
         // Act
         let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
@@ -184,8 +196,8 @@ describe('Gmail Preset - Save to Database', () => {
             'Test content'
         );
 
-        // SaveToDatabaseStep without repository
-        const saveStep = new SaveToDatabaseStep('test-user', logger, undefined);
+        // SaveToBookmarkStep without repository
+        const saveStep = new SaveToBookmarkStep('test-user', logger, undefined);
 
         // Act
         const context: WorkflowContext<BaseContent> = { items: [testItem], outputPath: '', updatedIds: new Set<string>(), metadata: {} };

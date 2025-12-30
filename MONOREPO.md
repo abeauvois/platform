@@ -2,7 +2,7 @@
 
 This repository is organized as a monorepo containing:
 
-- A reusable `@myorg/cached-http-client` library package
+- A reusable `@platform/cached-http-client` library package
 - The main `email-link-extractor` application
 
 ## Structure
@@ -25,7 +25,7 @@ This repository is organized as a monorepo containing:
 │   ├── domain/                      # Business logic & interfaces
 │   ├── infrastructure/              # External adapters
 │   │   └── adapters/
-│   │       ├── TwitterScraper.ts    # Uses @myorg/cached-http-client
+│   │       ├── TwitterScraper.ts    # Uses @platform/cached-http-client
 │   │       └── ...
 │   └── cli/                         # CLI entry point
 │
@@ -45,7 +45,7 @@ The monorepo uses Bun workspaces to manage packages:
 
 ## Packages
 
-### @myorg/cached-http-client
+### @platform/cached-http-client
 
 A standalone, reusable HTTP client library with:
 
@@ -62,7 +62,7 @@ A standalone, reusable HTTP client library with:
 **Usage in other projects:**
 
 ```typescript
-import { CachedHttpClient, type ILogger } from "@myorg/cached-http-client";
+import { CachedHttpClient, type ILogger } from "@platform/cached-http-client";
 
 const logger: ILogger = {
   info: console.log,
@@ -129,7 +129,7 @@ The main application uses the library locally via workspace resolution:
 
 ```typescript
 // In src/infrastructure/adapters/TwitterScraper.ts
-import { CachedHttpClient } from "@myorg/cached-http-client";
+import { CachedHttpClient } from "@platform/cached-http-client";
 
 export class TwitterScraper implements ITweetScraper {
   private readonly httpClient: CachedHttpClient<string>;
@@ -145,7 +145,7 @@ export class TwitterScraper implements ITweetScraper {
 
 ## Publishing the Library
 
-To publish `@myorg/cached-http-client` to npm:
+To publish `@platform/cached-http-client` to npm:
 
 ```bash
 cd packages/cached-http-client
@@ -156,7 +156,7 @@ bun run build
 npm publish
 ```
 
-**Note:** Update the package name in `package.json` from `@myorg/cached-http-client` to your organization's scope.
+**Note:** Update the package name in `package.json` from `@platform/cached-http-client` to your organization's scope.
 
 ## Benefits of Monorepo Structure
 
@@ -202,7 +202,7 @@ The monorepo follows **Hexagonal Architecture**:
 - **Domain Layer**: Pure business logic (ports/interfaces)
 - **Application Layer**: Use cases orchestrating domain logic
 - **Infrastructure Layer**: External system adapters
-  - Uses `@myorg/cached-http-client` for HTTP operations
+  - Uses `@platform/cached-http-client` for HTTP operations
   - Implements domain ports with concrete adapters
 
 ## Migration from Single Package
@@ -229,7 +229,7 @@ With the following changes:
 
 The main application was updated to:
 
-1. Import from `@myorg/cached-http-client`
+1. Import from `@platform/cached-http-client`
 2. Continue using same API (backward compatible)
 
 ## Future Enhancements
@@ -237,14 +237,12 @@ The main application was updated to:
 Possible additions to the monorepo:
 
 1. **More Libraries**:
-
-   - `@myorg/email-parser` - Email parsing utilities
-   - `@myorg/link-analyzer` - Link analysis tools
+   - `@platform/email-parser` - Email parsing utilities
+   - `@platform/link-analyzer` - Link analysis tools
 
 2. **Shared Packages**:
-
-   - `@myorg/types` - Shared TypeScript types
-   - `@myorg/utils` - Common utilities
+   - `@platform/types` - Shared TypeScript types
+   - `@platform/utils` - Common utilities
 
 3. **Testing**:
    - Shared test utilities

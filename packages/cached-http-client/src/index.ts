@@ -1,11 +1,11 @@
 /**
- * @myorg/cached-http-client
+ * @platform/cached-http-client
  * 
  * Generic HTTP client with caching, throttling, and retry logic
  * 
  * @example
  * ```typescript
- * import { CachedHttpClient, type ILogger } from '@myorg/cached-http-client';
+ * import { CachedHttpClient, type ILogger } from '@platform/cached-http-client';
  * 
  * const logger: ILogger = {
  *   info: (msg) => console.log(msg),

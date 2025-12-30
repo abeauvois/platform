@@ -6,7 +6,7 @@ export * from './ports.js';
 export type { PgBoss, Job } from 'pg-boss';
 
 // Boss setup
-export { initBoss, getBoss, stopBoss, createQueue, type BossConfig } from './boss.js';
+export { initBoss, getBoss, stopBoss, createQueue, scheduleRecurringTask, type BossConfig } from './boss.js';
 
 // Adapters
 export { PgBossTaskRunner } from './adapters/PgBossTaskRunner.js';

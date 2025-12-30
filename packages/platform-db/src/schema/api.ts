@@ -6,6 +6,7 @@ import {
     text,
     integer,
     jsonb,
+    unique,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 
@@ -27,6 +28,28 @@ export const bookmarks = pgTable('bookmarks', {
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Pending content table
+ * Stores raw content awaiting enrichment processing
+ * Status: pending → processing → archived
+ */
+export const pendingContent = pgTable('pending_content', {
+    id: varchar('id', { length: 100 }).primaryKey(),
+    userId: text('user_id')
+        .notNull()
+        .references(() => user.id, { onDelete: 'cascade' }),
+    url: text('url').notNull(),
+    sourceAdapter: varchar('source_adapter', { length: 50 }).notNull().default('None'),
+    externalId: varchar('external_id', { length: 255 }),
+    rawContent: text('raw_content').notNull().default(''),
+    contentType: varchar('content_type', { length: 50 }).notNull().default('unknown'),
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+    unique('pending_content_user_url_unique').on(table.userId, table.url),
+]);
 
 /**
  * Background tasks table

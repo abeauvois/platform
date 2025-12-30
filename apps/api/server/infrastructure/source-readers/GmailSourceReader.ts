@@ -1,12 +1,11 @@
 import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@platform/platform-domain';
-import { truncateText } from '@platform/utils';
 import { GmailApiClient } from '../GmailApiClient';
 import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository';
 import { UrlExtractor } from '../UrlExtractor';
 
 // Singleton timestamp repository to persist state across jobs
 const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
-
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 /**
  * Create a Gmail source reader that fetches real Gmail messages
  */
@@ -37,12 +36,12 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
             const lastExecution = await gmailTimestampRepo.getLastExecutionTime();
 
             if (config.filter?.limitDays) {
-                sinceDate = new Date(Date.now() - config.filter.limitDays * 24 * 60 * 60 * 1000);
+                sinceDate = new Date(Date.now() - config.filter.limitDays * DAY_MILLISECONDS);
             } else if (lastExecution) {
                 sinceDate = lastExecution;
             } else {
                 // Default: last 7 days for first run
-                sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                sinceDate = new Date(Date.now() - 7 * DAY_MILLISECONDS);
             }
 
             logger.info(`Fetching messages since ${sinceDate.toISOString()}`);
@@ -53,9 +52,9 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
                 config.filter?.withUrl
             );
 
-            logger.info(`Found ${messages.length} Gmail messages`);
-            logger.info(messages.map((m) => truncateText(m.rawContent, 380)).join('\n'));
-            logger.info('\n');
+            messages.forEach((b) => logger.debug(`Converted message to base content: ${b.subject}`));
+
+            logger.info(`Found ${messages.length} Gmail messages \n`);
 
             // Save current timestamp for next run
             await gmailTimestampRepo.saveLastExecutionTime(new Date());
@@ -64,7 +63,7 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
             const urlExtractor = new UrlExtractor();
 
             // Convert GmailMessage to BaseContent
-            return messages.map(
+            const baseContents = messages.map(
                 (message) =>
                     new BaseContent(
                         urlExtractor.extractFirst(message.rawContent) || message.id,
@@ -77,6 +76,8 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
                         'email'
                     )
             );
+
+            return baseContents;
         },
     };
 }

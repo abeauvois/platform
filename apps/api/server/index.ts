@@ -6,7 +6,7 @@ import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { workflows } from './routes/workflow.routes';
 import { sources } from './routes/sources.routes';
-import { initBoss, stopBoss, createQueue } from '@platform/task';
+import { initBoss, stopBoss, createQueue, scheduleRecurringTask } from '@platform/task';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
 import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgroundTaskRepository';
@@ -48,10 +48,24 @@ async function startJobQueue() {
       throw new Error('DATABASE_URL environment variable is required');
     }
     const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
+
+    // Create queues
     await createQueue(QUEUE_NAMES.WORKFLOW);
+    await createQueue(QUEUE_NAMES.BOOKMARK_ENRICHMENT);
+
+    // Register workers
     const taskRepository = new DrizzleBackgroundTaskRepository();
     await registerAllWorkers(boss, taskRepository);
-    console.log('Job queue initialized');
+
+    // Schedule daily bookmark enrichment at 11:59 AM UTC
+    await scheduleRecurringTask(
+      'daily-bookmark-enrichment',
+      '59 11 * * *',
+      QUEUE_NAMES.BOOKMARK_ENRICHMENT,
+      { preset: 'bookmarkEnrichment' }
+    );
+
+    console.log('Job queue initialized with daily enrichment schedule');
   } catch (error) {
     console.error('Failed to initialize job queue:', error);
     // Continue without job queue - endpoints will fail gracefully

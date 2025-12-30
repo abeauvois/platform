@@ -4,12 +4,12 @@ import { z } from 'zod';
 /**
  * Workflow presets available
  */
-const workflowPresets = ['gmail', 'bookmark', 'analyzeOnly', 'twitterFocus', 'csvOnly'] as const;
+const workflowPresets = ['gmail', 'bookmark', 'analyzeOnly', 'twitterFocus', 'csvOnly', 'bookmarkEnrichment'] as const;
 
 /**
  * Available destinations for saving processed items
  */
-export const SAVE_TO_DESTINATIONS = ['console', 'database', 'csv', 'notion'] as const;
+export const SAVE_TO_DESTINATIONS = ['console', 'database', 'csv', 'notion', 'bookmarks'] as const;
 
 /**
  * Schema for workflow filter options
