@@ -9,6 +9,7 @@
         "build": "bun build ./index.ts --outdir ./dist --target bun --format esm",
         "dev": "bun run index.ts",
         "start": "bun run index.ts",
+        "prod": "bun --env-file=.env.production run index.ts",
         "test": "bun test"
     },
     "dependencies": {
