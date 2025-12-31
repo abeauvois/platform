@@ -94,6 +94,13 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         this.links.clear();
     }
 
+    async existsByUrls(userId: string, urls: string[]): Promise<Set<string>> {
+        const existingUrls = Array.from(this.links.values())
+            .filter((bookmark) => bookmark.userId === userId && urls.includes(bookmark.url))
+            .map((bookmark) => bookmark.url);
+        return new Set(existingUrls);
+    }
+
     /**
      * Get the count of stored links (useful for testing)
      */

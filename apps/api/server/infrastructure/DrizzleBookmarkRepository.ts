@@ -1,4 +1,4 @@
-import { db, bookmarks, eq, and, gte } from '@platform/db';
+import { db, bookmarks, eq, and, gte, inArray } from '@platform/db';
 import { Bookmark, type ILinkRepository, type SourceAdapter, type FileType } from '@platform/platform-domain';
 
 export class DrizzleBookmarkRepository implements ILinkRepository {
@@ -115,6 +115,17 @@ export class DrizzleBookmarkRepository implements ILinkRepository {
 
     async clear(): Promise<void> {
         await db.delete(bookmarks);
+    }
+
+    async existsByUrls(userId: string, urls: string[]): Promise<Set<string>> {
+        if (urls.length === 0) return new Set();
+
+        const results = await db
+            .select({ url: bookmarks.url })
+            .from(bookmarks)
+            .where(and(eq(bookmarks.userId, userId), inArray(bookmarks.url, urls)));
+
+        return new Set(results.map((r) => r.url));
     }
 
     private toDomain(row: typeof bookmarks.$inferSelect): Bookmark {

@@ -56,4 +56,13 @@ export interface IPendingContentRepository {
      * @returns The PendingContent if found, null otherwise
      */
     findById(id: string): Promise<PendingContent | null>;
+
+    /**
+     * Check which URLs already exist for a user
+     * Used for pre-filtering before batch insert to avoid constraint violations
+     * @param userId The user ID to check
+     * @param urls Array of URLs to check
+     * @returns Set of URLs that already exist
+     */
+    existsByUrls(userId: string, urls: string[]): Promise<Set<string>>;
 }

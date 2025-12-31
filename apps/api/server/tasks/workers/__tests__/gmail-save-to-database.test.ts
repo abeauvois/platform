@@ -45,6 +45,17 @@ function createReadStepConfig(sourceReader?: ISourceReader): StepFactoryConfig {
 }
 
 /**
+ * Create a test config for SaveToBookmarkStep
+ */
+function createSaveStepConfig(userId: string, logger: ILogger): StepFactoryConfig {
+    return {
+        logger,
+        preset: 'gmail',
+        userId,
+    };
+}
+
+/**
  * Check if a string is a valid URL
  */
 function isValidUrl(url: string): boolean {
@@ -88,7 +99,7 @@ describe('Gmail Preset - Save to Database', () => {
 
         // Create steps directly (simulating gmail preset with saveTo='database')
         const readStep = new ReadStep(createReadStepConfig(mockSourceReader));
-        const saveStep = new SaveToBookmarkStep('test-user-123', logger, bookmarkRepository);
+        const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user-123', logger), bookmarkRepository);
 
         // Act - Execute all steps
         let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
@@ -120,7 +131,7 @@ describe('Gmail Preset - Save to Database', () => {
 
     test('SaveToBookmarkStep has correct name', () => {
         // Verify step naming for workflow integration
-        const saveStep = new SaveToBookmarkStep('test-user', logger, bookmarkRepository);
+        const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user', logger), bookmarkRepository);
         expect(saveStep.name).toBe('saveToDatabase');
     });
 
@@ -134,7 +145,7 @@ describe('Gmail Preset - Save to Database', () => {
         // Arrange
         const mockSourceReader = createMockSourceReader([]);
         const readStep = new ReadStep(createReadStepConfig(mockSourceReader));
-        const saveStep = new SaveToBookmarkStep('test-user', logger, bookmarkRepository);
+        const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user', logger), bookmarkRepository);
 
         // Act
         let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
@@ -163,7 +174,7 @@ describe('Gmail Preset - Save to Database', () => {
 
         const mockSourceReader = createMockSourceReader([testItem]);
         const readStep = new ReadStep(createReadStepConfig(mockSourceReader));
-        const saveStep = new SaveToBookmarkStep('user-with-full-data', logger, bookmarkRepository);
+        const saveStep = new SaveToBookmarkStep(createSaveStepConfig('user-with-full-data', logger), bookmarkRepository);
 
         // Act
         let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
@@ -197,7 +208,7 @@ describe('Gmail Preset - Save to Database', () => {
         );
 
         // SaveToBookmarkStep without repository
-        const saveStep = new SaveToBookmarkStep('test-user', logger, undefined);
+        const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user', logger), undefined);
 
         // Act
         const context: WorkflowContext<BaseContent> = { items: [testItem], outputPath: '', updatedIds: new Set<string>(), metadata: {} };

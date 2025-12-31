@@ -8,6 +8,12 @@ export type {
     SourceReaderConfig,
 } from './ports';
 
+// Base class
+export { BaseWorkflowStep } from './BaseWorkflowStep';
+
+// Utilities
+export { reportProgress, toBookmark, toPendingContent, toBaseContent } from './utils';
+
 // Steps
 export { ReadStep } from './ReadStep';
 export { AnalyzeStep } from './AnalyzeStep';

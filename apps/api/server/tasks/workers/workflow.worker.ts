@@ -129,7 +129,7 @@ async function processWorkflowTask(
         .build();
 
     // Execute the workflow
-    await workflow.execute('', '');
+    await workflow.execute('', '', '');
 
     // Convert to API response format
     const processedItems = finalItems.map((item, i) => contentToProcessedItem(item, i));

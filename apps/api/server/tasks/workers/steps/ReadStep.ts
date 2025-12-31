@@ -1,28 +1,36 @@
 import {
-    type IWorkflowStep,
     type WorkflowContext,
     type StepResult,
     BaseContent,
 } from '@platform/platform-domain';
 import type { StepFactoryConfig } from '../presets';
+import { BaseWorkflowStep } from './BaseWorkflowStep';
 
 /**
  * Read step - fetches items from the source (Gmail, etc.)
  */
-export class ReadStep implements IWorkflowStep<BaseContent> {
+export class ReadStep extends BaseWorkflowStep {
     readonly name = 'read';
 
-    constructor(
-        private readonly config: StepFactoryConfig
-    ) { }
+    constructor(config: StepFactoryConfig) {
+        super(config);
+    }
 
-    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
-        const { logger, sourceReader, userId, filter, preset } = this.config;
+    /**
+     * ReadStep should always execute even with empty context.items
+     * because it creates new items from the source.
+     */
+    protected shouldSkipIfEmpty(): boolean {
+        return false;
+    }
 
-        logger.info(`Reading items from ${preset} source...`);
+    protected async doExecute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
+        const { sourceReader, filter, preset } = this.config;
+
+        this.logger.info(`Reading items from ${preset} source...`);
 
         if (!sourceReader) {
-            logger.warning('No source reader configured, returning empty items');
+            this.logger.warning('No source reader configured, returning empty items');
             return {
                 context: { ...context, items: [] },
                 continue: true,
@@ -33,7 +41,7 @@ export class ReadStep implements IWorkflowStep<BaseContent> {
         // Fetch items from source
         // The source reader may attach additional metadata to the config (e.g., pendingContentIds)
         const readerConfig: { userId?: string; filter?: typeof filter; pendingContentIds?: Record<string, string> } = {
-            userId,
+            userId: this.userId,
             filter,
         };
         const items = await sourceReader.read(readerConfig);
@@ -43,29 +51,18 @@ export class ReadStep implements IWorkflowStep<BaseContent> {
         if (readerConfig.pendingContentIds) {
             updatedMetadata.pendingContentIds = readerConfig.pendingContentIds;
         }
-        if (userId) {
-            updatedMetadata.userId = userId;
+        if (this.userId) {
+            updatedMetadata.userId = this.userId;
         }
 
-        // Notify progress for each item
-        for (let i = 0; i < items.length; i++) {
-            if (context.onItemProcessed) {
-                await context.onItemProcessed({
-                    item: items[i],
-                    index: i,
-                    total: items.length,
-                    stepName: this.name,
-                    success: true,
-                });
-            }
-        }
+        await this.reportProgress(context, items);
 
-        logger.info(`Readed ${items.length} items`);
+        this.logger.info(`Read ${items.length} items`);
 
         return {
             context: { ...context, items, metadata: updatedMetadata },
             continue: true,
-            message: `Readed ${items.length} items from ${preset}`,
+            message: `Read ${items.length} items from ${preset}`,
         };
     }
 }

@@ -1,7 +1,6 @@
 import {
     BaseContent,
     Bookmark,
-    type IWorkflowStep,
     type WorkflowContext,
     type StepResult,
     type IWebScraper,
@@ -12,6 +11,8 @@ import {
     MAX_EXTRACTED_URLS,
 } from '@platform/platform-domain';
 import type { StepFactoryConfig } from '../presets';
+import { BaseWorkflowStep } from './BaseWorkflowStep';
+import { toBaseContent } from './utils';
 
 export interface BookmarkEnrichmentStepOptions {
     withNested?: boolean;
@@ -25,35 +26,33 @@ export interface BookmarkEnrichmentStepOptions {
  * 4. Creating bookmarks for each enriched URL
  * 5. Archiving the original pending content
  */
-export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
+export class BookmarkEnrichmentStep extends BaseWorkflowStep {
     readonly name = 'enrich-bookmarks';
     private readonly withNested: boolean;
 
     constructor(
-        private readonly config: StepFactoryConfig,
+        config: StepFactoryConfig,
         private readonly webScraper: IWebScraper,
         private readonly bookmarkEnricher: IBookmarkEnricher,
         private readonly pendingContentRepository: IPendingContentRepository,
         private readonly bookmarkRepository: ILinkRepository,
         private readonly options: BookmarkEnrichmentStepOptions = {}
     ) {
+        super(config);
         this.withNested = options.withNested ?? false;
     }
 
-    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
+    protected async doExecute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
         const { items, metadata } = context;
 
-        if (items.length === 0) {
-            return { context, continue: true, message: 'No items to enrich' };
-        }
-
-        const userId = (metadata.userId as string | undefined) ?? this.config.userId;
+        const userId = (metadata.userId as string | undefined) ?? this.userId;
         if (!userId) {
             return { context, continue: false, message: 'userId is required for bookmark enrichment' };
         }
 
         const pendingContentIds = (metadata.pendingContentIds as Record<string, string>) || {};
         const enrichedBookmarks: Bookmark[] = [];
+        const results: Map<number, { success: boolean; error?: string }> = new Map();
         let processedCount = 0;
 
         for (let i = 0; i < items.length; i++) {
@@ -64,18 +63,20 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
 
             enrichedBookmarks.push(...bookmarks);
             if (success) processedCount++;
+            results.set(i, { success, error });
 
             await this.archivePendingContent(pendingContentId);
-            await this.reportProgress(context, item, i, items.length, success, error);
         }
+
+        await this.reportProgress(context, items, (_, index) => results.get(index) ?? { success: true });
 
         if (enrichedBookmarks.length > 0) {
             await this.bookmarkRepository.saveMany(enrichedBookmarks);
-            this.config.logger.info(`Saved ${enrichedBookmarks.length} enriched bookmarks`);
+            this.logger.info(`Saved ${enrichedBookmarks.length} enriched bookmarks`);
         }
 
         return {
-            context: { ...context, items: enrichedBookmarks.map((b) => this.toBaseContent(b)) },
+            context: { ...context, items: enrichedBookmarks.map((b) => toBaseContent(b)) },
             continue: true,
             message: `Enriched ${processedCount} items, created ${enrichedBookmarks.length} bookmarks`,
         };
@@ -93,7 +94,7 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
 
             const pageContent = await this.webScraper.scrape(item.url);
             if (!pageContent) {
-                this.config.logger.warning(`Failed to scrape content from ${item.url}`);
+                this.logger.warning(`Failed to scrape content from ${item.url}`);
                 return { bookmarks: [], success: false, error: 'Failed to scrape content' };
             }
 
@@ -111,7 +112,7 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
             }
 
             const { tags, summary } = await this.bookmarkEnricher.analyzeContent(item.url, pageContent);
-            const bookmark =  new Bookmark(
+            const bookmark = new Bookmark(
                 item.url,
                 userId,
                 item.sourceAdapter,
@@ -124,14 +125,14 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
             );
 
             if (bookmark) {
-                this.config.logger.debug(`Created bookmark for extracted URL: ${item.url}, tags: ${bookmark.tags.join(', ')}, summary: ${bookmark.summary}`);
+                this.logger.debug(`Created bookmark for extracted URL: ${item.url}, tags: ${bookmark.tags.join(', ')}, summary: ${bookmark.summary}`);
                 bookmarks.push(bookmark);
             }
 
             return { bookmarks, success: true };
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            this.config.logger.error(`Error enriching ${item.url}: ${message}`);
+            this.logger.error(`Error enriching ${item.url}: ${message}`);
             return { bookmarks: [], success: false, error: message };
         }
     }
@@ -144,7 +145,7 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
         try {
             const content = await this.webScraper.scrape(url);
             if (!content) {
-                this.config.logger.warning(`Failed to scrape extracted URL: ${url}`);
+                this.logger.warning(`Failed to scrape extracted URL: ${url}`);
                 return null;
             }
 
@@ -162,7 +163,7 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
                 'unknown'
             );
         } catch (error) {
-            this.config.logger.error(
+            this.logger.error(
                 `Error processing extracted URL ${url}: ${error instanceof Error ? error.message : error}`
             );
             return null;
@@ -179,12 +180,12 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
         const { extractedUrls } = await this.bookmarkEnricher.extractUrls(originalUrl, pageContent);
         const urlsToProcess = extractedUrls.slice(0, MAX_EXTRACTED_URLS);
 
-        this.config.logger.info(`Extracted ${urlsToProcess.length} URLs from ${originalUrl}`);
+        this.logger.info(`Extracted ${urlsToProcess.length} URLs from ${originalUrl}`);
 
         for (const url of urlsToProcess) {
             const bookmark = await this.scrapAndAnalyseExtractedUrl(url, sourceAdapter, userId);
             if (bookmark) {
-                this.config.logger.debug(`Created bookmark for extracted URL: ${url}`);
+                this.logger.debug(`Created bookmark for extracted URL: ${url}`);
                 bookmarks.push(bookmark);
             }
         }
@@ -196,38 +197,5 @@ export class BookmarkEnrichmentStep implements IWorkflowStep<BaseContent> {
         if (pendingContentId) {
             await this.pendingContentRepository.updateStatus(pendingContentId, 'archived');
         }
-    }
-
-    private async reportProgress(
-        context: WorkflowContext<BaseContent>,
-        item: BaseContent,
-        index: number,
-        total: number,
-        success: boolean,
-        error?: string
-    ): Promise<void> {
-        if (context.onItemProcessed) {
-            await context.onItemProcessed({
-                item,
-                index,
-                total,
-                stepName: this.name,
-                success,
-                error,
-            });
-        }
-    }
-
-    private toBaseContent(bookmark: Bookmark): BaseContent {
-        return new BaseContent(
-            bookmark.url,
-            bookmark.sourceAdapter,
-            bookmark.tags,
-            bookmark.summary,
-            bookmark.rawContent,
-            bookmark.createdAt,
-            bookmark.updatedAt,
-            bookmark.contentType
-        );
     }
 }

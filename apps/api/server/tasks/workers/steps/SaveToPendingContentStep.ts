@@ -1,45 +1,50 @@
 import {
-    type IWorkflowStep,
     type WorkflowContext,
     type StepResult,
     type IPendingContentRepository,
     BaseContent,
-    PendingContent,
 } from '@platform/platform-domain';
 import type { StepFactoryConfig } from '../presets';
+import { BaseWorkflowStep } from './BaseWorkflowStep';
+import { toPendingContent } from './utils';
 
 /**
  * Save to pending content step - saves items to pending_content table for later enrichment
  * Use this instead of SaveToBookmarkStep when content needs enrichment before becoming bookmarks
  */
-export class SaveToPendingContentStep implements IWorkflowStep<BaseContent> {
+export class SaveToPendingContentStep extends BaseWorkflowStep {
     readonly name = 'saveToPendingContent';
 
     constructor(
-        private readonly config: StepFactoryConfig,
+        config: StepFactoryConfig,
         private readonly pendingContentRepository: IPendingContentRepository,
         private readonly getExternalId?: (item: BaseContent) => string | undefined
-    ) { }
+    ) {
+        super(config);
+    }
 
-    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
-        const { logger, userId } = this.config;
+    protected async doExecute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
+        const userId = this.requireUserId();
 
-        if (context.items.length === 0) {
-            return { context, continue: true, message: 'No items to save' };
-        }
-
-        if (!userId) {
-            logger.error('userId is required for SaveToPendingContentStep');
-            return { context, continue: false, message: 'userId is required' };
-        }
-
-        logger.info(`Saving ${context.items.length} items to pending_content...`);
+        this.logger.info(`Saving ${context.items.length} items to pending_content...`);
 
         try {
-            // Convert BaseContent to PendingContent
-            const pendingItems: PendingContent[] = [];
+            // Pre-filter by URL to avoid unique constraint violations
+            const urls = context.items.map((item) => item.url);
+            const existingUrls = await this.pendingContentRepository.existsByUrls(userId, urls);
+
+            const pendingItems = [];
+            let skippedByUrl = 0;
+            let skippedByExternalId = 0;
 
             for (const item of context.items) {
+                // Skip if URL already exists
+                if (existingUrls.has(item.url)) {
+                    this.logger.info(`Skipping duplicate URL: ${item.url}`);
+                    skippedByUrl++;
+                    continue;
+                }
+
                 const externalId = this.getExternalId?.(item);
 
                 // Check for duplicates if we have an external ID
@@ -50,48 +55,33 @@ export class SaveToPendingContentStep implements IWorkflowStep<BaseContent> {
                         externalId
                     );
                     if (exists) {
-                        logger.info(`Skipping duplicate: ${externalId}`);
+                        this.logger.info(`Skipping duplicate externalId: ${externalId}`);
+                        skippedByExternalId++;
                         continue;
                     }
                 }
 
-                pendingItems.push(
-                    new PendingContent(
-                        item.url,
-                        item.sourceAdapter,
-                        item.rawContent,
-                        item.contentType,
-                        'pending',
-                        userId,
-                        undefined,
-                        externalId,
-                        item.createdAt,
-                        item.updatedAt
-                    )
-                );
+                pendingItems.push(toPendingContent(item, userId, externalId));
             }
 
             if (pendingItems.length > 0) {
                 await this.pendingContentRepository.saveMany(pendingItems);
-                logger.info(`Saved ${pendingItems.length} items to pending_content`);
-            } else {
-                logger.info('No new items to save (all duplicates)');
+                this.logger.info(`Saved ${pendingItems.length} items to pending_content`);
             }
 
-            // Notify progress for each item
-            for (let i = 0; i < context.items.length; i++) {
-                if (context.onItemProcessed) {
-                    await context.onItemProcessed({
-                        item: context.items[i],
-                        index: i,
-                        total: context.items.length,
-                        stepName: this.name,
-                        success: true,
-                    });
-                }
+            if (skippedByUrl > 0 || skippedByExternalId > 0) {
+                this.logger.info(
+                    `Skipped ${skippedByUrl + skippedByExternalId} duplicates (${skippedByUrl} by URL, ${skippedByExternalId} by externalId)`
+                );
             }
+
+            if (pendingItems.length === 0 && context.items.length > 0) {
+                this.logger.info('No new items to save (all duplicates)');
+            }
+
+            await this.reportProgress(context, context.items);
         } catch (error) {
-            logger.error(`Failed to save to pending_content: ${error}`);
+            this.logger.error(`Failed to save to pending_content: ${error}`);
             // Continue workflow despite save failure
         }
 

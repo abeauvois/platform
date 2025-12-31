@@ -74,4 +74,13 @@ export interface ILinkRepository {
      * Clear all stored links (useful for testing)
      */
     clear(): Promise<void>;
+
+    /**
+     * Check which URLs already exist for a user
+     * Used for pre-filtering before batch insert to avoid duplicates
+     * @param userId The user ID to check
+     * @param urls Array of URLs to check
+     * @returns Set of URLs that already exist
+     */
+    existsByUrls(userId: string, urls: string[]): Promise<Set<string>>;
 }

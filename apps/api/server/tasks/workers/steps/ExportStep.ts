@@ -1,70 +1,54 @@
 import {
-    type IWorkflowStep,
     type WorkflowContext,
     type StepResult,
     BaseContent,
 } from '@platform/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 import type { IExportService } from './ports';
+import { BaseWorkflowStep } from './BaseWorkflowStep';
 
 /**
  * Export step - exports results to CSV/Notion
  */
-export class ExportStep implements IWorkflowStep<BaseContent> {
+export class ExportStep extends BaseWorkflowStep {
     readonly name = 'export';
 
     constructor(
-        private readonly config: StepFactoryConfig,
+        config: StepFactoryConfig,
         private readonly exportService?: IExportService,
         private readonly outputPath?: string
-    ) { }
+    ) {
+        super(config);
+    }
 
-    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
-        const { logger, csvOnly } = this.config;
-
-        if (context.items.length === 0) {
-            return { context, continue: true, message: 'No items to export' };
-        }
-
+    protected async doExecute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
+        const { csvOnly } = this.config;
         const exportTargets = csvOnly ? 'CSV' : 'CSV and Notion';
-        logger.info(`Exporting ${context.items.length} items to ${exportTargets}...`);
 
-        // Use injected export service if available
+        this.logger.info(`Exporting ${context.items.length} items to ${exportTargets}...`);
+
         if (this.exportService) {
             const csvPath = this.outputPath || context.outputPath || `/tmp/export-${Date.now()}.csv`;
 
             try {
                 await this.exportService.exportToCsv(context.items, csvPath);
-                logger.info(`CSV exported to ${csvPath}`);
+                this.logger.info(`CSV exported to ${csvPath}`);
 
                 if (!csvOnly) {
                     await this.exportService.exportToNotion(context.items);
-                    logger.info('Notion export complete');
+                    this.logger.info('Notion export complete');
                 }
             } catch (error) {
-                logger.error(`Export failed: ${error}`);
+                this.logger.error(`Export failed: ${error}`);
                 // Continue workflow despite export failure
             }
         } else {
-            logger.debug('No export service configured, skipping actual export');
+            this.logger.debug('No export service configured, skipping actual export');
         }
 
-        // Notify progress for each item
-        for (let i = 0; i < context.items.length; i++) {
-            const item = context.items[i];
+        await this.reportProgress(context, context.items);
 
-            if (context.onItemProcessed) {
-                await context.onItemProcessed({
-                    item,
-                    index: i,
-                    total: context.items.length,
-                    stepName: this.name,
-                    success: true,
-                });
-            }
-        }
-
-        logger.info(`Exported ${context.items.length} items`);
+        this.logger.info(`Exported ${context.items.length} items`);
 
         return {
             context,

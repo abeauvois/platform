@@ -1,48 +1,39 @@
 import {
-    type IWorkflowStep,
     type WorkflowContext,
     type StepResult,
     BaseContent,
 } from '@platform/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 import type { IContentAnalyser, IRateLimitedClient } from './ports';
+import { BaseWorkflowStep } from './BaseWorkflowStep';
 
 /**
  * Enrich step - enriches Twitter/X links with additional content
  */
-export class EnrichStep implements IWorkflowStep<BaseContent> {
+export class EnrichStep extends BaseWorkflowStep {
     readonly name = 'enrich';
 
     constructor(
-        private readonly config: StepFactoryConfig,
+        config: StepFactoryConfig,
         private readonly rateLimitedClient?: IRateLimitedClient,
         private readonly contentAnalyser?: IContentAnalyser
-    ) { }
+    ) {
+        super(config);
+    }
 
-    async execute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
-        const { logger } = this.config;
+    protected async doExecute(context: WorkflowContext<BaseContent>): Promise<StepResult<BaseContent>> {
         const twitterItems = context.items.filter(item => this.isTwitterUrl(item.url));
 
         if (twitterItems.length === 0) {
-            logger.info('No Twitter links to enrich');
-            // Still notify progress for all items
-            for (let i = 0; i < context.items.length; i++) {
-                if (context.onItemProcessed) {
-                    await context.onItemProcessed({
-                        item: context.items[i],
-                        index: i,
-                        total: context.items.length,
-                        stepName: this.name,
-                        success: true,
-                    });
-                }
-            }
+            this.logger.info('No Twitter links to enrich');
+            await this.reportProgress(context, context.items);
             return { context, continue: true, message: 'No Twitter links to enrich' };
         }
 
-        logger.info(`Enriching ${twitterItems.length} Twitter links...`);
+        this.logger.info(`Enriching ${twitterItems.length} Twitter links...`);
 
         const enrichedItems = [...context.items];
+        const results: Map<number, { success: boolean; error?: string }> = new Map();
 
         for (let i = 0; i < context.items.length; i++) {
             const item = context.items[i];
@@ -51,25 +42,24 @@ export class EnrichStep implements IWorkflowStep<BaseContent> {
                 try {
                     const enriched = await this.enrichTwitterItem(item);
                     enrichedItems[i] = enriched;
+                    results.set(i, { success: true });
                 } catch (error) {
-                    logger.error(`Failed to enrich ${item.url}: ${error}`);
+                    this.logger.error(`Failed to enrich ${item.url}: ${error}`);
+                    results.set(i, { success: false, error: String(error) });
                     // Keep original on error
                 }
-            }
-
-            // Notify progress
-            if (context.onItemProcessed) {
-                await context.onItemProcessed({
-                    item: enrichedItems[i],
-                    index: i,
-                    total: context.items.length,
-                    stepName: this.name,
-                    success: true,
-                });
+            } else {
+                results.set(i, { success: true });
             }
         }
 
-        logger.info(`Enriched ${twitterItems.length} Twitter links`);
+        await this.reportProgress(
+            { ...context, items: enrichedItems },
+            enrichedItems,
+            (_, index) => results.get(index) ?? { success: true }
+        );
+
+        this.logger.info(`Enriched ${twitterItems.length} Twitter links`);
 
         return {
             context: { ...context, items: enrichedItems },
@@ -86,7 +76,7 @@ export class EnrichStep implements IWorkflowStep<BaseContent> {
         // Use injected rate-limited client if available
         if (this.rateLimitedClient) {
             if (this.rateLimitedClient.isRateLimited()) {
-                this.config.logger.warning(`Rate limited, skipping enrichment for ${item.url}`);
+                this.logger.warning(`Rate limited, skipping enrichment for ${item.url}`);
                 return item;
             }
 
@@ -106,7 +96,7 @@ export class EnrichStep implements IWorkflowStep<BaseContent> {
         }
 
         // Fallback: mark as enriched without actual content
-        this.config.logger.debug('No rate-limited client configured, using placeholder enrichment');
+        this.logger.debug('No rate-limited client configured, using placeholder enrichment');
         return item.withCategorization(
             [...item.tags, 'enriched'],
             item.summary + ' (with fetched content)'

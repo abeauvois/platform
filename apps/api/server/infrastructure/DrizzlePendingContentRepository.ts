@@ -1,4 +1,4 @@
-import { db, pendingContent, eq, and } from '@platform/db';
+import { db, pendingContent, eq, and, inArray } from '@platform/db';
 import {
     PendingContent,
     PendingContentStatus,
@@ -99,6 +99,17 @@ export class DrizzlePendingContentRepository implements IPendingContentRepositor
             .from(pendingContent)
             .where(eq(pendingContent.id, id));
         return result ? this.toDomain(result) : null;
+    }
+
+    async existsByUrls(userId: string, urls: string[]): Promise<Set<string>> {
+        if (urls.length === 0) return new Set();
+
+        const results = await db
+            .select({ url: pendingContent.url })
+            .from(pendingContent)
+            .where(and(eq(pendingContent.userId, userId), inArray(pendingContent.url, urls)));
+
+        return new Set(results.map((r) => r.url));
     }
 
     private toDomain(row: typeof pendingContent.$inferSelect): PendingContent {
