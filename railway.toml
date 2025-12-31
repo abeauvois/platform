@@ -1,13 +1,10 @@
-# Railway configuration for monorepo
-# Configure individual services via Railway dashboard or environment variables
-
 [build]
 builder = "dockerfile"
+dockerfilePath = "apps/api/Dockerfile"
 
-# Service-specific settings should be configured in Railway dashboard:
-# - API: dockerfilePath = "apps/api/Dockerfile"
-# - Trading: dockerfilePath = "apps/trading/Dockerfile"
-#
-# Set these in Railway service settings:
-# 1. Root Directory: (leave empty for repo root)
-# 2. Dockerfile Path: apps/api/Dockerfile (or apps/trading/Dockerfile)
+[deploy]
+startCommand = "bun run ./dist/index.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
