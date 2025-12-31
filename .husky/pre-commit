@@ -1,0 +1,13 @@
+# Run type checking
+echo "Running type check..."
+bun --bun tsc --noEmit -p packages/platform-task/tsconfig.json || exit 1
+
+# Run linting (dashboard)
+echo "Running lint..."
+bun run --filter dashboard lint || exit 1
+
+# Run unit tests
+echo "Running unit tests..."
+bun run test:unit || exit 1
+
+echo "Pre-commit checks passed!"

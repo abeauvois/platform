@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BookmarkForm } from './BookmarkForm'
@@ -137,18 +137,18 @@ describe('BookmarkForm', () => {
         const onSubmit = vi.fn()
         render(<BookmarkForm onSubmit={onSubmit} />)
 
-        const urlInput = screen.getByLabelText(/url/i) as HTMLInputElement
+        const urlInput = screen.getByLabelText(/url/i)
         await userEvent.type(urlInput, 'https://example.com')
 
-        const sourceSelect = screen.getByLabelText(/source adapter/i) as HTMLSelectElement
+        const sourceSelect = screen.getByLabelText(/source adapter/i)
         await userEvent.selectOptions(sourceSelect, 'Other')
 
         const submitButton = screen.getByRole('button', { name: /add bookmark/i })
         await userEvent.click(submitButton)
 
         await waitFor(() => {
-            expect(urlInput.value).toBe('')
-            expect(sourceSelect.value).toBe('None')
+            expect((urlInput as HTMLInputElement).value).toBe('')
+            expect((sourceSelect as HTMLSelectElement).value).toBe('None')
         })
     })
 })

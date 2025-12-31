@@ -1,0 +1,114 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":automergeDigest",
+    ":automergeMinor"
+  ],
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "timezone": "Europe/Paris",
+  "labels": [
+    "dependencies"
+  ],
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 5,
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security"
+    ],
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "description": "Automerge non-major dev dependencies",
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Automerge type definitions",
+      "matchPackagePatterns": [
+        "^@types/"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Group ESLint packages",
+      "matchPackagePatterns": [
+        "^eslint",
+        "^@typescript-eslint"
+      ],
+      "groupName": "eslint packages",
+      "automerge": true
+    },
+    {
+      "description": "Group TanStack packages",
+      "matchPackagePatterns": [
+        "^@tanstack/"
+      ],
+      "groupName": "tanstack packages"
+    },
+    {
+      "description": "Group React packages",
+      "matchPackagePatterns": [
+        "^react",
+        "^react-dom"
+      ],
+      "groupName": "react packages"
+    },
+    {
+      "description": "Group Drizzle packages",
+      "matchPackagePatterns": [
+        "^drizzle"
+      ],
+      "groupName": "drizzle packages"
+    },
+    {
+      "description": "Group test packages",
+      "matchPackagePatterns": [
+        "vitest",
+        "@testing-library"
+      ],
+      "groupName": "test packages",
+      "automerge": true
+    },
+    {
+      "description": "Pin Docker digests",
+      "matchManagers": [
+        "docker-compose",
+        "dockerfile"
+      ],
+      "pinDigests": true
+    },
+    {
+      "description": "Disable Bun updates (managed manually)",
+      "matchPackageNames": [
+        "bun"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Major updates require manual approval",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "major"
+      ]
+    }
+  ],
+  "postUpdateOptions": [
+    "npmDedupe"
+  ],
+  "rebaseWhen": "behind-base-branch",
+  "semanticCommitScope": "deps"
+}

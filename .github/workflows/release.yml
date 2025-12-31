@@ -1,0 +1,194 @@
+# Release workflow with semantic versioning
+# Creates releases based on conventional commits
+
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform a dry run without publishing'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  BUN_VERSION: '1.1.45'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+            **/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build all packages
+        run: bun run build
+
+      - name: Create GitHub Release
+        id: release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { execSync } = require('child_process');
+
+            // Get the latest tag
+            let latestTag;
+            try {
+              latestTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim();
+            } catch {
+              latestTag = null;
+            }
+
+            // Get commit messages since last tag
+            const range = latestTag ? `${latestTag}..HEAD` : 'HEAD';
+            const commits = execSync(`git log ${range} --pretty=format:"%h %s" --no-merges`, { encoding: 'utf8' })
+              .split('\n')
+              .filter(Boolean);
+
+            if (commits.length === 0) {
+              console.log('No new commits since last release');
+              return;
+            }
+
+            // Parse conventional commits
+            const features = [];
+            const fixes = [];
+            const breaking = [];
+            const other = [];
+
+            for (const commit of commits) {
+              const [hash, ...messageParts] = commit.split(' ');
+              const message = messageParts.join(' ');
+
+              if (message.startsWith('feat:') || message.startsWith('feat(')) {
+                features.push({ hash, message });
+              } else if (message.startsWith('fix:') || message.startsWith('fix(')) {
+                fixes.push({ hash, message });
+              } else if (message.includes('BREAKING CHANGE') || message.includes('!:')) {
+                breaking.push({ hash, message });
+              } else if (!message.startsWith('chore:') && !message.startsWith('docs:')) {
+                other.push({ hash, message });
+              }
+            }
+
+            // Determine version bump
+            let bump = 'patch';
+            if (breaking.length > 0) bump = 'major';
+            else if (features.length > 0) bump = 'minor';
+
+            // Calculate new version
+            const currentVersion = latestTag ? latestTag.replace('v', '') : '0.0.0';
+            const [major, minor, patch] = currentVersion.split('.').map(Number);
+
+            let newVersion;
+            switch (bump) {
+              case 'major':
+                newVersion = `${major + 1}.0.0`;
+                break;
+              case 'minor':
+                newVersion = `${major}.${minor + 1}.0`;
+                break;
+              default:
+                newVersion = `${major}.${minor}.${patch + 1}`;
+            }
+
+            // Generate release notes
+            let releaseNotes = `## What's Changed\n\n`;
+
+            if (breaking.length > 0) {
+              releaseNotes += `### Breaking Changes\n`;
+              for (const { hash, message } of breaking) {
+                releaseNotes += `- ${message} (${hash})\n`;
+              }
+              releaseNotes += '\n';
+            }
+
+            if (features.length > 0) {
+              releaseNotes += `### Features\n`;
+              for (const { hash, message } of features) {
+                releaseNotes += `- ${message} (${hash})\n`;
+              }
+              releaseNotes += '\n';
+            }
+
+            if (fixes.length > 0) {
+              releaseNotes += `### Bug Fixes\n`;
+              for (const { hash, message } of fixes) {
+                releaseNotes += `- ${message} (${hash})\n`;
+              }
+              releaseNotes += '\n';
+            }
+
+            if (other.length > 0) {
+              releaseNotes += `### Other Changes\n`;
+              for (const { hash, message } of other) {
+                releaseNotes += `- ${message} (${hash})\n`;
+              }
+              releaseNotes += '\n';
+            }
+
+            releaseNotes += `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${latestTag || 'initial'}...v${newVersion}`;
+
+            // Check for dry run
+            if ('${{ inputs.dry_run }}' === 'true') {
+              console.log('Dry run - would create release:');
+              console.log(`Version: v${newVersion}`);
+              console.log('Release notes:');
+              console.log(releaseNotes);
+              return;
+            }
+
+            // Create the release
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${newVersion}`,
+              name: `v${newVersion}`,
+              body: releaseNotes,
+              draft: false,
+              prerelease: false,
+              generate_release_notes: false
+            });
+
+            console.log(`Created release: ${release.data.html_url}`);
+            core.setOutput('release_url', release.data.html_url);
+            core.setOutput('version', newVersion);
+
+      - name: Notify release
+        if: steps.release.outputs.version
+        run: |
+          echo "::notice::Released version ${{ steps.release.outputs.version }}"
+          echo "Release URL: ${{ steps.release.outputs.release_url }}"

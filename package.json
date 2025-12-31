@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "husky",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:generate": "bun run --filter @platform/db db:generate",
@@ -58,6 +59,7 @@
     "@types/bun": "latest",
     "@types/tar": "^6.1.13",
     "concurrently": "^9.2.0",
+    "husky": "^9.1.7",
     "typescript": "^5.0.0"
   }
 }

@@ -51,7 +51,7 @@ function RouteComponent() {
     },
   })
 
-  const { data, isError, error, isLoading } = useQuery({
+  const bookmarksQuery = useQuery({
     queryKey: ['bookmarks'],
     queryFn: async () => {
       const resp = await client.api.bookmarks.$get()
@@ -59,6 +59,8 @@ function RouteComponent() {
       return resp.json()
     },
   })
+
+  const { data, isError, error, isLoading } = bookmarksQuery
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl flex-grow">
