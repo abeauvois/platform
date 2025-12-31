@@ -1,0 +1,39 @@
+:root {
+  --radius-field: 0.5rem;
+}
+
+@import 'tailwindcss';
+
+@plugin "daisyui" {
+  themes: dim --default;
+  exclude: rootscrollgutter;
+}
+
+.btn {
+  border-radius: var(--radius-field);
+}
+
+.input, .textarea, .select {
+  border: none;
+  border-radius: var(--radius-field);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Terminal font */
+.font-terminal {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+}
+
+/* Blinking cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
