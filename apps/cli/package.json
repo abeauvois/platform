@@ -1,9 +1,16 @@
 {
-    "name": "@platform/cli",
+    "name": "platform-cli-tool",
     "version": "0.0.2",
+    "description": "Platform CLI for managing personal data",
     "type": "module",
     "bin": {
         "platform": "./dist/index.js"
+    },
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "bun build ./index.ts --outdir ./dist --target bun --format esm",
