@@ -32,9 +32,24 @@ detect_platform() {
 
 # Get latest release version
 get_latest_version() {
-    VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    # Allow version override via environment variable
+    if [ -n "${VERSION:-}" ]; then
+        echo "Using specified version: $VERSION"
+        return
+    fi
+
+    # Try to get latest release from GitHub
+    RELEASE_INFO=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null || echo "")
+    VERSION=$(echo "$RELEASE_INFO" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+
     if [ -z "$VERSION" ]; then
-        echo "Failed to get latest version"
+        echo "Error: No releases found for $REPO"
+        echo ""
+        echo "To create a release, run:"
+        echo "  gh release create v1.0.0 apps/cli/bin/platform-* --title 'v1.0.0' --notes 'Initial release'"
+        echo ""
+        echo "Or specify a version manually:"
+        echo "  VERSION=v1.0.0 bash install.sh"
         exit 1
     fi
     echo "Latest version: $VERSION"
@@ -63,14 +78,38 @@ install() {
 
 # Add to PATH if needed
 setup_path() {
-    if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-        echo ""
-        echo "Add this to your shell profile (~/.zshrc or ~/.bashrc):"
-        echo ""
-        echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
-        echo ""
-        echo "Then run: source ~/.zshrc"
+    # Skip if already in PATH
+    if [[ ":$PATH:" == *":$INSTALL_DIR:"* ]]; then
+        return
     fi
+
+    # Detect shell and profile
+    SHELL_NAME=$(basename "$SHELL")
+    case "$SHELL_NAME" in
+        zsh)  PROFILE="$HOME/.zshrc" ;;
+        bash) PROFILE="$HOME/.bashrc" ;;
+        fish) PROFILE="$HOME/.config/fish/config.fish" ;;
+        *)    PROFILE="$HOME/.profile" ;;
+    esac
+
+    # Create profile if it doesn't exist
+    mkdir -p "$(dirname "$PROFILE")"
+    touch "$PROFILE"
+
+    # Check if already added
+    if ! grep -q "/.local/bin" "$PROFILE" 2>/dev/null; then
+        echo "" >> "$PROFILE"
+        echo "# Platform CLI" >> "$PROFILE"
+        if [ "$SHELL_NAME" = "fish" ]; then
+            echo "set -gx PATH \"$INSTALL_DIR\" \$PATH" >> "$PROFILE"
+        else
+            echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$PROFILE"
+        fi
+        echo "Added PATH to $PROFILE"
+    fi
+
+    # Export for current session
+    export PATH="$INSTALL_DIR:$PATH"
 }
 
 # Verify installation
