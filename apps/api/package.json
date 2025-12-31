@@ -11,7 +11,7 @@
     "db:seed": "bun run ./scripts/seed-local-db.script.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
+    "@anthropic-ai/sdk": "^0.71.2",
     "@hono/zod-validator": "^0.7.2",
     "@neondatabase/serverless": "^1.0.1",
     "@platform/auth": "workspace:*",
