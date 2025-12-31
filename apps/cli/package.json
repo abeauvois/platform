@@ -7,6 +7,11 @@
     },
     "scripts": {
         "build": "bun build ./index.ts --outdir ./dist --target bun --format esm",
+        "compile": "bun build ./index.ts --compile --outfile ./bin/platform",
+        "compile:all": "bun run compile:macos && bun run compile:linux && bun run compile:windows",
+        "compile:macos": "bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile ./bin/platform-macos-arm64 && bun build ./index.ts --compile --target=bun-darwin-x64 --outfile ./bin/platform-macos-x64",
+        "compile:linux": "bun build ./index.ts --compile --target=bun-linux-x64 --outfile ./bin/platform-linux-x64 && bun build ./index.ts --compile --target=bun-linux-arm64 --outfile ./bin/platform-linux-arm64",
+        "compile:windows": "bun build ./index.ts --compile --target=bun-windows-x64 --outfile ./bin/platform-windows-x64.exe",
         "dev": "bun run index.ts",
         "start": "bun run index.ts",
         "prod": "bun --env-file=.env.production run index.ts",
