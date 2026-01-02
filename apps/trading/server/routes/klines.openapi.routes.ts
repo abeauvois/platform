@@ -4,12 +4,12 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { BinanceClient } from '../adapters/BinanceClient.js';
 import type { HonoEnv } from '../types';
-import { BinanceTestnetClient } from '../adapters/BinanceTestnetClient.js';
 import type { IExchangeClient } from '@platform/trading-domain';
 
-// Create exchange client instance (using testnet for development)
-const exchangeClient: IExchangeClient = new BinanceTestnetClient();
+// Create exchange client instance (using production API for real market data)
+const exchangeClient: IExchangeClient = new BinanceClient();
 
 // OpenAPI schemas
 const CandlestickSchema = z.object({

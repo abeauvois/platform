@@ -29,6 +29,7 @@ export function createKlinesRoutes(exchangeClient: IExchangeClient) {
             const limit = parseInt(c.req.query('limit') || '100');
 
             const klines = await exchangeClient.getKlines(symbol, interval, limit);
+            console.log("🚀 ~ createKlinesRoutes ~ klines:", klines)
 
             return c.json({
                 exchange: exchangeClient.getExchangeName(),

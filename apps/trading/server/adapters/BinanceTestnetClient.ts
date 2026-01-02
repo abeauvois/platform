@@ -9,12 +9,12 @@
  */
 
 import type {
-    IExchangeClient,
-    MarketTicker,
     AccountBalance,
     Candlestick,
-    Order,
-    CreateOrderData
+    CreateOrderData,
+    IExchangeClient,
+    MarketTicker,
+    Order
 } from '@platform/trading-domain';
 
 /**
@@ -137,7 +137,7 @@ export class BinanceTestnetClient implements IExchangeClient {
      * @param limit - Number of candles to fetch (default 100, max 1000)
      * @returns Array of candlestick data
      */
-    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Candlestick[]> {
+    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Array<Candlestick>> {
         // Validate interval
         if (!VALID_INTERVALS.includes(interval)) {
             throw new Error(`Invalid interval: ${interval}. Must be one of: ${VALID_INTERVALS.join(', ')}`);
@@ -164,7 +164,7 @@ export class BinanceTestnetClient implements IExchangeClient {
             throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
         }
 
-        const data: BinanceKlineResponse[] = await response.json();
+        const data: Array<BinanceKlineResponse> = await response.json();
 
         return data.map((kline) => this.mapToCandlestick(kline));
     }
@@ -173,7 +173,7 @@ export class BinanceTestnetClient implements IExchangeClient {
      * Get all account balances (requires authentication)
      * @returns Array of account balances for all assets
      */
-    async getBalances(): Promise<AccountBalance[]> {
+    async getBalances(): Promise<Array<AccountBalance>> {
         if (!this.isAuthenticated()) {
             throw new Error('Authentication required: API key and secret must be provided');
         }
@@ -230,7 +230,7 @@ export class BinanceTestnetClient implements IExchangeClient {
      * @param symbol - Trading pair (optional)
      * @returns Array of orders
      */
-    async getOrders(symbol?: string): Promise<Order[]> {
+    async getOrders(symbol?: string): Promise<Array<Order>> {
         if (!this.isAuthenticated()) {
             throw new Error('Authentication required: API key and secret must be provided');
         }

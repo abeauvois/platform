@@ -4,8 +4,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { HonoEnv } from '../types';
 import { BinanceClient } from '../adapters/BinanceClient.js';
+import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
 
 // Create exchange client instance (can be swapped for different exchanges)

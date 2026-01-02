@@ -6,7 +6,7 @@
  * Supports both public (unauthenticated) and private (authenticated) endpoints
  */
 
-import type { IExchangeClient, MarketTicker, AccountBalance, Candlestick, Order, CreateOrderData } from '@platform/trading-domain';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarketTicker, Order } from '@platform/trading-domain';
 
 /**
  * Binance API response type for 24hr ticker
@@ -22,6 +22,34 @@ interface BinanceTickerResponse {
     priceChange: string;
     priceChangePercent: string;
 }
+
+/**
+ * Binance API response type for klines/candlesticks
+ * Format: [openTime, open, high, low, close, volume, closeTime, ...]
+ */
+type BinanceKlineResponse = [
+    number,  // Open time
+    string,  // Open
+    string,  // High
+    string,  // Low
+    string,  // Close
+    string,  // Volume
+    number,  // Close time
+    string,  // Quote asset volume
+    number,  // Number of trades
+    string,  // Taker buy base asset volume
+    string,  // Taker buy quote asset volume
+    string   // Ignore
+];
+
+/**
+ * Valid Binance kline intervals
+ */
+const VALID_INTERVALS = [
+    '1s', '1m', '3m', '5m', '15m', '30m',
+    '1h', '2h', '4h', '6h', '8h', '12h',
+    '1d', '3d', '1w', '1M'
+];
 
 /**
  * Binance account response type
@@ -98,7 +126,7 @@ export class BinanceClient implements IExchangeClient {
      * Get all account balances (requires authentication)
      * @returns Array of account balances for all assets
      */
-    async getBalances(): Promise<AccountBalance[]> {
+    async getBalances(): Promise<Array<AccountBalance>> {
         if (!this.isAuthenticated()) {
             throw new Error('Authentication required: API key and secret must be provided');
         }
@@ -143,9 +171,51 @@ export class BinanceClient implements IExchangeClient {
      * @param limit - Number of candles to fetch (default 100, max 1000)
      * @returns Array of candlestick data
      */
-    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Candlestick[]> {
-        // TODO: Implement klines for production Binance
-        throw new Error('getKlines not yet implemented for production Binance');
+    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Array<Candlestick>> {
+        // Validate interval
+        if (!VALID_INTERVALS.includes(interval)) {
+            throw new Error(`Invalid interval: ${interval}. Must be one of: ${VALID_INTERVALS.join(', ')}`);
+        }
+
+        // Validate limit
+        if (limit <= 0) {
+            throw new Error('Limit must be greater than 0');
+        }
+
+        if (limit > 1000) {
+            throw new Error('Limit cannot exceed 1000');
+        }
+
+        const binanceSymbol = this.convertSymbol(symbol);
+        const url = `${this.baseUrl}/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: Array<BinanceKlineResponse> = await response.json();
+
+        return data.map((kline) => this.mapToCandlestick(kline));
+    }
+
+    /**
+     * Map Binance kline response to Candlestick domain model
+     */
+    private mapToCandlestick(data: BinanceKlineResponse): Candlestick {
+        return {
+            openTime: data[0],
+            open: Number.parseFloat(data[1]),
+            high: Number.parseFloat(data[2]),
+            low: Number.parseFloat(data[3]),
+            close: Number.parseFloat(data[4]),
+            volume: Number.parseFloat(data[5]),
+            closeTime: data[6],
+        };
     }
 
     /**

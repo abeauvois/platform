@@ -4,8 +4,8 @@
  */
 
 import { Hono } from 'hono';
-import type { HonoEnv } from '../types';
 import { BinanceClient } from '../adapters/BinanceClient.js';
+import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
 
 // Create authenticated exchange client using environment variables

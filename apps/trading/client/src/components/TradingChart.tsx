@@ -23,7 +23,7 @@ export function TradingChart({
     symbol = 'BTCUSDT',
     interval = '1h',
     limit = 100
-}: TradingChartProps) {
+}: Readonly<TradingChartProps>) {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const candlestickSeriesRef = useRef<any>(null);
