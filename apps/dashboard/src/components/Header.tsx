@@ -57,12 +57,6 @@ export default function Header() {
 
             <div className="px-2 flex items-center gap-1">
               <Link
-                to="/todos"
-                activeProps={{ className: 'font-bold text-primary' }}
-              >
-                Todos
-              </Link>
-              <Link
                 to="/bookmarks"
                 activeProps={{ className: 'font-bold text-primary' }}
               >
@@ -71,7 +65,7 @@ export default function Header() {
               {!session && (
                 <div
                   className="tooltip tooltip-bottom"
-                  data-tip="must sign in to access todos"
+                  data-tip="must sign in to access bookmarks"
                 >
                   <span>
                     <ShieldAlert className="size-5 text-warning" />

@@ -8,6 +8,10 @@
         ".": {
             "import": "./dist/platform-sdk/src/index.js",
             "types": "./dist/platform-sdk/src/index.d.ts"
+        },
+        "./server": {
+            "import": "./dist/platform-sdk/src/server.js",
+            "types": "./dist/platform-sdk/src/server.d.ts"
         }
     },
     "scripts": {

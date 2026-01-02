@@ -4,8 +4,22 @@ import { ApiClient } from './ApiClient.js';
 export interface BaseClientConfig {
     baseUrl: string;
     sessionToken?: string;
-    logger: ILogger;
+    logger?: ILogger;
+    /**
+     * Fetch credentials mode for cookie handling.
+     * @see ApiClientConfig.credentials
+     */
+    credentials?: 'include' | 'omit' | 'same-origin';
 }
+
+/** No-op logger for when no logger is provided */
+const noopLogger: ILogger = {
+    info: () => {},
+    warning: () => {},
+    error: () => {},
+    debug: () => {},
+    await: () => ({ start: () => {}, update: () => {}, stop: () => {} }),
+};
 
 /**
  * Base client with shared authentication logic and token management.
@@ -18,10 +32,11 @@ export class BaseClient {
 
     constructor(config: BaseClientConfig) {
         this.baseUrl = config.baseUrl;
-        this.logger = config.logger;
+        this.logger = config.logger ?? noopLogger;
         this.apiClient = new ApiClient({
             baseUrl: config.baseUrl,
             sessionToken: config.sessionToken,
+            credentials: config.credentials,
         });
     }
 
@@ -55,10 +70,12 @@ export class BaseClient {
 
     /**
      * Make an authenticated request.
-     * Requires sessionToken to be set.
+     * When using browser cookies (credentials: 'include'), auth is handled automatically.
+     * When using manual token management, requires sessionToken to be set.
      */
     protected async authenticatedRequest<T>(endpoint: string, options: RequestInit): Promise<T> {
-        if (!this.apiClient.getSessionToken()) {
+        // Skip token check when browser handles cookies automatically
+        if (!this.apiClient.usesBrowserCookies() && !this.apiClient.getSessionToken()) {
             throw new Error('Authentication required. Please sign in first.');
         }
         return this.apiClient.request<T>(endpoint, options);

@@ -60,7 +60,7 @@ export default function Header() {
               {!session && (
                 <div
                   className="tooltip tooltip-bottom"
-                  data-tip="must sign in to access todos"
+                  data-tip="must sign in to access bookmarks"
                 >
                   <span>
                     <ShieldAlert className="size-5 text-warning" />

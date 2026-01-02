@@ -1,6 +1,6 @@
-import { SOURCE_ADAPTERS } from '@platform/platform-domain'
 import { useForm } from '@tanstack/react-form'
-import type { SourceAdapter } from '@platform/platform-domain'
+import { SOURCE_ADAPTERS } from '@platform/platform-domain/browser'
+import type { SourceAdapter } from '@platform/platform-domain/browser'
 
 interface BookmarkFormData {
     url: string
@@ -13,7 +13,7 @@ interface BookmarkFormProps {
     onSubmit: (data: BookmarkFormData) => void | Promise<void>
 }
 
-function FieldInfo({ field }: { field: any }) {
+function FieldInfo({ field }: Readonly<{ field: any }>) {
     return (
         <>
             {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
@@ -24,7 +24,7 @@ function FieldInfo({ field }: { field: any }) {
     )
 }
 
-export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
+export function BookmarkForm({ onSubmit }: Readonly<BookmarkFormProps>) {
     const form = useForm({
         defaultValues: {
             url: '',
@@ -75,7 +75,8 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             return undefined
                         }
                     }}
-                    children={(field) => (
+                >
+                    {(field) => (
                         <>
                             <label htmlFor={field.name} className="label">
                                 <span className="label-text font-medium">URL</span>
@@ -93,7 +94,7 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             <FieldInfo field={field} />
                         </>
                     )}
-                />
+                </form.Field>
             </div>
 
             <div>
@@ -107,7 +108,8 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             return undefined
                         }
                     }}
-                    children={(field) => (
+                >
+                    {(field) => (
                         <>
                             <label htmlFor={field.name} className="label">
                                 <span className="label-text font-medium">Source Adapter</span>
@@ -129,13 +131,14 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             <FieldInfo field={field} />
                         </>
                     )}
-                />
+                </form.Field>
             </div>
 
             <div>
                 <form.Field
                     name="tagsInput"
-                    children={(field) => (
+                >
+                    {(field) => (
                         <>
                             <label htmlFor={field.name} className="label">
                                 <span className="label-text font-medium">Tags</span>
@@ -153,13 +156,14 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             <FieldInfo field={field} />
                         </>
                     )}
-                />
+                </form.Field>
             </div>
 
             <div>
                 <form.Field
                     name="summary"
-                    children={(field) => (
+                >
+                    {(field) => (
                         <>
                             <label htmlFor={field.name} className="label">
                                 <span className="label-text font-medium">Summary</span>
@@ -176,13 +180,14 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             <FieldInfo field={field} />
                         </>
                     )}
-                />
+                </form.Field>
             </div>
 
             <div className="flex justify-end">
                 <form.Subscribe
                     selector={(state) => [state.canSubmit, state.isSubmitting]}
-                    children={([canSubmit, isSubmitting]) => (
+                >
+                    {([canSubmit, isSubmitting]) => (
                         <button
                             type="submit"
                             className="btn btn-primary"
@@ -191,7 +196,7 @@ export function BookmarkForm({ onSubmit }: BookmarkFormProps) {
                             {isSubmitting ? 'Adding...' : 'Add Bookmark'}
                         </button>
                     )}
-                />
+                </form.Subscribe>
             </div>
         </form>
     )

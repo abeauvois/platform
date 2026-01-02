@@ -1,6 +1,15 @@
 export interface ApiClientConfig {
     baseUrl: string;
     sessionToken?: string;
+    /**
+     * Fetch credentials mode for cookie handling.
+     * - 'include': Browser sends cookies automatically (for web apps with same-origin or CORS)
+     * - 'omit': Never send cookies, use manual token in Cookie header (for CLI apps)
+     * - 'same-origin': Send cookies only for same-origin requests (default browser behavior)
+     *
+     * @default 'omit' - Manual token management for backwards compatibility
+     */
+    credentials?: 'include' | 'omit' | 'same-origin';
 }
 
 /**
@@ -10,10 +19,12 @@ export interface ApiClientConfig {
 export class ApiClient {
     private baseUrl: string;
     private sessionToken?: string;
+    private readonly credentials: 'include' | 'omit' | 'same-origin';
 
     constructor(config: ApiClientConfig) {
         this.baseUrl = config.baseUrl;
         this.sessionToken = config.sessionToken;
+        this.credentials = config.credentials ?? 'omit';
     }
 
     /**
@@ -38,8 +49,18 @@ export class ApiClient {
     }
 
     /**
+     * Check if using browser cookie authentication.
+     * When true, the browser handles auth via cookies and no manual token is needed.
+     */
+    usesBrowserCookies(): boolean {
+        return this.credentials === 'include' || this.credentials === 'same-origin';
+    }
+
+    /**
      * Make an HTTP request to the API.
-     * Authentication is optional - adds cookie only when sessionToken is set.
+     * Authentication is handled based on the credentials mode:
+     * - 'include': Browser sends cookies automatically
+     * - 'omit': Manual Cookie header with sessionToken (for CLI)
      */
     async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const headers: Record<string, string> = {
@@ -47,13 +68,15 @@ export class ApiClient {
             ...(options.headers as Record<string, string> || {}),
         };
 
-        if (this.sessionToken) {
+        // Only set Cookie header manually when not using browser cookie handling
+        if (this.sessionToken && this.credentials === 'omit') {
             headers['Cookie'] = `better-auth.session_token=${this.sessionToken}`;
         }
 
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             ...options,
             headers,
+            credentials: this.credentials,
         });
 
         if (!response.ok) {

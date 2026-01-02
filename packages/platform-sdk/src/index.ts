@@ -22,8 +22,12 @@ export {
     type SourceContentItem,
 } from './clients/index.js';
 
-// Config Providers
-export { EnvConfigProvider, ApiConfigProvider } from './config/index.js';
+// Config Providers (browser-compatible only)
+// Note: EnvConfigProvider is Bun-specific, import from '@platform/sdk/server' for server-side code
+export { ApiConfigProvider } from './config/ApiConfigProvider.js';
+
+// Session Storage Port
+export type { ISessionStorage } from './ports/ISessionStorage.js';
 
 // Workflow
 export { Workflow } from './Workflow.js';

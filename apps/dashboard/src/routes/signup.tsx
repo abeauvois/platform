@@ -19,7 +19,7 @@ function SignUpPage() {
 
   // Redirect if already authenticated
   if (session) {
-    router.navigate({ to: '/todos' })
+    router.navigate({ to: '/bookmarks' })
     return null
   }
 
@@ -39,14 +39,14 @@ function SignUpPage() {
         email,
         password,
         name,
-        callbackURL: '/todos',
+        callbackURL: '/bookmarks',
       })
 
       if (result.error) {
         setError(result.error.message || 'Signup failed')
       } else {
         router.navigate({
-          to: '/todos',
+          to: '/bookmarks',
         })
       }
     } catch (err) {

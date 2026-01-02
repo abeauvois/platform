@@ -1,4 +1,5 @@
-import { Bookmark, ILinkRepository } from '@platform/platform-domain'
+import { Bookmark } from '@platform/platform-domain'
+import type { ILinkRepository } from '@platform/platform-domain';
 
 /**
  * In-Memory Implementation of ILinkRepository for Bookmark entities
@@ -6,7 +7,7 @@ import { Bookmark, ILinkRepository } from '@platform/platform-domain'
  */
 export class InMemoryBookmarkRepository implements ILinkRepository {
     private links: Map<string, Bookmark> = new Map();
-    private idCounter: number = 0;
+    private idCounter = 0;
 
     async exists(url: string): Promise<boolean> {
         return this.links.has(url);
@@ -39,8 +40,8 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         return bookmarkWithId;
     }
 
-    async saveMany(links: Bookmark[]): Promise<Bookmark[]> {
-        const saved: Bookmark[] = [];
+    async saveMany(links: Array<Bookmark>): Promise<Array<Bookmark>> {
+        const saved: Array<Bookmark> = [];
         for (const link of links) {
             const savedLink = await this.save(link);
             saved.push(savedLink);
@@ -80,11 +81,11 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         return true;
     }
 
-    async findAll(): Promise<Bookmark[]> {
+    async findAll(): Promise<Array<Bookmark>> {
         return Array.from(this.links.values());
     }
 
-    async findByUserId(userId: string): Promise<Bookmark[]> {
+    async findByUserId(userId: string): Promise<Array<Bookmark>> {
         return Array.from(this.links.values()).filter(
             bookmark => bookmark.userId === userId
         );
@@ -94,7 +95,7 @@ export class InMemoryBookmarkRepository implements ILinkRepository {
         this.links.clear();
     }
 
-    async existsByUrls(userId: string, urls: string[]): Promise<Set<string>> {
+    async existsByUrls(userId: string, urls: Array<string>): Promise<Set<string>> {
         const existingUrls = Array.from(this.links.values())
             .filter((bookmark) => bookmark.userId === userId && urls.includes(bookmark.url))
             .map((bookmark) => bookmark.url);

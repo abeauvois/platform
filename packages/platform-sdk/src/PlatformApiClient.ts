@@ -1,15 +1,23 @@
-import type { SignInData, SignUpData, AuthResponse, ILogger } from './types.js';
 import { AuthClient } from './clients/AuthClient.js';
 import { BookmarkClient } from './clients/BookmarkClient.js';
 import { ConfigClient } from './clients/ConfigClient.js';
 import { WorkflowClient } from './clients/WorkflowClient.js';
 import { SourcesClient } from './clients/SourcesClient.js';
+import type { AuthResponse, ILogger, SignInData, SignUpData } from './types.js';
 import type { BaseClient } from './clients/BaseClient.js';
 
 interface PlatformApiClientConfig {
     baseUrl: string;
     sessionToken?: string;
-    logger: ILogger;
+    logger?: ILogger;
+    /**
+     * Fetch credentials mode for cookie handling.
+     * - 'include': Browser sends cookies automatically (for web apps)
+     * - 'omit': Manual token management via Cookie header (for CLI apps)
+     *
+     * @default 'omit'
+     */
+    credentials?: 'include' | 'omit' | 'same-origin';
 }
 
 /**
@@ -18,8 +26,8 @@ interface PlatformApiClientConfig {
 class SyncedAuthClient {
     constructor(
         private readonly authClient: AuthClient,
-        private readonly allClients: BaseClient[],
-    ) {}
+        private readonly allClients: Array<BaseClient>,
+    ) { }
 
     async signIn(data: SignInData): Promise<AuthResponse> {
         const response = await this.authClient.signIn(data);
@@ -87,7 +95,7 @@ export class PlatformApiClient {
     readonly workflow: WorkflowClient;
     readonly sources: SourcesClient;
 
-    private readonly clients: BaseClient[];
+    private readonly clients: Array<BaseClient>
     private readonly authClient: AuthClient;
 
     constructor(config: PlatformApiClientConfig) {
@@ -95,6 +103,7 @@ export class PlatformApiClient {
             baseUrl: config.baseUrl,
             sessionToken: config.sessionToken,
             logger: config.logger,
+            credentials: config.credentials,
         };
 
         this.authClient = new AuthClient(clientConfig);

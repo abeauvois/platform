@@ -1,0 +1,13 @@
+/**
+ * Browser-safe exports from platform-domain
+ * Does NOT include @platform/task or any Node.js-specific code
+ */
+
+// Entities (browser-safe types and constants only)
+export * from './domain/entities/BaseContent';
+export * from './domain/entities/Bookmark';
+export * from './domain/entities/SourceAdapter';
+
+// Core ports (interfaces only, no implementations)
+export * from './domain/ports/IConfigProvider';
+export * from './domain/ports/ILogger';

@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { hc } from 'hono/client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CircleX } from 'lucide-react'
 import { authClient } from '../lib/auth-client'
+import { platformClient } from '../../platformClient'
 import { BookmarkForm } from '../components/BookmarkForm'
-import type { SourceAdapter } from '@platform/platform-domain'
-import type { AppType } from '../../../server/index'
-
-const client = hc<AppType>('/')
+import type { SourceAdapter } from '@platform/platform-domain/browser'
 
 export const Route = createFileRoute('/bookmarks')({
   component: RouteComponent,
@@ -20,11 +17,6 @@ function RouteComponent() {
   const [createBookmarkError, setCreateBookmarkError] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  if (!session) {
-    router.navigate({ to: '/signin' })
-    return null
-  }
-
   const createBookmark = useMutation({
     mutationFn: async (data: {
       url: string
@@ -32,11 +24,12 @@ function RouteComponent() {
       tags: Array<string>
       summary: string
     }) => {
-      const resp = await client.api.bookmarks.$post({
-        json: data,
+      return platformClient.bookmarks.create({
+        url: data.url,
+        sourceAdapter: data.sourceAdapter,
+        tags: data.tags,
+        summary: data.summary,
       })
-      if (!resp.ok) throw new Error('Failed to save bookmark')
-      return resp.json()
     },
     onSuccess: () => {
       setCreateBookmarkError(null)
@@ -53,14 +46,20 @@ function RouteComponent() {
 
   const bookmarksQuery = useQuery({
     queryKey: ['bookmarks'],
-    queryFn: async () => {
-      const resp = await client.api.bookmarks.$get()
-      if (!resp.ok) throw new Error('Failed to fetch bookmarks')
-      return resp.json()
-    },
+    queryFn: () => platformClient.bookmarks.fetchAll(),
   })
 
-  const { data, isError, error, isLoading } = bookmarksQuery
+  const {
+    data: bookmarks,
+    isError,
+    error,
+    isLoading,
+  } = bookmarksQuery
+
+  if (!session) {
+    router.navigate({ to: '/signin' })
+    return null
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl flex-grow">
@@ -92,7 +91,7 @@ function RouteComponent() {
       {/* Bookmarks Section */}
       <div>
         <h2 className="text-2xl font-bold mb-6">
-          Your Bookmarks {data && `(${data.length})`}
+          Your Bookmarks {bookmarks && `(${bookmarks.length})`}
         </h2>
 
         {isError && (
@@ -116,7 +115,7 @@ function RouteComponent() {
           </div>
         )}
 
-        {data && data.length === 0 && (
+        {bookmarks && bookmarks.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔖</div>
             <h3 className="text-xl font-semibold mb-2">No bookmarks yet</h3>
@@ -126,12 +125,13 @@ function RouteComponent() {
           </div>
         )}
 
-        {data && data.length > 0 && (
+        {bookmarks && bookmarks.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {data.map((bookmark) => {
+            {bookmarks.map((bookmark) => {
               const created = (() => {
+                if (!bookmark.createdAt) return null
                 try {
-                  const d = new Date(bookmark.createdAt as string)
+                  const d = new Date(bookmark.createdAt)
                   if (isNaN(d.getTime())) return null
                   return d.toLocaleDateString(undefined, {
                     year: 'numeric',
@@ -164,7 +164,7 @@ function RouteComponent() {
                         {bookmark.summary}
                       </p>
                     )}
-                    {bookmark.tags && bookmark.tags.length > 0 && (
+                    {bookmark.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {bookmark.tags.map((tag) => (
                           <span key={tag} className="badge badge-sm">

@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@platform/platform-domain": "workspace:*",
+    "@platform/sdk": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-form": "^0.36.0",
     "@tanstack/react-query": "^5.66.5",

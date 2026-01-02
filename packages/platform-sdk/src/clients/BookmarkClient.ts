@@ -1,5 +1,6 @@
+import { BaseClient } from './BaseClient.js';
+import type { BaseClientConfig } from './BaseClient.js';
 import type { BookmarkData } from '../types.js';
-import { BaseClient, type BaseClientConfig } from './BaseClient.js';
 
 /**
  * Bookmark type for API responses
@@ -7,7 +8,7 @@ import { BaseClient, type BaseClientConfig } from './BaseClient.js';
 export interface Bookmark {
     url: string;
     sourceAdapter: string;
-    tags: string[];
+    tags: Array<string>;
     summary?: string;
     rawContent?: string;
     createdAt?: Date;
@@ -29,11 +30,11 @@ export class BookmarkClient extends BaseClient {
      * Fetch all bookmarks for authenticated user
      * Requires sessionToken to be set
      */
-    async fetchAll(): Promise<Bookmark[]> {
+    async fetchAll(): Promise<Array<Bookmark>> {
         try {
             this.logger.info('Fetching bookmarks...');
 
-            const bookmarks = await this.authenticatedRequest<Bookmark[]>('/api/bookmarks', {
+            const bookmarks = await this.authenticatedRequest<Array<Bookmark>>('/api/bookmarks', {
                 method: 'GET',
             });
 

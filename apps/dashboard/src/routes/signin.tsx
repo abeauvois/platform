@@ -17,7 +17,7 @@ function LoginPage() {
 
   // Redirect if already authenticated
   if (session) {
-    router.navigate({ to: '/todos' })
+    router.navigate({ to: '/bookmarks' })
     return null
   }
 
@@ -36,7 +36,7 @@ function LoginPage() {
         setError(result.error.message || 'Login failed')
       } else {
         // Redirect to dashboard or intended page
-        router.navigate({ to: '/todos' })
+        router.navigate({ to: '/bookmarks' })
       }
     } catch (err) {
       setError('Failed to sign in, try again.')

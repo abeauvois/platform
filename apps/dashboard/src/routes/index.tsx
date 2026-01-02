@@ -21,7 +21,7 @@ function App() {
                 Todo<span className="text-primary">Master</span>
               </h1>
               <p className="text-xl text-base-content/80 mb-8 max-w-2xl mx-auto leading-relaxed">
-                Organize your life with our simple, elegant todo app. Stay
+                Organize your life with our simple, elegant bookmarks app. Stay
                 productive, track your progress, and accomplish your goals with
                 ease.
               </p>
@@ -30,9 +30,9 @@ function App() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               {session ? (
-                <Link to="/todos" className="btn btn-primary btn-lg px-8">
+                <Link to="/bookmarks" className="btn btn-primary btn-lg px-8">
                   <Plus className="w-5 h-5 mr-2" />
-                  Go to My Todos
+                  Go to My Bookmarks
                 </Link>
               ) : (
                 <>
@@ -55,7 +55,7 @@ function App() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Simple Creation</h3>
                 <p className="text-base-content/70">
-                  Add todos instantly with our intuitive interface. No
+                  Add bookmarks instantly with our intuitive interface. No
                   complicated setup required.
                 </p>
               </div>

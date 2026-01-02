@@ -1,5 +1,6 @@
-import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@platform/platform-domain';
+import { BaseContent } from '@platform/platform-domain';
 import { DrizzlePendingContentRepository } from '../DrizzlePendingContentRepository';
+import type { ILogger, ISourceReader, SourceReaderConfig } from '@platform/platform-domain';
 
 /**
  * Create a source reader that fetches all pending content from the database
@@ -9,7 +10,7 @@ export function createPendingContentSourceReader(logger: ILogger): ISourceReader
     const pendingContentRepo = new DrizzlePendingContentRepository();
 
     return {
-        async read(config: SourceReaderConfig): Promise<BaseContent[]> {
+        async read(config: SourceReaderConfig): Promise<Array<BaseContent>> {
             logger.info('Fetching pending content from database...');
 
             // Get all pending items (or filter by user if specified)

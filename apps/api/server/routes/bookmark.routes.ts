@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
-import type { HonoEnv } from '../types'
-import { createBookmarkValidator } from '../validators/create-bookmark.validator'
-import { authMiddleware } from '@/middlewares/auth.middleware'
 import { Bookmark, GetBookmarksByUserIdService } from '@platform/platform-domain'
-import { InMemoryBookmarkRepository } from '../infrastructure/InMemoryBookmarkRepository'
+import { createBookmarkValidator } from '../validators/create-bookmark.validator'
+import { DrizzleBookmarkRepository } from '../infrastructure/DrizzleBookmarkRepository'
+import type { HonoEnv } from '../types'
+import { authMiddleware } from '@/middlewares/auth.middleware'
 
-const repository = new InMemoryBookmarkRepository()
+const repository = new DrizzleBookmarkRepository()
 const getBookmarksByUserIdService = new GetBookmarksByUserIdService(repository)
 
 /**
@@ -13,7 +13,7 @@ const getBookmarksByUserIdService = new GetBookmarksByUserIdService(repository)
  * @param userId - The ID of the user whose bookmarks to retrieve
  * @returns Promise resolving to array of user's bookmarks
  */
-async function getBookmarksByUserId(userId: string): Promise<Bookmark[]> {
+async function getBookmarksByUserId(userId: string): Promise<Array<Bookmark>> {
   return await getBookmarksByUserIdService.execute(userId);
 }
 
@@ -39,7 +39,7 @@ export const bookmarks = new Hono<HonoEnv>()
       )
 
       if (!bookmark.isValid()) {
-        const errors: string[] = [];
+        const errors: Array<string> = [];
 
         if (!bookmark.url || bookmark.url.length === 0) {
           errors.push('url: URL is required and cannot be empty');
@@ -105,7 +105,7 @@ export const bookmarks = new Hono<HonoEnv>()
 
     try {
       const bookmarks = await getBookmarksByUserId(user.id);
-      return c.json(bookmarks as Bookmark[]);
+      return c.json(bookmarks);
     } catch (error) {
       console.error('Failed to fetch bookmarks: ', error);
       return c.json({ error: 'Failed to fetch bookmarks' }, 500);
