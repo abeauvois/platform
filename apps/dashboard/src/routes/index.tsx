@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Calendar, CheckCircle2, Plus, User } from 'lucide-react'
-import { authClient } from '../lib/auth-client'
+import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -18,7 +18,7 @@ function App() {
             <div className="mb-8">
               <CheckCircle2 className="w-20 h-20 mx-auto text-primary mb-4" />
               <h1 className="text-6xl font-bold text-base-content mb-6">
-                Todo<span className="text-primary">Master</span>
+                Bookmark<span className="text-primary">Master</span>
               </h1>
               <p className="text-xl text-base-content/80 mb-8 max-w-2xl mx-auto leading-relaxed">
                 Organize your life with our simple, elegant bookmarks app. Stay

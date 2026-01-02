@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CircleX } from 'lucide-react'
-import { authClient } from '../lib/auth-client'
 import { platformClient } from '../../platformClient'
 import { BookmarkForm } from '../components/BookmarkForm'
 import type { SourceAdapter } from '@platform/platform-domain/browser'
+import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/bookmarks')({
   component: RouteComponent,
@@ -115,7 +115,7 @@ function RouteComponent() {
           </div>
         )}
 
-        {bookmarks && bookmarks.length === 0 && (
+        {bookmarks?.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔖</div>
             <h3 className="text-xl font-semibold mb-2">No bookmarks yet</h3>
@@ -132,7 +132,7 @@ function RouteComponent() {
                 if (!bookmark.createdAt) return null
                 try {
                   const d = new Date(bookmark.createdAt)
-                  if (isNaN(d.getTime())) return null
+                  if (Number.isNaN(d.getTime())) return null
                   return d.toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'short',

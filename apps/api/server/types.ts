@@ -1,4 +1,4 @@
-import { auth } from './lib/auth';
+import type { auth } from './lib/auth';
 
 export type HonoEnv = {
   Variables: {

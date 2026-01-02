@@ -1,8 +1,8 @@
 import { command } from 'cleye';
 import * as p from '@clack/prompts';
-import { truncateText } from '@platform/utils';
-import { SAVE_TO_DESTINATIONS, type SaveToDestination } from '@platform/sdk';
+import { SAVE_TO_DESTINATIONS } from '@platform/sdk';
 import { createCliContext, getDefaultEmail } from '../../lib/cli-context.js';
+import type { SaveToDestination } from '@platform/sdk';
 
 type GmailFlags = {
     filter?: string;

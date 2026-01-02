@@ -1,10 +1,6 @@
-import {
-    type WorkflowContext,
-    type StepResult,
-    BaseContent,
-} from '@platform/platform-domain';
-import type { StepFactoryConfig } from '../presets';
 import { BaseWorkflowStep } from './BaseWorkflowStep';
+import type { BaseContent, StepResult, WorkflowContext } from '@platform/platform-domain';
+import type { StepFactoryConfig } from '../presets';
 
 /**
  * Read step - fetches items from the source (Gmail, etc.)

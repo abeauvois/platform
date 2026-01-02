@@ -1,7 +1,8 @@
-import type { ILogger } from '@platform/platform-domain';
-import type { ISessionStorage, AuthResponse } from '@platform/sdk';
 import { PlatformApiClient } from '@platform/sdk';
-import { FileSessionStorage, type StoredSession } from './adapters/FileSessionStorage.js';
+import { FileSessionStorage } from './adapters/FileSessionStorage.js';
+import type { StoredSession } from './adapters/FileSessionStorage.js';
+import type { ILogger } from '@platform/platform-domain';
+import type { AuthResponse, ISessionStorage } from '@platform/sdk';
 
 export interface AuthManagerConfig {
     /** Base URL of the platform API */
@@ -14,14 +15,14 @@ export interface AuthManagerConfig {
 
 /** No-op logger for when no logger is provided */
 const noopLogger: ILogger = Object.freeze({
-    info: () => {},
-    warning: () => {},
-    error: () => {},
-    debug: () => {},
+    info: () => { },
+    warning: () => { },
+    error: () => { },
+    debug: () => { },
     await: () => ({
-        start: () => {},
-        update: () => {},
-        stop: () => {},
+        start: () => { },
+        update: () => { },
+        stop: () => { },
     }),
 });
 
@@ -150,12 +151,10 @@ export class AuthManager {
     }
 
     private getApiClient(): PlatformApiClient {
-        if (!this.apiClient) {
-            this.apiClient = new PlatformApiClient({
-                baseUrl: this.baseUrl,
-                logger: this.logger,
-            });
-        }
+        this.apiClient ??= new PlatformApiClient({
+            baseUrl: this.baseUrl,
+            logger: this.logger,
+        });
         return this.apiClient;
     }
 }

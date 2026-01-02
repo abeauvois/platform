@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { createQueue, initBoss, scheduleRecurringTask, stopBoss } from '@platform/task';
 import { auth } from './lib/auth';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { workflows } from './routes/workflow.routes';
 import { sources } from './routes/sources.routes';
-import { initBoss, stopBoss, createQueue, scheduleRecurringTask } from '@platform/task';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
 import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgroundTaskRepository';

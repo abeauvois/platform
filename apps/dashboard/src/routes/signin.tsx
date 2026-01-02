@@ -66,7 +66,7 @@ function LoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-control mb-4">
-              <label className="label">
+              <label htmlFor='email' className="label">
                 <span className="label-text">Email</span>
               </label>
               <input
@@ -82,7 +82,7 @@ function LoginPage() {
             </div>
 
             <div className="form-control">
-              <label className="label">
+              <label htmlFor="password" className="label">
                 <span className="label-text">Password</span>
               </label>
               <input

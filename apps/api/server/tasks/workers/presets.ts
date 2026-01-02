@@ -1,12 +1,12 @@
-import { BaseContent, type ILogger, type ISourceReader, type IWorkflowStep } from '@platform/platform-domain';
-import { createGmailSourceReader, createBookmarkSourceReader } from '../../infrastructure/source-readers';
+import { createBookmarkSourceReader, createGmailSourceReader } from '../../infrastructure/source-readers';
 import { createPendingContentSourceReader } from '../../infrastructure/source-readers/PendingContentSourceReader';
 import { DrizzleBookmarkRepository } from '../../infrastructure/DrizzleBookmarkRepository';
 import { DrizzlePendingContentRepository } from '../../infrastructure/DrizzlePendingContentRepository';
 import { WebScraperAdapter } from '../../infrastructure/WebScraperAdapter';
 import { BookmarkEnricherAdapter } from '../../infrastructure/BookmarkEnricherAdapter';
-import { ReadStep, AnalyzeStep, EnrichStep, ExportStep, SaveToPendingContentStep, BookmarkEnrichmentStep } from './steps';
-import { WorkflowRequest, SAVE_TO_DESTINATIONS } from '@/validators/workflow.validator';
+import { AnalyzeStep, BookmarkEnrichmentStep, EnrichStep, ExportStep, ReadStep, SaveToPendingContentStep } from './steps';
+import type { BaseContent, ILogger, ISourceReader, IWorkflowStep } from '@platform/platform-domain';
+import type { SAVE_TO_DESTINATIONS, WorkflowRequest } from '@/validators/workflow.validator';
 
 /**
  * SaveTo destination type
@@ -34,7 +34,7 @@ export interface StepFactoryConfig {
 export interface PresetConfig {
     name: string;
     createSourceReader: (logger: ILogger) => ISourceReader | undefined;
-    createSteps: (config: StepFactoryConfig) => IWorkflowStep<BaseContent>[];
+    createSteps: (config: StepFactoryConfig) => Array<IWorkflowStep<BaseContent>>;
 }
 
 /**
@@ -45,7 +45,7 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         name: 'gmail',
         createSourceReader: createGmailSourceReader,
         createSteps: (config) => {
-            const steps: IWorkflowStep<BaseContent>[] = [];
+            const steps: Array<IWorkflowStep<BaseContent>> = [];
             steps.push(new ReadStep(config));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config));
 
@@ -65,7 +65,7 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         name: 'bookmark',
         createSourceReader: createBookmarkSourceReader,
         createSteps: (config) => {
-            const steps: IWorkflowStep<BaseContent>[] = [];
+            const steps: Array<IWorkflowStep<BaseContent>> = [];
             steps.push(new ReadStep(config));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config));
             if (!config.skipTwitter) steps.push(new EnrichStep(config));
@@ -78,7 +78,7 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSourceReader: () => undefined,
         createSteps: (config) => {
             // Only extract and analyze, no export
-            const steps: IWorkflowStep<BaseContent>[] = [];
+            const steps: Array<IWorkflowStep<BaseContent>> = [];
             steps.push(new ReadStep(config));
             steps.push(new AnalyzeStep(config));
             return steps;
@@ -90,7 +90,7 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         createSourceReader: () => undefined,
         createSteps: (config) => {
             // Always include enrichment for Twitter focus
-            const steps: IWorkflowStep<BaseContent>[] = [];
+            const steps: Array<IWorkflowStep<BaseContent>> = [];
             steps.push(new ReadStep(config));
             if (!config.skipAnalysis) steps.push(new AnalyzeStep(config));
             steps.push(new EnrichStep(config)); // Always enrich for Twitter
@@ -103,8 +103,8 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         name: 'csvOnly',
         createSourceReader: () => undefined,
         createSteps: (config) => {
-            const steps: IWorkflowStep<BaseContent>[] = [];
-            steps.push(new ReadStep( config));
+            const steps: Array<IWorkflowStep<BaseContent>> = [];
+            steps.push(new ReadStep(config));
             steps.push(new ExportStep({ ...config, csvOnly: true })); // Force CSV only
             return steps;
         },
@@ -114,7 +114,7 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
         name: 'bookmarkEnrichment',
         createSourceReader: createPendingContentSourceReader,
         createSteps: (config) => {
-            const steps: IWorkflowStep<BaseContent>[] = [];
+            const steps: Array<IWorkflowStep<BaseContent>> = [];
 
             // Read pending content from database
             steps.push(new ReadStep(config));
@@ -151,8 +151,5 @@ export const presets: Record<WorkflowRequest['preset'], PresetConfig> = {
  */
 export function getPreset(name: WorkflowRequest['preset']): PresetConfig {
     const preset = presets[name];
-    if (!preset) {
-        throw new Error(`Unknown preset: ${name}`);
-    }
     return preset;
 }
