@@ -43,7 +43,7 @@
     "test:unit": "bun test ./packages/platform-sdk/tests/unit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@anthropic-ai/sdk": "^0.71.2",
     "@clack/prompts": "^0.11.0",
     "@notionhq/client": "^5.4.0",
     "@poppinss/cliui": "^6.5.0",
