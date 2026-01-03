@@ -1,11 +1,30 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { apiReference } from '@scalar/hono-api-reference';
+import { Scalar } from '@scalar/hono-api-reference';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
-import { tickerOpenApi } from './routes/ticker.openapi.routes';
-import { balanceOpenApi } from './routes/balance.openapi.routes';
-import { klinesOpenApi } from './routes/klines.openapi.routes';
+import { createTickerOpenApiRoutes } from './routes/ticker.openapi.routes';
+import { createBalanceOpenApiRoutes } from './routes/balance.openapi.routes';
+import { createKlinesOpenApiRoutes } from './routes/klines.openapi.routes';
+import { BinanceClient } from './adapters/BinanceClient';
+
+// Create exchange clients (dependency injection at composition root)
+// Public client for market data (ticker, klines)
+const publicExchangeClient = new BinanceClient();
+
+// Authenticated client for account operations (balances, orders)
+const createAuthenticatedClient = () => {
+  const apiKey = process.env.BINANCE_API_KEY;
+  const apiSecret = process.env.BINANCE_API_SECRET;
+
+  if (!apiKey || !apiSecret) {
+    throw new Error(
+      'BINANCE_API_KEY and BINANCE_API_SECRET must be set in environment'
+    );
+  }
+
+  return new BinanceClient({ apiKey, apiSecret });
+};
 
 const app = new OpenAPIHono();
 
@@ -30,9 +49,17 @@ app.use(
 );
 
 // Trading API routes with OpenAPI documentation
-app.route('/api/trading/ticker', tickerOpenApi);
-app.route('/api/trading/balance', balanceOpenApi);
-app.route('/api/trading/klines', klinesOpenApi);
+app.route('/api/trading/ticker', createTickerOpenApiRoutes(publicExchangeClient));
+app.route('/api/trading/klines', createKlinesOpenApiRoutes(publicExchangeClient));
+
+// Balance routes require authentication - create client lazily to allow startup without credentials
+try {
+  const authenticatedClient = createAuthenticatedClient();
+  app.route('/api/trading/balance', createBalanceOpenApiRoutes(authenticatedClient));
+} catch {
+  // Balance routes unavailable without credentials - log warning but don't fail startup
+  console.warn('Balance routes disabled: Binance API credentials not configured');
+}
 
 // OpenAPI JSON spec endpoint
 app.doc('/api/docs/openapi.json', {
@@ -69,7 +96,7 @@ app.doc('/api/docs/openapi.json', {
 // Scalar API Reference UI
 app.get(
   '/api/docs',
-  apiReference({
+  Scalar({
     theme: 'purple',
     url: '/api/docs/openapi.json',
     pageTitle: 'Trading API Documentation',

@@ -4,12 +4,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { BinanceClient } from '../adapters/BinanceClient.js';
 import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
-
-// Create exchange client instance (can be swapped for different exchanges)
-const exchangeClient: IExchangeClient = new BinanceClient();
 
 // OpenAPI schemas
 const MarketTickerSchema = z.object({
@@ -35,7 +31,7 @@ const getTickerRoute = createRoute({
     path: '/',
     tags: ['Ticker'],
     summary: 'Get market ticker',
-    description: 'Fetch real-time market ticker data from Binance exchange. Defaults to BTC/USD if no symbol provided.',
+    description: 'Fetch real-time market ticker data from exchange. Defaults to BTC/USD if no symbol provided.',
     request: {
         query: z.object({
             symbol: z.string().optional().openapi({
@@ -64,19 +60,25 @@ const getTickerRoute = createRoute({
     },
 });
 
-// Create OpenAPI Hono app
-export const tickerOpenApi = new OpenAPIHono<HonoEnv>()
-    .openapi(getTickerRoute, async (c) => {
-        try {
-            const { symbol = 'BTC/USD' } = c.req.valid('query');
-            const ticker = await exchangeClient.getTicker(symbol);
+/**
+ * Create ticker OpenAPI routes with dependency injection
+ * @param exchangeClient - Exchange client instance (injected)
+ * @returns OpenAPIHono app with ticker routes
+ */
+export function createTickerOpenApiRoutes(exchangeClient: IExchangeClient) {
+    return new OpenAPIHono<HonoEnv>()
+        .openapi(getTickerRoute, async (c) => {
+            try {
+                const { symbol = 'BTC/USD' } = c.req.valid('query');
+                const ticker = await exchangeClient.getTicker(symbol);
 
-            return c.json({
-                ...ticker,
-                timestamp: ticker.timestamp.toISOString(),
-            }, 200);
-        } catch (error) {
-            console.error('Failed to fetch ticker: ', error);
-            return c.json({ error: 'Failed to fetch ticker' }, 500);
-        }
-    });
+                return c.json({
+                    ...ticker,
+                    timestamp: ticker.timestamp.toISOString(),
+                }, 200);
+            } catch (error) {
+                console.error('Failed to fetch ticker: ', error);
+                return c.json({ error: 'Failed to fetch ticker' }, 500);
+            }
+        });
+}

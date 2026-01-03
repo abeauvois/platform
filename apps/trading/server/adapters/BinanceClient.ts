@@ -233,7 +233,7 @@ export class BinanceClient implements IExchangeClient {
      * @param symbol - Trading pair (optional)
      * @returns Array of orders
      */
-    async getOrders(symbol?: string): Promise<Order[]> {
+    async getOrders(symbol?: string): Promise<Array<Order>> {
         // TODO: Implement order fetching for production Binance
         throw new Error('getOrders not yet implemented for production Binance');
     }

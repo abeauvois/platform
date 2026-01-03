@@ -4,12 +4,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { BinanceClient } from '../adapters/BinanceClient.js';
 import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
-
-// Create exchange client instance (using production API for real market data)
-const exchangeClient: IExchangeClient = new BinanceClient();
 
 // OpenAPI schemas
 const CandlestickSchema = z.object({
@@ -23,7 +19,7 @@ const CandlestickSchema = z.object({
 }).openapi('Candlestick');
 
 const KlinesResponseSchema = z.object({
-    exchange: z.string().openapi({ example: 'Binance Testnet', description: 'Exchange name' }),
+    exchange: z.string().openapi({ example: 'Binance', description: 'Exchange name' }),
     symbol: z.string().openapi({ example: 'BTCUSDT', description: 'Trading pair symbol' }),
     interval: z.string().openapi({ example: '1h', description: 'Candlestick interval' }),
     klines: z.array(CandlestickSchema).openapi({ description: 'Array of candlestick data' }),
@@ -40,7 +36,7 @@ const getKlinesRoute = createRoute({
     path: '/',
     tags: ['Market Data'],
     summary: 'Get historical candlestick data',
-    description: 'Fetch historical candlestick (OHLCV) data from Binance testnet exchange. Used for charting and technical analysis.',
+    description: 'Fetch historical candlestick (OHLCV) data from exchange. Used for charting and technical analysis.',
     request: {
         query: z.object({
             symbol: z.string().optional().openapi({
@@ -77,24 +73,30 @@ const getKlinesRoute = createRoute({
     },
 });
 
-// Create OpenAPI Hono app
-export const klinesOpenApi = new OpenAPIHono<HonoEnv>()
-    .openapi(getKlinesRoute, async (c) => {
-        try {
-            const { symbol = 'BTCUSDT', interval = '1h', limit = '100' } = c.req.valid('query');
-            const klines = await exchangeClient.getKlines(symbol, interval, parseInt(limit));
+/**
+ * Create klines OpenAPI routes with dependency injection
+ * @param exchangeClient - Exchange client instance (injected)
+ * @returns OpenAPIHono app with klines routes
+ */
+export function createKlinesOpenApiRoutes(exchangeClient: IExchangeClient) {
+    return new OpenAPIHono<HonoEnv>()
+        .openapi(getKlinesRoute, async (c) => {
+            try {
+                const { symbol = 'BTCUSDT', interval = '1h', limit = '100' } = c.req.valid('query');
+                const klines = await exchangeClient.getKlines(symbol, interval, Number.parseInt(limit));
 
-            return c.json({
-                exchange: exchangeClient.getExchangeName(),
-                symbol,
-                interval,
-                klines,
-                count: klines.length
-            }, 200);
-        } catch (error) {
-            console.error('Failed to fetch klines:', error);
-            return c.json({
-                error: error instanceof Error ? error.message : 'Failed to fetch klines'
-            }, 500);
-        }
-    });
+                return c.json({
+                    exchange: exchangeClient.getExchangeName(),
+                    symbol,
+                    interval,
+                    klines,
+                    count: klines.length
+                }, 200);
+            } catch (error) {
+                console.error('Failed to fetch klines:', error);
+                return c.json({
+                    error: error instanceof Error ? error.message : 'Failed to fetch klines'
+                }, 500);
+            }
+        });
+}
