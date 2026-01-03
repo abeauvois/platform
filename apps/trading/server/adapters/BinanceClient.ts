@@ -6,7 +6,7 @@
  * Supports both public (unauthenticated) and private (authenticated) endpoints
  */
 
-import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarketTicker, Order } from '@platform/trading-domain';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice } from '@platform/trading-domain';
 
 /**
  * Binance API response type for 24hr ticker
@@ -21,6 +21,14 @@ interface BinanceTickerResponse {
     lowPrice: string;
     priceChange: string;
     priceChangePercent: string;
+}
+
+/**
+ * Binance API response type for price ticker (/ticker/price)
+ */
+interface BinancePriceResponse {
+    symbol: string;
+    price: string;
 }
 
 /**
@@ -63,6 +71,20 @@ interface BinanceAccountResponse {
 }
 
 /**
+ * Binance margin account response type
+ */
+interface BinanceMarginAccountResponse {
+    userAssets: Array<{
+        asset: string;
+        free: string;
+        locked: string;
+        borrowed: string;
+        interest: string;
+        netAsset: string;
+    }>;
+}
+
+/**
  * Configuration options for BinanceClient
  */
 export interface BinanceClientConfig {
@@ -77,6 +99,7 @@ export interface BinanceClientConfig {
  */
 export class BinanceClient implements IExchangeClient {
     private readonly baseUrl = 'https://api.binance.com/api/v3';
+    private readonly sapiUrl = 'https://api.binance.com/sapi/v1';
     private readonly apiKey?: string;
     private readonly apiSecret?: string;
 
@@ -123,6 +146,55 @@ export class BinanceClient implements IExchangeClient {
     }
 
     /**
+     * Get prices for multiple trading pairs in a single request (public endpoint)
+     * Uses lightweight /ticker/price endpoint
+     * @param symbols - Array of trading pair symbols (e.g., ['BTCUSDT', 'BTC/USD'])
+     * @returns Array of symbol prices
+     */
+    async getTickers(symbols: Array<string>): Promise<Array<SymbolPrice>> {
+        if (symbols.length === 0) {
+            return [];
+        }
+
+        const binanceSymbols = symbols.map(s => this.convertSymbol(s));
+        const symbolsParam = JSON.stringify(binanceSymbols);
+        const url = `${this.baseUrl}/ticker/price?symbols=${encodeURIComponent(symbolsParam)}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            // If batch request fails (e.g., invalid symbol), fall back to individual requests
+            const results: Array<SymbolPrice> = [];
+            for (const symbol of binanceSymbols) {
+                try {
+                    const singleUrl = `${this.baseUrl}/ticker/price?symbol=${symbol}`;
+                    const singleResponse = await fetch(singleUrl, { method: 'GET' });
+                    if (singleResponse.ok) {
+                        const data: BinancePriceResponse = await singleResponse.json();
+                        results.push({
+                            symbol: data.symbol,
+                            price: Number.parseFloat(data.price),
+                        });
+                    }
+                    // Skip invalid symbols silently
+                } catch {
+                    // Skip symbols that fail
+                }
+            }
+            return results;
+        }
+
+        const data: Array<BinancePriceResponse> = await response.json();
+
+        return data.map(d => ({
+            symbol: d.symbol,
+            price: Number.parseFloat(d.price),
+        }));
+    }
+
+    /**
      * Get all account balances (requires authentication)
      * @returns Array of account balances for all assets
      */
@@ -162,6 +234,37 @@ export class BinanceClient implements IExchangeClient {
         const balances = await this.getBalances();
         const upperAsset = asset.toUpperCase();
         return balances.find(b => b.asset === upperAsset) || null;
+    }
+
+    /**
+     * Get all margin account balances (requires authentication)
+     * @returns Array of margin balances for all assets
+     */
+    async getMarginBalances(): Promise<Array<MarginBalance>> {
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        const timestamp = Date.now();
+        const queryString = `timestamp=${timestamp}`;
+        const signature = await this.sign(queryString);
+        const url = `${this.sapiUrl}/margin/account?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: BinanceMarginAccountResponse = await response.json();
+
+        return data.userAssets.map(this.mapToMarginBalance);
     }
 
     /**
@@ -300,6 +403,20 @@ export class BinanceClient implements IExchangeClient {
             free,
             locked,
             total: free + locked,
+        };
+    }
+
+    /**
+     * Map Binance margin balance to MarginBalance domain model
+     */
+    private mapToMarginBalance(data: { asset: string; free: string; locked: string; borrowed: string; interest: string; netAsset: string }): MarginBalance {
+        return {
+            asset: data.asset,
+            free: Number.parseFloat(data.free),
+            locked: Number.parseFloat(data.locked),
+            borrowed: Number.parseFloat(data.borrowed),
+            interest: Number.parseFloat(data.interest),
+            netAsset: Number.parseFloat(data.netAsset),
         };
     }
 

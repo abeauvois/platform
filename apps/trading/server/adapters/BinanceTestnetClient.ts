@@ -13,8 +13,10 @@ import type {
     Candlestick,
     CreateOrderData,
     IExchangeClient,
+    MarginBalance,
     MarketTicker,
-    Order
+    Order,
+    SymbolPrice
 } from '@platform/trading-domain';
 
 /**
@@ -30,6 +32,14 @@ interface BinanceTickerResponse {
     lowPrice: string;
     priceChange: string;
     priceChangePercent: string;
+}
+
+/**
+ * Binance API response type for price ticker (/ticker/price)
+ */
+interface BinancePriceResponse {
+    symbol: string;
+    price: string;
 }
 
 /**
@@ -131,6 +141,55 @@ export class BinanceTestnetClient implements IExchangeClient {
     }
 
     /**
+     * Get prices for multiple trading pairs in a single request (public endpoint)
+     * Uses lightweight /ticker/price endpoint
+     * @param symbols - Array of trading pair symbols (e.g., ['BTCUSDT', 'BTC/USD'])
+     * @returns Array of symbol prices
+     */
+    async getTickers(symbols: Array<string>): Promise<Array<SymbolPrice>> {
+        if (symbols.length === 0) {
+            return [];
+        }
+
+        const binanceSymbols = symbols.map(s => this.convertSymbol(s));
+        const symbolsParam = JSON.stringify(binanceSymbols);
+        const url = `${this.baseUrl}/ticker/price?symbols=${encodeURIComponent(symbolsParam)}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            // If batch request fails (e.g., invalid symbol), fall back to individual requests
+            const results: Array<SymbolPrice> = [];
+            for (const symbol of binanceSymbols) {
+                try {
+                    const singleUrl = `${this.baseUrl}/ticker/price?symbol=${symbol}`;
+                    const singleResponse = await fetch(singleUrl, { method: 'GET' });
+                    if (singleResponse.ok) {
+                        const data: BinancePriceResponse = await singleResponse.json();
+                        results.push({
+                            symbol: data.symbol,
+                            price: Number.parseFloat(data.price),
+                        });
+                    }
+                    // Skip invalid symbols silently
+                } catch {
+                    // Skip symbols that fail
+                }
+            }
+            return results;
+        }
+
+        const data: Array<BinancePriceResponse> = await response.json();
+
+        return data.map(d => ({
+            symbol: d.symbol,
+            price: Number.parseFloat(d.price),
+        }));
+    }
+
+    /**
      * Get historical candlestick/kline data (public endpoint)
      * @param symbol - Trading pair (e.g., 'BTCUSDT')
      * @param interval - Time interval ('1m', '5m', '1h', '1d', etc.)
@@ -209,6 +268,15 @@ export class BinanceTestnetClient implements IExchangeClient {
         const balances = await this.getBalances();
         const upperAsset = asset.toUpperCase();
         return balances.find(b => b.asset === upperAsset) || null;
+    }
+
+    /**
+     * Get all margin account balances (requires authentication)
+     * Note: Binance Testnet does not support margin trading
+     * @returns Array of margin balances
+     */
+    async getMarginBalances(): Promise<Array<MarginBalance>> {
+        throw new Error('Margin trading is not supported on Binance Testnet');
     }
 
     /**

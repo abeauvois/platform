@@ -4,7 +4,9 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
 import { createTickerOpenApiRoutes } from './routes/ticker.openapi.routes';
+import { createTickersOpenApiRoutes } from './routes/tickers.openapi.routes';
 import { createBalanceOpenApiRoutes } from './routes/balance.openapi.routes';
+import { createMarginBalanceOpenApiRoutes } from './routes/margin-balance.openapi.routes';
 import { createKlinesOpenApiRoutes } from './routes/klines.openapi.routes';
 import { BinanceClient } from './adapters/BinanceClient';
 
@@ -50,12 +52,14 @@ app.use(
 
 // Trading API routes with OpenAPI documentation
 app.route('/api/trading/ticker', createTickerOpenApiRoutes(publicExchangeClient));
+app.route('/api/trading/tickers', createTickersOpenApiRoutes(publicExchangeClient));
 app.route('/api/trading/klines', createKlinesOpenApiRoutes(publicExchangeClient));
 
 // Balance routes require authentication - create client lazily to allow startup without credentials
 try {
   const authenticatedClient = createAuthenticatedClient();
   app.route('/api/trading/balance', createBalanceOpenApiRoutes(authenticatedClient));
+  app.route('/api/trading/margin-balance', createMarginBalanceOpenApiRoutes(authenticatedClient));
 } catch {
   // Balance routes unavailable without credentials - log warning but don't fail startup
   console.warn('Balance routes disabled: Binance API credentials not configured');
@@ -88,7 +92,11 @@ app.doc('/api/docs/openapi.json', {
     },
     {
       name: 'Balance',
-      description: 'Account balance endpoints - requires Binance API credentials',
+      description: 'Spot account balance endpoints - requires Binance API credentials',
+    },
+    {
+      name: 'Margin',
+      description: 'Margin account balance endpoints - requires Binance API credentials',
     },
   ],
 });

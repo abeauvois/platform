@@ -82,6 +82,15 @@ export interface MarketTicker {
 }
 
 /**
+ * Simple symbol price (from lightweight /ticker/price endpoint)
+ * Used for batch price lookups where only the current price is needed
+ */
+export interface SymbolPrice {
+    symbol: string;
+    price: number;
+}
+
+/**
  * Account balance information
  */
 export interface AccountBalance {
@@ -89,6 +98,19 @@ export interface AccountBalance {
     free: number;
     locked: number;
     total: number;
+}
+
+/**
+ * Margin account balance information
+ * Includes borrowed amount and interest for margin trading
+ */
+export interface MarginBalance {
+    asset: string;
+    free: number;
+    locked: number;
+    borrowed: number;
+    interest: number;
+    netAsset: number;  // free + locked - borrowed - interest
 }
 
 /**
