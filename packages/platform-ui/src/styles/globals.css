@@ -1,0 +1,107 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/figtree";
+
+/* Tell Tailwind to scan @platform/ui components for class names */
+@source "../components/**/*.tsx";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tailwind v4 Theme Configuration
+ * Using static oklch values that work at build time
+ * Dark mode is handled via the @custom-variant dark selector
+ */
+@theme {
+    --font-sans: 'Figtree Variable', sans-serif;
+
+    /* Border radius */
+    --radius: 0.35rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.35rem;
+    --radius-lg: 0.45rem;
+    --radius-xl: 0.65rem;
+    --radius-2xl: 0.85rem;
+    --radius-3xl: 1.05rem;
+    --radius-4xl: 1.25rem;
+
+    /* Light mode colors (default) - lime/stone theme */
+    --color-background: oklch(1 0 0);
+    --color-foreground: oklch(0.147 0.004 49.25);
+    --color-card: oklch(1 0 0);
+    --color-card-foreground: oklch(0.147 0.004 49.25);
+    --color-popover: oklch(1 0 0);
+    --color-popover-foreground: oklch(0.147 0.004 49.25);
+    --color-primary: oklch(0.65 0.18 132);
+    --color-primary-foreground: oklch(0.99 0.03 121);
+    --color-secondary: oklch(0.967 0.001 286.375);
+    --color-secondary-foreground: oklch(0.21 0.006 285.885);
+    --color-muted: oklch(0.97 0.001 106.424);
+    --color-muted-foreground: oklch(0.553 0.013 58.071);
+    --color-accent: oklch(0.97 0.001 106.424);
+    --color-accent-foreground: oklch(0.216 0.006 56.043);
+    --color-destructive: oklch(0.577 0.245 27.325);
+    --color-border: oklch(0.923 0.003 48.717);
+    --color-input: oklch(0.923 0.003 48.717);
+    --color-ring: oklch(0.709 0.01 56.259);
+    --color-chart-1: oklch(0.90 0.18 127);
+    --color-chart-2: oklch(0.85 0.21 129);
+    --color-chart-3: oklch(0.77 0.20 131);
+    --color-chart-4: oklch(0.65 0.18 132);
+    --color-chart-5: oklch(0.53 0.14 132);
+    --color-sidebar: oklch(0.985 0.001 106.423);
+    --color-sidebar-foreground: oklch(0.147 0.004 49.25);
+    --color-sidebar-primary: oklch(0.65 0.18 132);
+    --color-sidebar-primary-foreground: oklch(0.99 0.03 121);
+    --color-sidebar-accent: oklch(0.97 0.001 106.424);
+    --color-sidebar-accent-foreground: oklch(0.216 0.006 56.043);
+    --color-sidebar-border: oklch(0.923 0.003 48.717);
+    --color-sidebar-ring: oklch(0.709 0.01 56.259);
+}
+
+/* Dark mode color overrides using CSS custom properties */
+.dark {
+    --color-background: oklch(0.147 0.004 49.25);
+    --color-foreground: oklch(0.985 0.001 106.423);
+    --color-card: oklch(0.216 0.006 56.043);
+    --color-card-foreground: oklch(0.985 0.001 106.423);
+    --color-popover: oklch(0.216 0.006 56.043);
+    --color-popover-foreground: oklch(0.985 0.001 106.423);
+    --color-primary: oklch(0.77 0.20 131);
+    --color-primary-foreground: oklch(0.27 0.07 132);
+    --color-secondary: oklch(0.274 0.006 286.033);
+    --color-secondary-foreground: oklch(0.985 0 0);
+    --color-muted: oklch(0.268 0.007 34.298);
+    --color-muted-foreground: oklch(0.709 0.01 56.259);
+    --color-accent: oklch(0.268 0.007 34.298);
+    --color-accent-foreground: oklch(0.985 0.001 106.423);
+    --color-destructive: oklch(0.704 0.191 22.216);
+    --color-border: oklch(1 0 0 / 10%);
+    --color-input: oklch(1 0 0 / 15%);
+    --color-ring: oklch(0.553 0.013 58.071);
+    --color-chart-1: oklch(0.90 0.18 127);
+    --color-chart-2: oklch(0.85 0.21 129);
+    --color-chart-3: oklch(0.77 0.20 131);
+    --color-chart-4: oklch(0.65 0.18 132);
+    --color-chart-5: oklch(0.53 0.14 132);
+    --color-sidebar: oklch(0.216 0.006 56.043);
+    --color-sidebar-foreground: oklch(0.985 0.001 106.423);
+    --color-sidebar-primary: oklch(0.85 0.21 129);
+    --color-sidebar-primary-foreground: oklch(0.27 0.07 132);
+    --color-sidebar-accent: oklch(0.268 0.007 34.298);
+    --color-sidebar-accent-foreground: oklch(0.985 0.001 106.423);
+    --color-sidebar-border: oklch(1 0 0 / 10%);
+    --color-sidebar-ring: oklch(0.553 0.013 58.071);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply font-sans bg-background text-foreground;
+    }
+    html {
+        @apply font-sans;
+    }
+}

@@ -1,6 +1,8 @@
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '@platform/ui'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { CircleX, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { CircleX } from 'lucide-react'
+
 import { authClient } from '../lib/auth-client'
 
 export const Route = createFileRoute('/signup')({
@@ -58,32 +60,27 @@ function SignUpPage() {
   }
 
   return (
-    <div className="bg-base-100 flex flex-grow items-center justify-center p-4 pt-12">
-      <div className="card w-full max-w-md bg-base-300 shadow-xl">
-        <div className="card-body">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-base-content">
-              Create Account
-            </h1>
-            <p className="text-base-content/70 mt-2">Sign up to get started</p>
-          </div>
-
+    <div className="bg-background flex flex-grow items-center justify-center p-4 pt-12">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
+          <p className="text-muted-foreground mt-2">Sign up to get started</p>
+        </CardHeader>
+        <CardContent>
           {error && (
-            <div className="alert alert-error mb-4">
-              <CircleX />
+            <div className="flex items-center gap-2 p-3 mb-4 rounded-md bg-destructive/10 text-destructive">
+              <CircleX className="size-5" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Full Name</span>
-              </label>
-              <input
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
                 type="text"
                 placeholder="Enter your full name"
-                className="input input-bordered w-full validator"
                 pattern="[A-Za-z][A-Za-z\- ]*"
                 title="Only letters and dash"
                 minLength={2}
@@ -93,95 +90,74 @@ function SignUpPage() {
                 required
                 disabled={isLoading}
               />
-              <p className="validator-hint hidden">
-                3 to 30 characters with only letters or dash
-              </p>
             </div>
 
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Email</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
                 type="email"
                 placeholder="Enter your email"
-                className="input input-bordered w-full validator"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
               />
-              <p className="validator-hint hidden">Should be a valid email</p>
             </div>
 
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Password</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
                 type="password"
                 placeholder="Enter your password"
-                className="input input-bordered w-full validator"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
                 minLength={8}
               />
-              <p className="validator-hint hidden">
+              <p className="text-xs text-muted-foreground">
                 Should be at least 8 characters
               </p>
             </div>
 
-            <div className="form-control mb-8">
-              <label className="label">
-                <span className="label-text">Confirm Password</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
-                className="input input-bordered w-full validator"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={isLoading}
                 minLength={8}
               />
-              <p className="validator-hint hidden">
-                Should be at least 8 characters
-              </p>
             </div>
 
-            <div className="form-control mt-2">
-              <button
-                type="submit"
-                className={'btn btn-primary w-full'}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm text-primary"></span>
-                    <span className="ml-2 text-primary">
-                      Creating account...
-                    </span>
-                  </>
-                ) : (
-                  'Sign Up'
-                )}
-              </button>
-            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                'Sign Up'
+              )}
+            </Button>
           </form>
 
           <div className="text-center mt-6">
-            <p className="text-base-content/70">
+            <p className="text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/signin" className="link link-primary">
+              <Link to="/signin" className="text-primary hover:underline">
                 Sign in
               </Link>
             </p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

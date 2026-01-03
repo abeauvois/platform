@@ -1,5 +1,6 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import { TooltipProvider, Toaster } from '@platform/ui'
 
 import Header from '../components/Header'
 
@@ -13,16 +14,19 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <Outlet />
-      <TanStackRouterDevtools />
-      <TanStackQueryLayout />
-      <footer className="footer footer-center p-4 bg-base-300 text-base-content/60">
-        <div>
-          <p>Built with ❤️ for productivity enthusiasts</p>
-        </div>
-      </footer>
-    </div>
+    <TooltipProvider>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <Outlet />
+        <TanStackRouterDevtools />
+        <TanStackQueryLayout />
+        <Toaster />
+        <footer className="p-4 bg-muted text-muted-foreground text-center">
+          <div>
+            <p>Built with love for trading enthusiasts</p>
+          </div>
+        </footer>
+      </div>
+    </TooltipProvider>
   ),
 })

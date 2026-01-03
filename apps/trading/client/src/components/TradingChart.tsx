@@ -1,22 +1,24 @@
-import { RefreshCw, TrendingUp } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import { CandlestickSeries, ColorType, createChart, } from 'lightweight-charts';
-import type { IChartApi } from 'lightweight-charts';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
+import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts'
+import { RefreshCw, TrendingUp } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+
+import type { IChartApi } from 'lightweight-charts'
 
 interface Candlestick {
-    openTime: number;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
-    closeTime: number;
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
 }
 
 interface TradingChartProps {
-    symbol?: string;
-    interval?: string;
-    limit?: number;
+    symbol?: string
+    interval?: string
+    limit?: number
 }
 
 export function TradingChart({
@@ -24,12 +26,12 @@ export function TradingChart({
     interval = '1h',
     limit = 100
 }: Readonly<TradingChartProps>) {
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const chartRef = useRef<IChartApi | null>(null);
-    const candlestickSeriesRef = useRef<any>(null);
+    const chartContainerRef = useRef<HTMLDivElement>(null)
+    const chartRef = useRef<IChartApi | null>(null)
+    const candlestickSeriesRef = useRef<any>(null)
 
     useEffect(() => {
-        if (!chartContainerRef.current) return;
+        if (!chartContainerRef.current) return
 
         // Create chart instance
         const chart = createChart(chartContainerRef.current, {
@@ -54,7 +56,7 @@ export function TradingChart({
                 timeVisible: true,
                 secondsVisible: false,
             },
-        });
+        })
 
         // Add candlestick series using v5 API
         const candlestickSeries = chart.addSeries(CandlestickSeries, {
@@ -63,43 +65,43 @@ export function TradingChart({
             borderVisible: false,
             wickUpColor: '#22c55e',
             wickDownColor: '#ef4444',
-        });
+        })
 
-        chartRef.current = chart;
-        candlestickSeriesRef.current = candlestickSeries;
+        chartRef.current = chart
+        candlestickSeriesRef.current = candlestickSeries
 
         // Handle window resize
         const handleResize = () => {
             if (chartContainerRef.current && chartRef.current) {
                 chartRef.current.applyOptions({
                     width: chartContainerRef.current.clientWidth,
-                });
+                })
             }
-        };
+        }
 
-        window.addEventListener('resize', handleResize);
+        window.addEventListener('resize', handleResize)
 
         // Fetch and display data
-        fetchAndDisplayKlines();
+        fetchAndDisplayKlines()
 
         // Cleanup
         return () => {
-            window.removeEventListener('resize', handleResize);
-            chart.remove();
-        };
-    }, [symbol, interval, limit]);
+            window.removeEventListener('resize', handleResize)
+            chart.remove()
+        }
+    }, [symbol, interval, limit])
 
     async function fetchAndDisplayKlines() {
         try {
             const response = await fetch(
                 `/api/trading/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
-            );
+            )
 
             if (!response.ok) {
-                throw new Error('Failed to fetch klines');
+                throw new Error('Failed to fetch klines')
             }
 
-            const data = await response.json();
+            const data = await response.json()
 
             // Transform data for Lightweight Charts
             const chartData = data.klines.map((k: Candlestick) => ({
@@ -108,38 +110,40 @@ export function TradingChart({
                 high: k.high,
                 low: k.low,
                 close: k.close,
-            }));
+            }))
 
-            candlestickSeriesRef.current?.setData(chartData);
+            candlestickSeriesRef.current?.setData(chartData)
 
             // Fit content to view
-            chartRef.current?.timeScale().fitContent();
+            chartRef.current?.timeScale().fitContent()
         } catch (error) {
-            console.error('Failed to fetch klines:', error);
+            console.error('Failed to fetch klines:', error)
         }
     }
 
     const handleRefresh = () => {
-        fetchAndDisplayKlines();
-    };
+        fetchAndDisplayKlines()
+    }
 
     return (
-        <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="card-title flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-accent" />
-                        {symbol} Chart ({interval})
-                    </h2>
-                    <button
-                        onClick={handleRefresh}
-                        className="btn btn-ghost btn-sm btn-circle"
-                    >
-                        <RefreshCw className="w-4 h-4" />
-                    </button>
-                </div>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-6 h-6 text-accent" />
+                    {symbol} Chart ({interval})
+                </CardTitle>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={handleRefresh}
+                >
+                    <RefreshCw className="w-4 h-4" />
+                </Button>
+            </CardHeader>
+            <CardContent>
                 <div ref={chartContainerRef} className="w-full" />
-            </div>
-        </div>
-    );
+            </CardContent>
+        </Card>
+    )
 }
