@@ -15,7 +15,7 @@ function HomePage() {
   const margin = useMarginBalances()
 
   return (
-    <div className="flex gap-4 h-full">
+    <section className="flex gap-4 h-full">
       {/* Left Column - Portfolio Summary */}
       <div className="w-80 flex flex-col gap-3">
         {/* Portfolio Value - fixed height */}
@@ -55,6 +55,6 @@ function HomePage() {
       <div className="flex-1 min-w-0">
         <TradingChart symbol="BTCUSDT" interval="1h" limit={100} />
       </div>
-    </div>
+    </section>
   )
 }

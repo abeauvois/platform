@@ -16,16 +16,14 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
     <TooltipProvider>
-      <div className="flex flex-col p-4 min-h-screen bg-muted">
+      <main className="flex justify-between min-h-screen flex-col p-4">
         <Header />
-        <main className="flex-1">
-          <Outlet />
-        </main>
+        <Outlet />
         <Footer />
-        <TanStackRouterDevtools />
-        <TanStackQueryLayout />
-        <Toaster />
-      </div>
+      </main>
+      <TanStackRouterDevtools />
+      <TanStackQueryLayout />
+      <Toaster />
     </TooltipProvider>
   ),
 })
