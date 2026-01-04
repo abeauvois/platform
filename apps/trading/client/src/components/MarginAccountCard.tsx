@@ -2,19 +2,12 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from '@platform/ui'
 import { AlertCircle, Loader2, RefreshCw, Scale } from 'lucide-react'
 import {
@@ -38,125 +31,89 @@ export interface MarginAccountCardProps {
 export function MarginAccountCard({
   balances,
   prices,
-  exchange,
   count,
   isLoading,
   isPricesLoading,
   error,
   refetch,
-}: MarginAccountCardProps) {
+}: Readonly<MarginAccountCardProps>) {
+  const renderUsdValue = (usdValue: number | null) => {
+    if (usdValue !== null) {
+      return formatPrice(usdValue)
+    }
+    if (isPricesLoading) {
+      return <Skeleton className="h-4 w-16" />
+    }
+    return '—'
+  }
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Scale className="w-6 h-6 text-yellow-500" />
-          Margin Account
+    <Card className="flex flex-col flex-1 min-h-0 overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between py-3 flex-shrink-0">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Scale className="w-5 h-5 text-yellow-500" />
+          Margin Balance
         </CardTitle>
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full"
+          className="h-7 w-7 rounded-full"
           onClick={() => refetch()}
           disabled={isLoading}
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0 flex-1 overflow-y-auto">
         {isLoading && balances.length === 0 && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-yellow-500" />
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-yellow-500" />
           </div>
         )}
 
         {error && (
           <Alert variant="destructive">
-            <AlertCircle />
+            <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              Failed to load margin balances: {error.message}
+            <AlertDescription className="text-xs">
+              {error.message}
             </AlertDescription>
           </Alert>
         )}
 
         {!isLoading && !error && (
-          <div className="space-y-4">
-            {/* Exchange Info */}
-            {exchange && <Badge variant="outline">{exchange} Margin</Badge>}
-
-            {/* Margin Balance Table */}
+          <div className="space-y-2">
             {count === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-4 text-sm text-muted-foreground">
                 No margin positions
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Asset</TableHead>
-                    <TableHead className="text-right">Free</TableHead>
-                    <TableHead className="text-right">Locked</TableHead>
-                    <TableHead className="text-right">Borrowed</TableHead>
-                    <TableHead className="text-right">Interest</TableHead>
-                    <TableHead className="text-right">Net Asset</TableHead>
-                    <TableHead className="text-right">USD Value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {balances.map(balance => {
-                    const usdValue = getUsdValue(
-                      balance.asset,
-                      balance.netAsset,
-                      prices
-                    )
-                    return (
-                      <TableRow key={balance.asset}>
-                        <TableCell className="font-bold">
-                          {balance.asset}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatBalance(balance.free)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatBalance(balance.locked)}
-                        </TableCell>
-                        <TableCell className="text-right text-destructive">
-                          {balance.borrowed > 0
-                            ? `-${formatBalance(balance.borrowed)}`
-                            : '0'}
-                        </TableCell>
-                        <TableCell className="text-right text-destructive">
-                          {balance.interest > 0
-                            ? `-${formatBalance(balance.interest)}`
-                            : '0'}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right font-bold ${balance.netAsset >= 0 ? 'text-green-500' : 'text-destructive'}`}
-                        >
-                          {formatBalance(balance.netAsset)}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right font-bold ${usdValue !== null && usdValue >= 0 ? 'text-primary' : 'text-destructive'}`}
-                        >
-                          {usdValue !== null ? (
-                            formatPrice(usdValue)
-                          ) : isPricesLoading ? (
-                            <Skeleton className="h-4 w-16 ml-auto" />
-                          ) : (
-                            '—'
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+              balances.map(balance => {
+                const usdValue = getUsdValue(balance.asset, balance.netAsset, prices)
+                const valueColorClass = usdValue !== null && usdValue >= 0 ? 'text-primary' : 'text-destructive'
+                return (
+                  <div
+                    key={balance.asset}
+                    className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                  >
+                    <div>
+                      <div className="font-bold text-sm">{balance.asset}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Net: {formatBalance(balance.netAsset)}
+                        {balance.borrowed > 0 && (
+                          <span className="text-destructive ml-1">
+                            (Borrowed: {formatBalance(balance.borrowed)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className={`font-bold text-sm ${valueColorClass}`}>
+                      {renderUsdValue(usdValue)}
+                    </div>
+                  </div>
+                )
+              })
             )}
-
-            {/* Summary */}
-            <div className="text-sm text-muted-foreground text-center">
-              {count} asset{count === 1 ? '' : 's'} in margin account
-            </div>
           </div>
         )}
       </CardContent>

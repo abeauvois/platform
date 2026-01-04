@@ -6,7 +6,7 @@ import {
   toast,
 } from '@platform/ui'
 import { Link, useRouter } from '@tanstack/react-router'
-import { LogIn, LogOut, Loader2, ShieldAlert } from 'lucide-react'
+import { Loader2, LogIn, LogOut, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { authClient } from '../lib/auth-client'
@@ -34,8 +34,8 @@ export default function Header() {
   }
 
   return (
-    <header className="px-4 py-2 bg-muted text-foreground">
-      <nav className="flex items-center justify-between max-w-7xl mx-auto">
+    <header >
+      <nav className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
             to="/"

@@ -25,6 +25,8 @@
     --radius-3xl: 1.05rem;
     --radius-4xl: 1.25rem;
 
+    
+
     /* Light mode colors (default) - lime/stone theme */
     --color-background: oklch(1 0 0);
     --color-foreground: oklch(0.147 0.004 49.25);
@@ -61,17 +63,17 @@
 
 /* Dark mode color overrides using CSS custom properties */
 .dark {
-    --color-background: oklch(0.147 0.004 49.25);
+    --color-background: oklch(0.22 0.02 261.85);
     --color-foreground: oklch(0.985 0.001 106.423);
-    --color-card: oklch(0.216 0.006 56.043);
+    --color-card: oklch(23.846% 0.02955 261.369);
     --color-card-foreground: oklch(0.985 0.001 106.423);
     --color-popover: oklch(0.216 0.006 56.043);
     --color-popover-foreground: oklch(0.985 0.001 106.423);
     --color-primary: oklch(0.77 0.20 131);
     --color-primary-foreground: oklch(0.27 0.07 132);
-    --color-secondary: oklch(0.274 0.006 286.033);
+    --color-secondary: oklch(0.52 0.25 263.52);
     --color-secondary-foreground: oklch(0.985 0 0);
-    --color-muted: oklch(0.268 0.007 34.298);
+    --color-muted: oklch(0.22 0.02 261.85);
     --color-muted-foreground: oklch(0.709 0.01 56.259);
     --color-accent: oklch(0.268 0.007 34.298);
     --color-accent-foreground: oklch(0.985 0.001 106.423);

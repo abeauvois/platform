@@ -26,30 +26,30 @@ export function PortfolioSummaryCard({
   const totalValue = spotValue + marginValue
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <DollarSign className="w-6 h-6 text-primary" />
+    <Card className="flex-shrink-0">
+      <CardHeader className="flex flex-row items-center justify-between py-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <DollarSign className="w-5 h-5 text-primary" />
           Portfolio Value
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {isLoading && totalValue === 0 && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
 
         {(!isLoading || totalValue > 0) && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Total Portfolio Value */}
-            <div className="text-center py-4">
-              <div className="text-sm text-muted-foreground mb-1">
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-1">
                 Total Portfolio Value
               </div>
-              <div className="text-5xl font-bold text-primary">
+              <div className="text-3xl font-bold text-primary">
                 {isLoading ? (
-                  <Skeleton className="h-12 w-48 mx-auto" />
+                  <Skeleton className="h-9 w-40 mx-auto" />
                 ) : (
                   formatPrice(totalValue)
                 )}
@@ -57,36 +57,36 @@ export function PortfolioSummaryCard({
             </div>
 
             {/* Breakdown Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-muted rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-muted rounded-lg p-2">
                 <div className="text-xs flex items-center gap-1 text-muted-foreground">
                   <Wallet className="w-3 h-3" />
-                  Spot Account
+                  Spot
                 </div>
-                <div className="text-lg font-bold text-secondary mt-1">
+                <div className="text-sm font-bold text-secondary mt-1">
                   {isLoading ? (
-                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-5 w-20" />
                   ) : (
                     formatPrice(spotValue)
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground">
                   {spotCount} assets
                 </div>
               </div>
-              <div className="bg-muted rounded-lg p-4">
+              <div className="bg-muted rounded-lg p-2">
                 <div className="text-xs flex items-center gap-1 text-muted-foreground">
                   <Scale className="w-3 h-3" />
-                  Margin Account
+                  Margin
                 </div>
-                <div className="text-lg font-bold text-yellow-500 mt-1">
+                <div className="text-sm font-bold text-yellow-500 mt-1">
                   {isLoading ? (
-                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-5 w-20" />
                   ) : (
                     formatPrice(marginValue)
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground">
                   {marginCount} assets
                 </div>
               </div>
@@ -94,11 +94,8 @@ export function PortfolioSummaryCard({
 
             {/* Allocation */}
             {totalValue > 0 && !isLoading && (
-              <div className="space-y-2">
-                <div className="text-xs text-muted-foreground text-center">
-                  Allocation
-                </div>
-                <div className="flex gap-1 h-3 rounded-full overflow-hidden">
+              <div className="space-y-1">
+                <div className="flex gap-1 h-2 rounded-full overflow-hidden">
                   <div
                     className="bg-secondary"
                     style={{ width: `${(spotValue / totalValue) * 100}%` }}
@@ -111,8 +108,8 @@ export function PortfolioSummaryCard({
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Spot: {((spotValue / totalValue) * 100).toFixed(1)}%</span>
-                  <span>Margin: {((marginValue / totalValue) * 100).toFixed(1)}%</span>
+                  <span>{((spotValue / totalValue) * 100).toFixed(0)}%</span>
+                  <span>{((marginValue / totalValue) * 100).toFixed(0)}%</span>
                 </div>
               </div>
             )}

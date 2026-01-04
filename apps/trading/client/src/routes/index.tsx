@@ -1,6 +1,4 @@
-import { Alert, AlertDescription, AlertTitle } from '@platform/ui'
 import { createFileRoute } from '@tanstack/react-router'
-import { Info } from 'lucide-react'
 
 import { MarginAccountCard } from '../components/MarginAccountCard'
 import { PortfolioSummaryCard } from '../components/PortfolioSummaryCard'
@@ -17,67 +15,45 @@ function HomePage() {
   const margin = useMarginBalances()
 
   return (
-    <div className="min-h-screen bg-muted">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Trading Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Monitor your portfolio value and account balances
-          </p>
-        </div>
+    <div className="flex gap-4 h-full">
+      {/* Left Column - Portfolio Summary */}
+      <div className="w-80 flex flex-col gap-3">
+        {/* Portfolio Value - fixed height */}
+        <PortfolioSummaryCard
+          spotValue={spot.totalValue}
+          marginValue={margin.totalValue}
+          spotCount={spot.count}
+          marginCount={margin.count}
+          isLoading={spot.isPricesLoading || margin.isPricesLoading}
+        />
 
-        {/* Trading Chart - Full Width */}
-        <div className="mb-6">
-          <TradingChart symbol="BTCUSDT" interval="1h" limit={100} />
-        </div>
+        {/* Spot Balances - scrollable */}
+        <SpotBalancesCard
+          balances={spot.balances}
+          prices={spot.prices}
+          exchange={spot.exchange}
+          isLoading={spot.isLoading}
+          isPricesLoading={spot.isPricesLoading}
+          error={spot.error}
+          refetch={spot.refetch}
+        />
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Global Portfolio Value Card */}
-          <PortfolioSummaryCard
-            spotValue={spot.totalValue}
-            marginValue={margin.totalValue}
-            spotCount={spot.count}
-            marginCount={margin.count}
-            isLoading={spot.isPricesLoading || margin.isPricesLoading}
-          />
+        {/* Margin Balances - scrollable */}
+        <MarginAccountCard
+          balances={margin.balances}
+          prices={margin.prices}
+          exchange={margin.exchange}
+          count={margin.count}
+          isLoading={margin.isLoading}
+          isPricesLoading={margin.isPricesLoading}
+          error={margin.error}
+          refetch={margin.refetch}
+        />
+      </div>
 
-          {/* Account Balance Card */}
-          <SpotBalancesCard
-            balances={spot.balances}
-            prices={spot.prices}
-            exchange={spot.exchange}
-            isLoading={spot.isLoading}
-            isPricesLoading={spot.isPricesLoading}
-            error={spot.error}
-            refetch={spot.refetch}
-          />
-        </div>
-
-        {/* Margin Balance Card - Full Width */}
-        <div className="mt-6">
-          <MarginAccountCard
-            balances={margin.balances}
-            prices={margin.prices}
-            exchange={margin.exchange}
-            count={margin.count}
-            isLoading={margin.isLoading}
-            isPricesLoading={margin.isPricesLoading}
-            error={margin.error}
-            refetch={margin.refetch}
-          />
-        </div>
-
-        {/* Info Banner */}
-        <Alert className="mt-8">
-          <Info />
-          <AlertTitle>Auto-refresh enabled</AlertTitle>
-          <AlertDescription>
-            Data refreshes automatically. Prices update every 5 seconds.
-          </AlertDescription>
-        </Alert>
+      {/* Right Column - Chart */}
+      <div className="flex-1 min-w-0">
+        <TradingChart symbol="BTCUSDT" interval="1h" limit={100} />
       </div>
     </div>
   )
