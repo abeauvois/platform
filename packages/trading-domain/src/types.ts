@@ -199,3 +199,34 @@ export function validateOrderValue(
 
     return { valid: true };
 }
+
+/**
+ * Order update event from user data stream
+ * Sent when an order is created, updated, partially filled, or fully filled
+ */
+export interface OrderUpdateEvent {
+    eventType: 'ORDER_UPDATE';
+    eventTime: number;
+    order: Order;
+}
+
+/**
+ * Balance update event from user data stream
+ * Sent when account balance changes (deposits, withdrawals, trades)
+ */
+export interface BalanceUpdateEvent {
+    eventType: 'BALANCE_UPDATE';
+    eventTime: number;
+    asset: string;
+    balanceDelta: number;
+}
+
+/**
+ * Union type for all user data stream events
+ */
+export type UserDataEvent = OrderUpdateEvent | BalanceUpdateEvent;
+
+/**
+ * Callback type for user data stream events
+ */
+export type UserDataEventCallback = (event: UserDataEvent) => void;

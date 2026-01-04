@@ -6,7 +6,8 @@
  * Supports both public (unauthenticated) and private (authenticated) endpoints
  */
 
-import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice } from '@platform/trading-domain';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
+import WebSocket from 'ws';
 
 /**
  * Binance API response type for 24hr ticker
@@ -85,6 +86,74 @@ interface BinanceMarginAccountResponse {
 }
 
 /**
+ * Binance order response type
+ */
+interface BinanceOrderResponse {
+    symbol: string;
+    orderId: number;
+    orderListId: number;
+    clientOrderId: string;
+    transactTime: number;
+    price: string;
+    origQty: string;
+    executedQty: string;
+    cummulativeQuoteQty: string;
+    status: 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'EXPIRED';
+    timeInForce: string;
+    type: string;
+    side: 'BUY' | 'SELL';
+}
+
+/**
+ * Binance user data stream execution report (order update)
+ */
+interface BinanceExecutionReport {
+    e: 'executionReport';  // Event type
+    E: number;             // Event time
+    s: string;             // Symbol
+    c: string;             // Client order ID
+    S: 'BUY' | 'SELL';     // Side
+    o: string;             // Order type
+    f: string;             // Time in force
+    q: string;             // Order quantity
+    p: string;             // Order price
+    P: string;             // Stop price
+    F: string;             // Iceberg quantity
+    g: number;             // OrderListId
+    C: string;             // Original client order ID
+    x: string;             // Current execution type
+    X: 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'EXPIRED'; // Current order status
+    r: string;             // Order reject reason
+    i: number;             // Order ID
+    l: string;             // Last executed quantity
+    z: string;             // Cumulative filled quantity
+    L: string;             // Last executed price
+    n: string;             // Commission amount
+    N: string | null;      // Commission asset
+    T: number;             // Transaction time
+    t: number;             // Trade ID
+    I: number;             // Ignore
+    w: boolean;            // Is the order on the book?
+    m: boolean;            // Is this trade the maker side?
+    M: boolean;            // Ignore
+    O: number;             // Order creation time
+    Z: string;             // Cumulative quote asset transacted quantity
+    Y: string;             // Last quote asset transacted quantity
+    Q: string;             // Quote order quantity
+}
+
+/**
+ * Binance balance update from user data stream
+ */
+interface BinanceBalanceUpdate {
+    e: 'balanceUpdate';    // Event type
+    E: number;             // Event time
+    a: string;             // Asset
+    d: string;             // Balance delta
+    T: number;             // Clear time
+}
+
+/**
  * Configuration options for BinanceClient
  */
 export interface BinanceClientConfig {
@@ -100,8 +169,15 @@ export interface BinanceClientConfig {
 export class BinanceClient implements IExchangeClient {
     private readonly baseUrl = 'https://api.binance.com/api/v3';
     private readonly sapiUrl = 'https://api.binance.com/sapi/v1';
+    private readonly wsBaseUrl = 'wss://stream.binance.com:9443/ws';
     private readonly apiKey?: string;
     private readonly apiSecret?: string;
+
+    // User data stream state
+    private listenKey: string | null = null;
+    private userDataWs: WebSocket | null = null;
+    private listenKeyRefreshInterval: ReturnType<typeof setInterval> | null = null;
+    private userDataCallbacks: Set<UserDataEventCallback> = new Set();
 
     constructor(config?: BinanceClientConfig) {
         this.apiKey = config?.apiKey;
@@ -327,8 +403,91 @@ export class BinanceClient implements IExchangeClient {
      * @returns Created order with ID and status
      */
     async createOrder(data: CreateOrderData): Promise<Order> {
-        // TODO: Implement order creation for production Binance
-        throw new Error('createOrder not yet implemented for production Binance');
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        const timestamp = Date.now();
+        const binanceSymbol = this.convertSymbol(data.symbol);
+
+        // Build order parameters
+        const params = new URLSearchParams({
+            symbol: binanceSymbol,
+            side: data.side.toUpperCase(),
+            type: data.type.toUpperCase(),
+            quantity: data.quantity.toString(),
+            timestamp: timestamp.toString(),
+        });
+
+        // Add price for limit orders
+        if (data.type === 'limit' && data.price !== undefined) {
+            params.append('price', data.price.toString());
+            params.append('timeInForce', data.timeInForce || 'GTC');
+        }
+
+        // Add stop price for stop orders
+        if ((data.type === 'stop' || data.type === 'stop_limit') && data.stopPrice !== undefined) {
+            params.append('stopPrice', data.stopPrice.toString());
+        }
+
+        const queryString = params.toString();
+        const signature = await this.sign(queryString);
+        const url = `${this.baseUrl}/order?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const orderResponse: BinanceOrderResponse = await response.json();
+        return this.mapBinanceOrderToOrder(orderResponse);
+    }
+
+    /**
+     * Map Binance order response to Order domain model
+     */
+    private mapBinanceOrderToOrder(data: BinanceOrderResponse): Order {
+        const statusMap: Record<BinanceOrderResponse['status'], Order['status']> = {
+            'NEW': 'pending',
+            'PARTIALLY_FILLED': 'partially_filled',
+            'FILLED': 'filled',
+            'CANCELED': 'cancelled',
+            'REJECTED': 'rejected',
+            'EXPIRED': 'cancelled',
+        };
+
+        const typeMap: Record<string, Order['type']> = {
+            'MARKET': 'market',
+            'LIMIT': 'limit',
+            'STOP_LOSS': 'stop',
+            'STOP_LOSS_LIMIT': 'stop_limit',
+            'TAKE_PROFIT': 'stop',
+            'TAKE_PROFIT_LIMIT': 'stop_limit',
+        };
+
+        const now = new Date(data.transactTime);
+
+        const price = Number.parseFloat(data.price);
+
+        return {
+            id: data.orderId.toString(),
+            symbol: data.symbol,
+            side: data.side.toLowerCase() as 'buy' | 'sell',
+            type: typeMap[data.type] ?? 'limit',
+            quantity: Number.parseFloat(data.origQty),
+            price: price > 0 ? price : undefined,
+            status: statusMap[data.status],
+            filledQuantity: Number.parseFloat(data.executedQty),
+            createdAt: now,
+            updatedAt: now,
+        };
     }
 
     /**
@@ -439,5 +598,229 @@ export class BinanceClient implements IExchangeClient {
         const signature = await crypto.subtle.sign('HMAC', cryptoKey, message);
         const hashArray = Array.from(new Uint8Array(signature));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    /**
+     * Check if user data stream is supported
+     */
+    supportsUserDataStream(): boolean {
+        return this.isAuthenticated();
+    }
+
+    /**
+     * Subscribe to user data stream events
+     * @param callback - Function called when events are received
+     * @returns Unsubscribe function
+     */
+    async subscribeToUserData(callback: UserDataEventCallback): Promise<() => void> {
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required for user data stream');
+        }
+
+        this.userDataCallbacks.add(callback);
+
+        // Start WebSocket connection if not already connected
+        if (!this.userDataWs) {
+            await this.startUserDataStream();
+        }
+
+        // Return unsubscribe function
+        return () => {
+            this.userDataCallbacks.delete(callback);
+            // Close WebSocket if no more subscribers
+            if (this.userDataCallbacks.size === 0) {
+                this.stopUserDataStream();
+            }
+        };
+    }
+
+    /**
+     * Start the user data stream WebSocket connection
+     */
+    private async startUserDataStream(): Promise<void> {
+        // Get listen key from Binance
+        this.listenKey = await this.createListenKey();
+
+        // Connect to WebSocket
+        const wsUrl = `${this.wsBaseUrl}/${this.listenKey}`;
+        this.userDataWs = new WebSocket(wsUrl);
+
+        this.userDataWs.on('open', () => {
+            console.log('[BinanceClient] User data stream connected');
+        });
+
+        this.userDataWs.on('message', (data: Buffer) => {
+            try {
+                const message = JSON.parse(data.toString());
+                const event = this.mapBinanceEventToUserDataEvent(message);
+                if (event) {
+                    for (const callback of this.userDataCallbacks) {
+                        callback(event);
+                    }
+                }
+            } catch (error) {
+                console.error('[BinanceClient] Failed to parse WebSocket message:', error);
+            }
+        });
+
+        this.userDataWs.on('error', (error) => {
+            console.error('[BinanceClient] WebSocket error:', error);
+        });
+
+        this.userDataWs.on('close', () => {
+            console.log('[BinanceClient] User data stream disconnected');
+            this.userDataWs = null;
+            // Attempt to reconnect if there are still subscribers
+            if (this.userDataCallbacks.size > 0) {
+                setTimeout(() => this.startUserDataStream(), 5000);
+            }
+        });
+
+        // Refresh listen key every 30 minutes (expires after 60 minutes)
+        this.listenKeyRefreshInterval = setInterval(async () => {
+            try {
+                await this.refreshListenKey();
+            } catch (error) {
+                console.error('[BinanceClient] Failed to refresh listen key:', error);
+            }
+        }, 30 * 60 * 1000);
+    }
+
+    /**
+     * Stop the user data stream
+     */
+    private stopUserDataStream(): void {
+        if (this.listenKeyRefreshInterval) {
+            clearInterval(this.listenKeyRefreshInterval);
+            this.listenKeyRefreshInterval = null;
+        }
+
+        if (this.userDataWs) {
+            this.userDataWs.close();
+            this.userDataWs = null;
+        }
+
+        if (this.listenKey) {
+            this.deleteListenKey().catch(console.error);
+            this.listenKey = null;
+        }
+    }
+
+    /**
+     * Create a listen key for user data stream
+     */
+    private async createListenKey(): Promise<string> {
+        const url = `${this.baseUrl}/userDataStream`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Failed to create listen key: ${errorData.msg || response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.listenKey;
+    }
+
+    /**
+     * Refresh the listen key to keep it alive
+     */
+    private async refreshListenKey(): Promise<void> {
+        if (!this.listenKey) return;
+
+        const url = `${this.baseUrl}/userDataStream?listenKey=${this.listenKey}`;
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Failed to refresh listen key: ${errorData.msg || response.statusText}`);
+        }
+
+        console.log('[BinanceClient] Listen key refreshed');
+    }
+
+    /**
+     * Delete the listen key when done
+     */
+    private async deleteListenKey(): Promise<void> {
+        if (!this.listenKey) return;
+
+        const url = `${this.baseUrl}/userDataStream?listenKey=${this.listenKey}`;
+
+        await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+    }
+
+    /**
+     * Map Binance WebSocket event to domain UserDataEvent
+     */
+    private mapBinanceEventToUserDataEvent(message: BinanceExecutionReport | BinanceBalanceUpdate): UserDataEvent | null {
+        if (message.e === 'executionReport') {
+            const report = message;
+            const statusMap: Record<BinanceExecutionReport['X'], Order['status']> = {
+                'NEW': 'pending',
+                'PARTIALLY_FILLED': 'partially_filled',
+                'FILLED': 'filled',
+                'CANCELED': 'cancelled',
+                'REJECTED': 'rejected',
+                'EXPIRED': 'cancelled',
+            };
+
+            const typeMap: Record<string, Order['type']> = {
+                'MARKET': 'market',
+                'LIMIT': 'limit',
+                'STOP_LOSS': 'stop',
+                'STOP_LOSS_LIMIT': 'stop_limit',
+                'TAKE_PROFIT': 'stop',
+                'TAKE_PROFIT_LIMIT': 'stop_limit',
+            };
+
+            const price = Number.parseFloat(report.p);
+
+            return {
+                eventType: 'ORDER_UPDATE',
+                eventTime: report.E,
+                order: {
+                    id: report.i.toString(),
+                    symbol: report.s,
+                    side: report.S.toLowerCase() as 'buy' | 'sell',
+                    type: typeMap[report.o] ?? 'limit',
+                    quantity: Number.parseFloat(report.q),
+                    price: price > 0 ? price : undefined,
+                    status: statusMap[report.X],
+                    filledQuantity: Number.parseFloat(report.z),
+                    createdAt: new Date(report.O),
+                    updatedAt: new Date(report.T),
+                },
+            };
+        }
+
+        if (message.e === 'balanceUpdate') {
+            const update = message;
+            return {
+                eventType: 'BALANCE_UPDATE',
+                eventTime: update.E,
+                asset: update.a,
+                balanceDelta: Number.parseFloat(update.d),
+            };
+        }
+
+        return null;
     }
 }

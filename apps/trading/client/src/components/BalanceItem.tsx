@@ -8,16 +8,22 @@ export interface BalanceItemProps {
   asset: string
   subtitle: ReactNode
   usdValue: number | null
+  lockedAmount?: number
   isPricesLoading?: boolean
   valueColorClass?: string
+  isSelected?: boolean
+  onClick?: (asset: string) => void
 }
 
 export function BalanceItem({
   asset,
   subtitle,
   usdValue,
+  lockedAmount,
   isPricesLoading = false,
   valueColorClass = 'text-primary',
+  isSelected = false,
+  onClick,
 }: Readonly<BalanceItemProps>) {
   const renderUsdValue = () => {
     if (usdValue !== null) {
@@ -29,15 +35,33 @@ export function BalanceItem({
     return '—'
   }
 
+  const handleClick = () => {
+    onClick?.(asset)
+  }
+
   return (
-    <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`w-full flex items-center justify-between p-2 rounded-lg transition-all text-left ${isSelected
+          ? 'bg-primary/20 border-l-4 border-primary'
+          : 'bg-muted hover:bg-muted/80 cursor-pointer'
+        }`}
+    >
       <div>
         <div className="font-bold text-sm">{asset}</div>
         <div className="text-xs text-muted-foreground">{subtitle}</div>
       </div>
-      <div className={`font-bold text-sm ${valueColorClass}`}>
-        {renderUsdValue()}
+      <div className="text-right">
+        <div className={`font-bold text-sm ${valueColorClass}`}>
+          {renderUsdValue()}
+        </div>
+        {lockedAmount !== undefined && lockedAmount > 0 && (
+          <div className="text-xs text-yellow-500">
+            {lockedAmount.toFixed(2)} locked
+          </div>
+        )}
       </div>
-    </div>
+    </button>
   )
 }

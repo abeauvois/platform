@@ -22,7 +22,7 @@ export function PortfolioSummaryCard({
 
   return (
     <TradingCard
-      title="Portfolio Value"
+      title="Portfolio Summary"
       icon={<DollarSign className="w-5 h-5" />}
       iconColor="text-primary"
     >
@@ -48,7 +48,7 @@ export function PortfolioSummaryCard({
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-muted rounded-lg p-2">
               <div className="text-xs flex items-center gap-1 text-muted-foreground">
-                <Wallet className="w-3 h-3" />
+                <Scale className="w-3 h-3" />
                 Spot
               </div>
               <div className="text-sm font-bold text-secondary mt-1">

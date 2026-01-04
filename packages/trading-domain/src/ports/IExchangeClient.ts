@@ -3,7 +3,7 @@
  * Interface for fetching market data from cryptocurrency exchanges
  */
 
-import type { MarketTicker, AccountBalance, MarginBalance, Candlestick, Order, CreateOrderData, SymbolPrice } from '../types.js';
+import type { MarketTicker, AccountBalance, MarginBalance, Candlestick, Order, CreateOrderData, SymbolPrice, UserDataEventCallback } from '../types.js';
 
 /**
  * Exchange client interface for fetching market data
@@ -83,4 +83,16 @@ export interface IExchangeClient {
      * @returns void (throws error if cancellation fails)
      */
     cancelOrder(orderId: string, symbol: string): Promise<void>;
+
+    /**
+     * Subscribe to user data stream events (order updates, balance changes)
+     * @param callback - Function called when events are received
+     * @returns Unsubscribe function to stop receiving events
+     */
+    subscribeToUserData(callback: UserDataEventCallback): Promise<() => void>;
+
+    /**
+     * Check if user data stream is supported by this client
+     */
+    supportsUserDataStream(): boolean;
 }

@@ -1,4 +1,4 @@
-import { Wallet } from 'lucide-react'
+import { Scale } from 'lucide-react'
 
 import {
   MIN_USD_VALUE_FILTER,
@@ -18,6 +18,8 @@ export interface SpotBalancesCardProps {
   isPricesLoading: boolean
   error: Error | null
   refetch: () => void
+  selectedAsset?: string
+  onAssetSelect?: (asset: string) => void
 }
 
 export function SpotBalancesCard({
@@ -27,12 +29,15 @@ export function SpotBalancesCard({
   isPricesLoading,
   error,
   refetch,
+  selectedAsset,
+  onAssetSelect,
 }: Readonly<SpotBalancesCardProps>) {
   // Filter and sort balances by USD value
   const filteredBalances = balances
     .map(balance => ({
       ...balance,
       usdValue: getUsdValue(balance.asset, balance.total, prices),
+      lockedAmount: balance.locked,
     }))
     .filter(b => b.usdValue !== null && b.usdValue > MIN_USD_VALUE_FILTER)
     .sort((a, b) => (b.usdValue ?? 0) - (a.usdValue ?? 0))
@@ -40,7 +45,7 @@ export function SpotBalancesCard({
   return (
     <TradingCard
       title="Spot Balance"
-      icon={<Wallet className="w-5 h-5" />}
+      icon={<Scale className="w-5 h-5" />}
       iconColor="text-secondary"
       isLoading={isLoading}
       error={error}
@@ -62,7 +67,10 @@ export function SpotBalancesCard({
                 asset={balance.asset}
                 subtitle={formatBalance(balance.total)}
                 usdValue={balance.usdValue}
+                lockedAmount={balance.lockedAmount}
                 isPricesLoading={isPricesLoading}
+                isSelected={selectedAsset === balance.asset}
+                onClick={onAssetSelect}
               />
             ))
           )}

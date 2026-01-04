@@ -73,6 +73,25 @@ interface BinanceAccountResponse {
 }
 
 /**
+ * Binance order response type
+ */
+interface BinanceOrderResponse {
+    symbol: string;
+    orderId: number;
+    orderListId: number;
+    clientOrderId: string;
+    transactTime: number;
+    price: string;
+    origQty: string;
+    executedQty: string;
+    cummulativeQuoteQty: string;
+    status: 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'EXPIRED';
+    timeInForce: string;
+    type: string;
+    side: 'BUY' | 'SELL';
+}
+
+/**
  * Configuration options for BinanceTestnetClient
  */
 export interface BinanceClientConfig {
@@ -289,8 +308,86 @@ export class BinanceTestnetClient implements IExchangeClient {
             throw new Error('Authentication required: API key and secret must be provided');
         }
 
-        // TODO: Implement in next phase
-        throw new Error('createOrder not yet implemented');
+        const timestamp = Date.now();
+        const binanceSymbol = this.convertSymbol(data.symbol);
+
+        // Build order parameters
+        const params = new URLSearchParams({
+            symbol: binanceSymbol,
+            side: data.side.toUpperCase(),
+            type: data.type.toUpperCase(),
+            quantity: data.quantity.toString(),
+            timestamp: timestamp.toString(),
+        });
+
+        // Add price for limit orders
+        if (data.type === 'limit' && data.price !== undefined) {
+            params.append('price', data.price.toString());
+            params.append('timeInForce', data.timeInForce || 'GTC');
+        }
+
+        // Add stop price for stop orders
+        if ((data.type === 'stop' || data.type === 'stop_limit') && data.stopPrice !== undefined) {
+            params.append('stopPrice', data.stopPrice.toString());
+        }
+
+        const queryString = params.toString();
+        const signature = await this.sign(queryString);
+        const url = `${this.baseUrl}/order?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const orderResponse: BinanceOrderResponse = await response.json();
+        return this.mapBinanceOrderToOrder(orderResponse);
+    }
+
+    /**
+     * Map Binance order response to Order domain model
+     */
+    private mapBinanceOrderToOrder(data: BinanceOrderResponse): Order {
+        const statusMap: Record<BinanceOrderResponse['status'], Order['status']> = {
+            'NEW': 'pending',
+            'PARTIALLY_FILLED': 'partially_filled',
+            'FILLED': 'filled',
+            'CANCELED': 'cancelled',
+            'REJECTED': 'rejected',
+            'EXPIRED': 'cancelled',
+        };
+
+        const typeMap: Record<string, Order['type']> = {
+            'MARKET': 'market',
+            'LIMIT': 'limit',
+            'STOP_LOSS': 'stop',
+            'STOP_LOSS_LIMIT': 'stop_limit',
+            'TAKE_PROFIT': 'stop',
+            'TAKE_PROFIT_LIMIT': 'stop_limit',
+        };
+
+        const now = new Date(data.transactTime);
+        const price = Number.parseFloat(data.price);
+
+        return {
+            id: data.orderId.toString(),
+            symbol: data.symbol,
+            side: data.side.toLowerCase() as 'buy' | 'sell',
+            type: typeMap[data.type] ?? 'limit',
+            quantity: Number.parseFloat(data.origQty),
+            price: price > 0 ? price : undefined,
+            status: statusMap[data.status],
+            filledQuantity: Number.parseFloat(data.executedQty),
+            createdAt: now,
+            updatedAt: now,
+        };
     }
 
     /**
