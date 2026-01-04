@@ -82,12 +82,13 @@ export interface MarketTicker {
 }
 
 /**
- * Simple symbol price (from lightweight /ticker/price endpoint)
- * Used for batch price lookups where only the current price is needed
+ * Symbol price with optional 24h change data (from /ticker/24hr endpoint)
+ * Used for batch price lookups with daily variation
  */
 export interface SymbolPrice {
     symbol: string;
     price: number;
+    priceChangePercent24h?: number;
 }
 
 /**

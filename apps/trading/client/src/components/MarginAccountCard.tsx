@@ -3,6 +3,7 @@ import { Scale } from 'lucide-react'
 import {
   type MarginBalance,
   formatBalance,
+  getTradableSymbol,
   getUsdValue,
 } from '../utils/balance'
 import { BalanceItem } from './BalanceItem'
@@ -11,6 +12,7 @@ import { TradingCard, TradingCardLoader } from './TradingCard'
 export interface MarginAccountCardProps {
   balances: MarginBalance[]
   prices: Map<string, number>
+  priceChanges: Map<string, number>
   exchange: string | null
   count: number
   isLoading: boolean
@@ -22,6 +24,7 @@ export interface MarginAccountCardProps {
 export function MarginAccountCard({
   balances,
   prices,
+  priceChanges,
   count,
   isLoading,
   isPricesLoading,
@@ -49,6 +52,8 @@ export function MarginAccountCard({
           ) : (
             balances.map(balance => {
               const usdValue = getUsdValue(balance.asset, balance.netAsset, prices)
+              const tradableSymbol = getTradableSymbol(balance.asset)
+              const priceChangePercent = priceChanges.get(`${tradableSymbol}USDT`)
               const valueColorClass = usdValue !== null && usdValue >= 0 ? 'text-primary' : 'text-destructive'
               return (
                 <BalanceItem
@@ -65,6 +70,7 @@ export function MarginAccountCard({
                     </>
                   }
                   usdValue={usdValue}
+                  priceChangePercent={priceChangePercent}
                   isPricesLoading={isPricesLoading}
                   valueColorClass={valueColorClass}
                 />

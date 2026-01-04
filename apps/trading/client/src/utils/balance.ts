@@ -30,6 +30,7 @@ export interface MarginBalanceResponse {
 export interface SymbolPrice {
   symbol: string
   price: number
+  priceChangePercent24h?: number
 }
 
 // Constants

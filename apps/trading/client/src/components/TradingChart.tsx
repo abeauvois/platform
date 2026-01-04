@@ -37,11 +37,12 @@ interface TradingChartProps {
     limit?: number
     orders?: Array<OrderLine>
     currentPrice?: number
+    lastUpdate?: number
 }
 
 export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
     function TradingChart(
-        { symbol = 'BTCUSDT', interval = '1h', limit = 100, orders = [], currentPrice = 0 },
+        { symbol = 'BTCUSDT', interval = '1h', limit = 100, orders = [], currentPrice = 0, lastUpdate },
         ref
     ) {
         const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -216,6 +217,12 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 priceLinesRef.current.set(order.id, priceLine)
             }
         }, [orders, symbol])
+
+        // Sync chart data with lastUpdate timestamp from useTradingData
+        useEffect(() => {
+            if (!lastUpdate || !candlestickSeriesRef.current) return
+            fetchAndDisplayKlines()
+        }, [lastUpdate])
 
         async function fetchAndDisplayKlines() {
             try {

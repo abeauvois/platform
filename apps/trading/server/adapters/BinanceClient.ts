@@ -25,14 +25,6 @@ interface BinanceTickerResponse {
 }
 
 /**
- * Binance API response type for price ticker (/ticker/price)
- */
-interface BinancePriceResponse {
-    symbol: string;
-    price: string;
-}
-
-/**
  * Binance API response type for klines/candlesticks
  * Format: [openTime, open, high, low, close, volume, closeTime, ...]
  */
@@ -223,9 +215,9 @@ export class BinanceClient implements IExchangeClient {
 
     /**
      * Get prices for multiple trading pairs in a single request (public endpoint)
-     * Uses lightweight /ticker/price endpoint
+     * Uses /ticker/24hr endpoint to include 24h price change data
      * @param symbols - Array of trading pair symbols (e.g., ['BTCUSDT', 'BTC/USD'])
-     * @returns Array of symbol prices
+     * @returns Array of symbol prices with 24h change percent
      */
     async getTickers(symbols: Array<string>): Promise<Array<SymbolPrice>> {
         if (symbols.length === 0) {
@@ -234,7 +226,7 @@ export class BinanceClient implements IExchangeClient {
 
         const binanceSymbols = symbols.map(s => this.convertSymbol(s));
         const symbolsParam = JSON.stringify(binanceSymbols);
-        const url = `${this.baseUrl}/ticker/price?symbols=${encodeURIComponent(symbolsParam)}`;
+        const url = `${this.baseUrl}/ticker/24hr?symbols=${encodeURIComponent(symbolsParam)}`;
 
         const response = await fetch(url, {
             method: 'GET',
@@ -245,13 +237,14 @@ export class BinanceClient implements IExchangeClient {
             const results: Array<SymbolPrice> = [];
             for (const symbol of binanceSymbols) {
                 try {
-                    const singleUrl = `${this.baseUrl}/ticker/price?symbol=${symbol}`;
+                    const singleUrl = `${this.baseUrl}/ticker/24hr?symbol=${symbol}`;
                     const singleResponse = await fetch(singleUrl, { method: 'GET' });
                     if (singleResponse.ok) {
-                        const data: BinancePriceResponse = await singleResponse.json();
+                        const data: BinanceTickerResponse = await singleResponse.json();
                         results.push({
                             symbol: data.symbol,
-                            price: Number.parseFloat(data.price),
+                            price: Number.parseFloat(data.lastPrice),
+                            priceChangePercent24h: Number.parseFloat(data.priceChangePercent),
                         });
                     }
                     // Skip invalid symbols silently
@@ -262,11 +255,12 @@ export class BinanceClient implements IExchangeClient {
             return results;
         }
 
-        const data: Array<BinancePriceResponse> = await response.json();
+        const data: Array<BinanceTickerResponse> = await response.json();
 
         return data.map(d => ({
             symbol: d.symbol,
-            price: Number.parseFloat(d.price),
+            price: Number.parseFloat(d.lastPrice),
+            priceChangePercent24h: Number.parseFloat(d.priceChangePercent),
         }));
     }
 

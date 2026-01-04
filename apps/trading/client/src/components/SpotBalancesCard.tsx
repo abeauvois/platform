@@ -3,6 +3,7 @@ import { Scale } from 'lucide-react'
 import {
   MIN_USD_VALUE_FILTER,
   formatBalance,
+  getTradableSymbol,
   getUsdValue,
 } from '../utils/balance'
 import { BalanceItem } from './BalanceItem'
@@ -13,6 +14,7 @@ import type { Balance } from '../utils/balance'
 export interface SpotBalancesCardProps {
   balances: Array<Balance>
   prices: Map<string, number>
+  priceChanges: Map<string, number>
   exchange: string | null
   isLoading: boolean
   isPricesLoading: boolean
@@ -25,6 +27,7 @@ export interface SpotBalancesCardProps {
 export function SpotBalancesCard({
   balances,
   prices,
+  priceChanges,
   isLoading,
   isPricesLoading,
   error,
@@ -34,11 +37,15 @@ export function SpotBalancesCard({
 }: Readonly<SpotBalancesCardProps>) {
   // Filter and sort balances by USD value
   const filteredBalances = balances
-    .map(balance => ({
-      ...balance,
-      usdValue: getUsdValue(balance.asset, balance.total, prices),
-      lockedAmount: balance.locked,
-    }))
+    .map(balance => {
+      const tradableSymbol = getTradableSymbol(balance.asset)
+      return {
+        ...balance,
+        usdValue: getUsdValue(balance.asset, balance.total, prices),
+        lockedAmount: balance.locked,
+        priceChangePercent: priceChanges.get(`${tradableSymbol}USDT`),
+      }
+    })
     .filter(b => b.usdValue !== null && b.usdValue > MIN_USD_VALUE_FILTER)
     .sort((a, b) => (b.usdValue ?? 0) - (a.usdValue ?? 0))
 
@@ -67,6 +74,7 @@ export function SpotBalancesCard({
                 asset={balance.asset}
                 subtitle={formatBalance(balance.total)}
                 usdValue={balance.usdValue}
+                priceChangePercent={balance.priceChangePercent}
                 lockedAmount={balance.lockedAmount}
                 isPricesLoading={isPricesLoading}
                 isSelected={selectedAsset === balance.asset}

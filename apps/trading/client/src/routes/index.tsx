@@ -9,9 +9,9 @@ import { OrdersTable } from '../components/OrdersTable'
 import { PortfolioSummaryCard } from '../components/PortfolioSummaryCard'
 import { SpotBalancesCard } from '../components/SpotBalancesCard'
 import { TradingChart } from '../components/TradingChart'
-import { useMarginBalances, useSpotBalances } from '../hooks/useBalances'
 import { useCreateOrder } from '../hooks/useCreateOrder'
 import { useOrderUpdates } from '../hooks/useOrderUpdates'
+import { useTradingData } from '../hooks/useTradingData'
 
 import type { DragEndEvent, DragMoveEvent } from '@dnd-kit/core'
 import type { OrderUpdateEvent } from '../hooks/useOrderUpdates'
@@ -32,8 +32,7 @@ const normalizeAsset = (asset: string): string => {
 }
 
 function HomePage() {
-  const spot = useSpotBalances()
-  const margin = useMarginBalances()
+  const tradingData = useTradingData()
   const createOrder = useCreateOrder()
   const chartRef = useRef<TradingChartHandle>(null)
 
@@ -47,39 +46,55 @@ function HomePage() {
   const tradingSymbol = `${baseAsset}${quoteAsset}`
 
   // State for order placement
-  const [orderAmount, setOrderAmount] = useState(0)
+  const [buyAmount, setBuyAmount] = useState(0)
+  const [sellAmount, setSellAmount] = useState(0)
   const [placedOrders, setPlacedOrders] = useState<Array<PlacedOrder>>([])
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [currentPrice, setCurrentPrice] = useState(0)
 
   // Get balances for the trading pair
   // Use 'free' balance (available to trade, not locked in orders)
-  const spotBaseData = spot.balances.find(b => normalizeAsset(b.asset) === baseAsset)
-  const marginBaseData = margin.balances.find(b => normalizeAsset(b.asset) === baseAsset)
+  const spotBaseData = tradingData.spotBalances.find(b => normalizeAsset(b.asset) === baseAsset)
+  const marginBaseData = tradingData.marginBalances.find(b => normalizeAsset(b.asset) === baseAsset)
   const baseBalance = Math.max(spotBaseData?.free ?? 0, marginBaseData?.free ?? 0)
   const baseLockedBalance = (spotBaseData?.locked ?? 0) + (marginBaseData?.locked ?? 0)
 
-  const spotQuoteData = spot.balances.find(b => normalizeAsset(b.asset) === quoteAsset)
-  const marginQuoteData = margin.balances.find(b => normalizeAsset(b.asset) === quoteAsset)
+  const spotQuoteData = tradingData.spotBalances.find(b => normalizeAsset(b.asset) === quoteAsset)
+  const marginQuoteData = tradingData.marginBalances.find(b => normalizeAsset(b.asset) === quoteAsset)
   const quoteBalance = Math.max(spotQuoteData?.free ?? 0, marginQuoteData?.free ?? 0)
   const quoteLockedBalance = (spotQuoteData?.locked ?? 0) + (marginQuoteData?.locked ?? 0)
 
   // Get current price from prices map
+  // Note: prices are stored with USDT suffix (e.g., BTCUSDT) from Binance API
   useEffect(() => {
-    const price = spot.prices.get(tradingSymbol)
+    const priceKey = `${baseAsset}USDT`
+    const price = tradingData.prices.get(priceKey)
     if (price) {
       setCurrentPrice(price)
     }
-  }, [spot.prices, tradingSymbol])
+  }, [tradingData.prices, baseAsset])
 
-  // Reset order amount when asset changes (set to 25% of available balance)
+  // Calculate default amounts when asset or price changes
+  // Default = min($500 worth / price, 25% of available balance)
+  const MAX_ORDER_VALUE_USD = 500
+
   useEffect(() => {
-    if (baseBalance > 0) {
-      setOrderAmount(baseBalance * 0.25)
+    if (currentPrice > 0) {
+      // For BUY: use quote balance (USDC) to calculate max buy amount
+      const maxBuyByValue = MAX_ORDER_VALUE_USD / currentPrice
+      const maxBuyByBalance = quoteBalance / currentPrice
+      const defaultBuy = Math.min(maxBuyByValue, maxBuyByBalance * 0.25)
+      setBuyAmount(defaultBuy > 0 ? Math.floor(defaultBuy * 10000) / 10000 : 0)
+
+      // For SELL: use base balance to calculate max sell amount
+      const maxSellByValue = MAX_ORDER_VALUE_USD / currentPrice
+      const defaultSell = Math.min(maxSellByValue, baseBalance * 0.25)
+      setSellAmount(defaultSell > 0 ? Math.floor(defaultSell * 10000) / 10000 : 0)
     } else {
-      setOrderAmount(0)
+      setBuyAmount(0)
+      setSellAmount(0)
     }
-  }, [baseAsset, baseBalance])
+  }, [baseAsset, baseBalance, quoteBalance, currentPrice])
 
   // Handle asset selection from balance list
   const handleAssetSelect = useCallback((asset: string) => {
@@ -184,6 +199,7 @@ function HomePage() {
     }
 
     const price = roundToPrecision(rawPrice, getPricePrecision(rawPrice))
+    const orderAmount = side === 'buy' ? buyAmount : sellAmount
     const quantity = roundToPrecision(orderAmount, getQuantityPrecision(rawPrice))
 
     // Validate order amount
@@ -257,7 +273,7 @@ function HomePage() {
         },
       }
     )
-  }, [orderAmount, createOrder, tradingSymbol, quoteBalance, baseBalance, baseAsset, quoteAsset])
+  }, [buyAmount, sellAmount, createOrder, tradingSymbol, quoteBalance, baseBalance, baseAsset, quoteAsset])
 
   // Handle order cancellation (placeholder - API not yet implemented)
   const handleCancelOrder = useCallback((orderId: string) => {
@@ -305,10 +321,9 @@ function HomePage() {
 
     // Refresh balances when order is filled
     if (order.status === 'filled' || order.status === 'partially_filled') {
-      spot.refetch()
-      margin.refetch()
+      tradingData.refetch()
     }
-  }, [spot, margin])
+  }, [tradingData])
 
   // Subscribe to real-time order updates
   useOrderUpdates(handleOrderUpdate)
@@ -325,36 +340,38 @@ function HomePage() {
         <div className="w-80 flex flex-col gap-3">
           {/* Portfolio Value - fixed height */}
           <PortfolioSummaryCard
-            spotValue={spot.totalValue}
-            marginValue={margin.totalValue}
-            spotCount={spot.count}
-            marginCount={margin.count}
-            isLoading={spot.isPricesLoading || margin.isPricesLoading}
+            spotValue={tradingData.spotTotalValue}
+            marginValue={tradingData.marginTotalValue}
+            spotCount={tradingData.spotCount}
+            marginCount={tradingData.marginCount}
+            isLoading={tradingData.isPricesLoading}
           />
 
           {/* Spot Balances - scrollable */}
           <SpotBalancesCard
-            balances={spot.balances}
-            prices={spot.prices}
-            exchange={spot.exchange}
-            isLoading={spot.isLoading}
-            isPricesLoading={spot.isPricesLoading}
-            error={spot.error}
-            refetch={spot.refetch}
+            balances={tradingData.spotBalances}
+            prices={tradingData.prices}
+            priceChanges={tradingData.priceChanges}
+            exchange={tradingData.spotExchange}
+            isLoading={tradingData.isBalancesLoading}
+            isPricesLoading={tradingData.isPricesLoading}
+            error={tradingData.spotError}
+            refetch={tradingData.refetch}
             selectedAsset={selectedAsset}
             onAssetSelect={handleAssetSelect}
           />
 
           {/* Margin Balances - scrollable */}
           <MarginAccountCard
-            balances={margin.balances}
-            prices={margin.prices}
-            exchange={margin.exchange}
-            count={margin.count}
-            isLoading={margin.isLoading}
-            isPricesLoading={margin.isPricesLoading}
-            error={margin.error}
-            refetch={margin.refetch}
+            balances={tradingData.marginBalances}
+            prices={tradingData.prices}
+            priceChanges={tradingData.priceChanges}
+            exchange={tradingData.marginExchange}
+            count={tradingData.marginCount}
+            isLoading={tradingData.isBalancesLoading}
+            isPricesLoading={tradingData.isPricesLoading}
+            error={tradingData.marginError}
+            refetch={tradingData.refetch}
           />
         </div>
 
@@ -366,6 +383,7 @@ function HomePage() {
             interval="1h"
             limit={100}
             currentPrice={currentPrice}
+            lastUpdate={tradingData.lastUpdate}
             orders={placedOrders
               .filter(o => o.symbol === tradingSymbol && (o.status === 'pending' || o.status === 'partially_filled'))
               .map(o => ({ id: o.id, side: o.side, price: o.price }))
@@ -380,8 +398,10 @@ function HomePage() {
             availableBase={baseBalance}
             availableQuote={quoteBalance}
             currentPrice={currentPrice}
-            amount={orderAmount}
-            onAmountChange={setOrderAmount}
+            buyAmount={buyAmount}
+            sellAmount={sellAmount}
+            onBuyAmountChange={setBuyAmount}
+            onSellAmountChange={setSellAmount}
           />
 
           {/* Orders Table */}

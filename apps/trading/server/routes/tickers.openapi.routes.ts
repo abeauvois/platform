@@ -11,6 +11,7 @@ import type { IExchangeClient } from '@platform/trading-domain';
 const SymbolPriceSchema = z.object({
     symbol: z.string().openapi({ example: 'BTCUSDT', description: 'Trading pair symbol' }),
     price: z.number().openapi({ example: 92000.50, description: 'Current price' }),
+    priceChangePercent24h: z.number().optional().openapi({ example: 2.35, description: '24-hour price change percentage' }),
 }).openapi('SymbolPrice');
 
 const ErrorSchema = z.object({

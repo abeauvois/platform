@@ -13,6 +13,7 @@ import {
 export interface UseSpotBalancesResult {
   balances: Balance[]
   prices: Map<string, number>
+  priceChanges: Map<string, number>
   totalValue: number
   exchange: string | null
   count: number
@@ -25,6 +26,7 @@ export interface UseSpotBalancesResult {
 export interface UseMarginBalancesResult {
   balances: MarginBalance[]
   prices: Map<string, number>
+  priceChanges: Map<string, number>
   totalValue: number
   exchange: string | null
   count: number
@@ -75,6 +77,18 @@ function buildPriceMap(prices: SymbolPrice[] | undefined): Map<string, number> {
   return map
 }
 
+function buildPriceChangeMap(prices: SymbolPrice[] | undefined): Map<string, number> {
+  const map = new Map<string, number>()
+  if (prices) {
+    for (const p of prices) {
+      if (p.priceChangePercent24h !== undefined) {
+        map.set(p.symbol, p.priceChangePercent24h)
+      }
+    }
+  }
+  return map
+}
+
 export function useSpotBalances(): UseSpotBalancesResult {
   const {
     data: balanceData,
@@ -96,6 +110,7 @@ export function useSpotBalances(): UseSpotBalancesResult {
   })
 
   const prices = buildPriceMap(pricesData)
+  const priceChanges = buildPriceChangeMap(pricesData)
 
   const totalValue = balanceData?.balances.reduce((sum, b) => {
     const usdValue = getUsdValue(b.asset, b.total, prices)
@@ -105,6 +120,7 @@ export function useSpotBalances(): UseSpotBalancesResult {
   return {
     balances: balanceData?.balances ?? [],
     prices,
+    priceChanges,
     totalValue,
     exchange: balanceData?.exchange ?? null,
     count: balanceData?.count ?? 0,
@@ -136,6 +152,7 @@ export function useMarginBalances(): UseMarginBalancesResult {
   })
 
   const prices = buildPriceMap(pricesData)
+  const priceChanges = buildPriceChangeMap(pricesData)
 
   const totalValue = marginData?.balances.reduce((sum, b) => {
     const usdValue = getUsdValue(b.asset, b.netAsset, prices)
@@ -145,6 +162,7 @@ export function useMarginBalances(): UseMarginBalancesResult {
   return {
     balances: marginData?.balances ?? [],
     prices,
+    priceChanges,
     totalValue,
     exchange: marginData?.exchange ?? null,
     count: marginData?.count ?? 0,

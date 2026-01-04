@@ -1,5 +1,5 @@
 import { Skeleton } from '@platform/ui'
-import { DollarSign, Scale, Wallet } from 'lucide-react'
+import { DollarSign, Scale } from 'lucide-react'
 import { formatPrice } from '../utils/balance'
 import { TradingCard, TradingCardLoader } from './TradingCard'
 
