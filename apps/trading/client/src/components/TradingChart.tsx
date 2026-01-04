@@ -20,6 +20,7 @@ export interface OrderLine {
     id: string
     side: 'buy' | 'sell'
     price: number
+    quantity: number
 }
 
 export interface TradingChartHandle {
@@ -81,13 +82,14 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                     candlestickSeriesRef.current.removePriceLine(existingLine)
                 }
 
+                const orderValue = order.price * order.quantity
                 const priceLine = candlestickSeriesRef.current.createPriceLine({
                     price: order.price,
                     color: order.side === 'buy' ? '#22c55e' : '#ef4444',
                     lineWidth: 2,
                     lineStyle: 2, // Dashed
                     axisLabelVisible: true,
-                    title: `${order.side.toUpperCase()} @ ${order.price.toFixed(2)}`,
+                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${order.price.toFixed(2)}`,
                 })
                 priceLinesRef.current.set(order.id, priceLine)
             },
@@ -206,13 +208,14 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
 
             // Redraw all pending/partially_filled orders
             for (const order of orders) {
+                const orderValue = order.price * order.quantity
                 const priceLine = candlestickSeriesRef.current.createPriceLine({
                     price: order.price,
                     color: order.side === 'buy' ? '#22c55e' : '#ef4444',
                     lineWidth: 2,
                     lineStyle: 2, // Dashed
                     axisLabelVisible: true,
-                    title: `${order.side.toUpperCase()} @ ${order.price.toFixed(2)}`,
+                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${order.price.toFixed(2)}`,
                 })
                 priceLinesRef.current.set(order.id, priceLine)
             }
