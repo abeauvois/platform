@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { onOrderCompleted } from '../lib/cache-utils'
+
 export interface CreateOrderRequest {
     symbol: string
     side: 'buy' | 'sell'
@@ -49,10 +51,8 @@ export function useCreateOrder() {
     return useMutation({
         mutationFn: createOrder,
         onSuccess: () => {
-            // Invalidate any order-related queries
-            queryClient.invalidateQueries({ queryKey: ['orders'] })
-            // Also refresh balances since an order affects available balance
-            queryClient.invalidateQueries({ queryKey: ['balances'] })
+            // Invalidate order and balance queries using centralized cache utils
+            onOrderCompleted(queryClient)
         },
     })
 }

@@ -121,7 +121,6 @@ function HomePage() {
             interval="1h"
             limit={100}
             currentPrice={currentPrice}
-            lastUpdate={tradingData.lastUpdate}
             orders={placedOrders
               .filter(
                 (o) =>

@@ -4,17 +4,10 @@ import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts'
 import { RefreshCw, TrendingUp } from 'lucide-react'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 
-import type { IChartApi, IPriceLine } from 'lightweight-charts'
+import { useKlines } from '../hooks/queries'
 
-interface Candlestick {
-    openTime: number
-    open: number
-    high: number
-    low: number
-    close: number
-    volume: number
-    closeTime: number
-}
+import type { IChartApi, IPriceLine } from 'lightweight-charts'
+import type { Candlestick } from '../lib/api'
 
 export interface OrderLine {
     id: string
@@ -38,12 +31,11 @@ interface TradingChartProps {
     limit?: number
     orders?: Array<OrderLine>
     currentPrice?: number
-    lastUpdate?: number
 }
 
 export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
     function TradingChart(
-        { symbol = 'BTCUSDT', interval = '1h', limit = 100, orders = [], currentPrice = 0, lastUpdate },
+        { symbol = 'BTCUSDT', interval = '1h', limit = 100, orders = [], currentPrice = 0 },
         ref
     ) {
         const chartContainerRef = useRef<HTMLDivElement>(null)
@@ -51,6 +43,13 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
         const candlestickSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null)
         const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map())
         const previewLineRef = useRef<IPriceLine | null>(null)
+
+        // Use TanStack Query for klines data
+        const { data: klinesData, refetch: refetchKlines } = useKlines({
+            symbol,
+            interval,
+            limit,
+        })
 
         const { setNodeRef, isOver } = useDroppable({
             id: 'trading-chart-drop-zone',
@@ -134,6 +133,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             },
         }), [currentPrice])
 
+        // Initialize chart
         useEffect(() => {
             if (!chartContainerRef.current) return
 
@@ -185,9 +185,6 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
 
             window.addEventListener('resize', handleResize)
 
-            // Fetch and display data
-            fetchAndDisplayKlines()
-
             // Cleanup
             return () => {
                 window.removeEventListener('resize', handleResize)
@@ -195,6 +192,25 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 chart.remove()
             }
         }, [symbol, interval, limit])
+
+        // Update chart when klines data changes
+        useEffect(() => {
+            if (!klinesData || !candlestickSeriesRef.current) return
+
+            // Transform data for Lightweight Charts
+            const chartData = klinesData.klines.map((k: Candlestick) => ({
+                time: Math.floor(k.openTime / 1000), // Convert to seconds
+                open: k.open,
+                high: k.high,
+                low: k.low,
+                close: k.close,
+            }))
+
+            candlestickSeriesRef.current.setData(chartData)
+
+            // Fit content to view
+            chartRef.current?.timeScale().fitContent()
+        }, [klinesData])
 
         // Redraw order lines when orders change or chart re-initializes
         useEffect(() => {
@@ -221,44 +237,8 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             }
         }, [orders, symbol])
 
-        // Sync chart data with lastUpdate timestamp from useTradingData
-        useEffect(() => {
-            if (!lastUpdate || !candlestickSeriesRef.current) return
-            fetchAndDisplayKlines()
-        }, [lastUpdate])
-
-        async function fetchAndDisplayKlines() {
-            try {
-                const response = await fetch(
-                    `/api/trading/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
-                )
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch klines')
-                }
-
-                const data = await response.json()
-
-                // Transform data for Lightweight Charts
-                const chartData = data.klines.map((k: Candlestick) => ({
-                    time: Math.floor(k.openTime / 1000), // Convert to seconds
-                    open: k.open,
-                    high: k.high,
-                    low: k.low,
-                    close: k.close,
-                }))
-
-                candlestickSeriesRef.current?.setData(chartData)
-
-                // Fit content to view
-                chartRef.current?.timeScale().fitContent()
-            } catch (error) {
-                console.error('Failed to fetch klines:', error)
-            }
-        }
-
         const handleRefresh = () => {
-            fetchAndDisplayKlines()
+            refetchKlines()
         }
 
         return (

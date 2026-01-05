@@ -1,19 +1,17 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
-import {
-  STABLECOINS,
-  getTradableSymbol,
-  getUsdValue
-} from '../utils/balance'
-import type { Balance, BalanceResponse, MarginBalance, MarginBalanceResponse, SymbolPrice } from '../utils/balance';
+import { useSpotBalances, useMarginBalances, usePrices } from './queries'
+import { invalidateAllTradingData } from '../lib/cache-utils'
+import { getUsdValue } from '../utils/balance'
+import type { Balance, MarginBalance, SymbolPrice } from '../utils/balance'
 
 /**
  * Unified trading data hook that synchronizes all data fetching
- * to ensure consistent display across all components
+ * to ensure consistent display across all components.
+ *
+ * Uses composable query hooks from ./queries for each data type.
  */
-
-const REFRESH_INTERVAL = 5000 // 5 seconds
 
 export interface TradingData {
   // Spot data
@@ -47,37 +45,6 @@ export interface TradingData {
   refetch: () => void
 }
 
-async function fetchSpotBalances(): Promise<BalanceResponse> {
-  const response = await fetch('/api/trading/balance')
-  if (!response.ok) {
-    throw new Error('Failed to fetch balances')
-  }
-  return response.json()
-}
-
-async function fetchMarginBalances(): Promise<MarginBalanceResponse> {
-  const response = await fetch('/api/trading/margin-balance')
-  if (!response.ok) {
-    throw new Error('Failed to fetch margin balances')
-  }
-  return response.json()
-}
-
-async function fetchPrices(assets: Array<string>): Promise<Array<SymbolPrice>> {
-  const symbols = assets
-    .map(getTradableSymbol)
-    .filter(tradable => !STABLECOINS.has(tradable))
-    .map(tradable => `${tradable}USDT`)
-
-  if (symbols.length === 0) return []
-
-  const response = await fetch(`/api/trading/tickers?symbols=${symbols.join(',')}`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch prices')
-  }
-  return response.json()
-}
-
 function buildPriceMap(prices: Array<SymbolPrice> | undefined): Map<string, number> {
   const map = new Map<string, number>()
   if (prices) {
@@ -102,49 +69,33 @@ function buildPriceChangeMap(prices: Array<SymbolPrice> | undefined): Map<string
 
 export function useTradingData(): TradingData {
   const queryClient = useQueryClient()
-  const [lastUpdate, setLastUpdate] = useState<number>(Date.now())
 
-  // Fetch spot balances
+  // Use individual query hooks
   const {
     data: spotData,
     isLoading: spotLoading,
     error: spotError,
-  } = useQuery<BalanceResponse>({
-    queryKey: ['balances'],
-    queryFn: fetchSpotBalances,
-    refetchInterval: REFRESH_INTERVAL,
-  })
+  } = useSpotBalances()
 
-  // Fetch margin balances
   const {
     data: marginData,
     isLoading: marginLoading,
     error: marginError,
-  } = useQuery<MarginBalanceResponse>({
-    queryKey: ['marginBalances'],
-    queryFn: fetchMarginBalances,
-    refetchInterval: REFRESH_INTERVAL,
-  })
+  } = useMarginBalances()
 
   // Combine all assets for price fetching
   const allAssets = useMemo(() => {
-    const spotAssets = spotData?.balances.map(b => b.asset) ?? []
-    const marginAssets = marginData?.balances.map(b => b.asset) ?? []
+    const spotAssets = spotData?.balances.map((b) => b.asset) ?? []
+    const marginAssets = marginData?.balances.map((b) => b.asset) ?? []
     return [...new Set([...spotAssets, ...marginAssets])]
   }, [spotData?.balances, marginData?.balances])
 
   // Fetch prices for all assets
-  const { data: pricesData, isLoading: pricesLoading } = useQuery<Array<SymbolPrice>>({
-    queryKey: ['allPrices', allAssets],
-    queryFn: async () => {
-      const prices = await fetchPrices(allAssets)
-      // Update the timestamp when prices are fetched
-      setLastUpdate(Date.now())
-      return prices
-    },
-    enabled: allAssets.length > 0,
-    refetchInterval: REFRESH_INTERVAL,
-  })
+  const {
+    data: pricesData,
+    isLoading: pricesLoading,
+    dataUpdatedAt,
+  } = usePrices(allAssets)
 
   // Build price maps
   const prices = useMemo(() => buildPriceMap(pricesData), [pricesData])
@@ -152,24 +103,26 @@ export function useTradingData(): TradingData {
 
   // Calculate totals
   const spotTotalValue = useMemo(() => {
-    return spotData?.balances.reduce((sum, b) => {
-      const usdValue = getUsdValue(b.asset, b.total, prices)
-      return sum + (usdValue ?? 0)
-    }, 0) ?? 0
+    return (
+      spotData?.balances.reduce((sum, b) => {
+        const usdValue = getUsdValue(b.asset, b.total, prices)
+        return sum + (usdValue ?? 0)
+      }, 0) ?? 0
+    )
   }, [spotData?.balances, prices])
 
   const marginTotalValue = useMemo(() => {
-    return marginData?.balances.reduce((sum, b) => {
-      const usdValue = getUsdValue(b.asset, b.netAsset, prices)
-      return sum + (usdValue ?? 0)
-    }, 0) ?? 0
+    return (
+      marginData?.balances.reduce((sum, b) => {
+        const usdValue = getUsdValue(b.asset, b.netAsset, prices)
+        return sum + (usdValue ?? 0)
+      }, 0) ?? 0
+    )
   }, [marginData?.balances, prices])
 
-  // Unified refetch function
+  // Unified refetch function using cache invalidation
   const refetch = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['balances'] })
-    queryClient.invalidateQueries({ queryKey: ['marginBalances'] })
-    queryClient.invalidateQueries({ queryKey: ['allPrices'] })
+    invalidateAllTradingData(queryClient)
   }, [queryClient])
 
   return {
@@ -194,11 +147,11 @@ export function useTradingData(): TradingData {
     isPricesLoading: pricesLoading,
 
     // Error states
-    spotError: spotError,
-    marginError: marginError,
+    spotError: spotError as Error | null,
+    marginError: marginError as Error | null,
 
-    // Sync info
-    lastUpdate,
+    // Sync info - use TanStack Query's dataUpdatedAt
+    lastUpdate: dataUpdatedAt,
 
     // Actions
     refetch,
