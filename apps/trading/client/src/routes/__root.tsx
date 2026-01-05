@@ -16,7 +16,7 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
     <TooltipProvider>
-      <main className="flex justify-between min-h-screen flex-col p-4">
+      <main className="flex justify-between min-h-screen flex-col px-4">
         <Header />
         <Outlet />
         <Footer />

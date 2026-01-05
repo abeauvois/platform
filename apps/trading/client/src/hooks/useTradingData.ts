@@ -2,15 +2,11 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
-  type Balance,
-  type BalanceResponse,
-  type MarginBalance,
-  type MarginBalanceResponse,
-  type SymbolPrice,
-  getTradableSymbol,
-  getUsdValue,
   STABLECOINS,
+  getTradableSymbol,
+  getUsdValue
 } from '../utils/balance'
+import type { Balance, BalanceResponse, MarginBalance, MarginBalanceResponse, SymbolPrice } from '../utils/balance';
 
 /**
  * Unified trading data hook that synchronizes all data fetching
@@ -21,13 +17,13 @@ const REFRESH_INTERVAL = 5000 // 5 seconds
 
 export interface TradingData {
   // Spot data
-  spotBalances: Balance[]
+  spotBalances: Array<Balance>
   spotTotalValue: number
   spotExchange: string | null
   spotCount: number
 
   // Margin data
-  marginBalances: MarginBalance[]
+  marginBalances: Array<MarginBalance>
   marginTotalValue: number
   marginExchange: string | null
   marginCount: number
@@ -67,7 +63,7 @@ async function fetchMarginBalances(): Promise<MarginBalanceResponse> {
   return response.json()
 }
 
-async function fetchPrices(assets: string[]): Promise<SymbolPrice[]> {
+async function fetchPrices(assets: Array<string>): Promise<Array<SymbolPrice>> {
   const symbols = assets
     .map(getTradableSymbol)
     .filter(tradable => !STABLECOINS.has(tradable))
@@ -82,7 +78,7 @@ async function fetchPrices(assets: string[]): Promise<SymbolPrice[]> {
   return response.json()
 }
 
-function buildPriceMap(prices: SymbolPrice[] | undefined): Map<string, number> {
+function buildPriceMap(prices: Array<SymbolPrice> | undefined): Map<string, number> {
   const map = new Map<string, number>()
   if (prices) {
     for (const p of prices) {
@@ -92,7 +88,7 @@ function buildPriceMap(prices: SymbolPrice[] | undefined): Map<string, number> {
   return map
 }
 
-function buildPriceChangeMap(prices: SymbolPrice[] | undefined): Map<string, number> {
+function buildPriceChangeMap(prices: Array<SymbolPrice> | undefined): Map<string, number> {
   const map = new Map<string, number>()
   if (prices) {
     for (const p of prices) {
@@ -138,7 +134,7 @@ export function useTradingData(): TradingData {
   }, [spotData?.balances, marginData?.balances])
 
   // Fetch prices for all assets
-  const { data: pricesData, isLoading: pricesLoading } = useQuery<SymbolPrice[]>({
+  const { data: pricesData, isLoading: pricesLoading } = useQuery<Array<SymbolPrice>>({
     queryKey: ['allPrices', allAssets],
     queryFn: async () => {
       const prices = await fetchPrices(allAssets)
@@ -198,8 +194,8 @@ export function useTradingData(): TradingData {
     isPricesLoading: pricesLoading,
 
     // Error states
-    spotError: spotError as Error | null,
-    marginError: marginError as Error | null,
+    spotError: spotError,
+    marginError: marginError,
 
     // Sync info
     lastUpdate,

@@ -10,6 +10,7 @@ import { Loader2, LogIn, LogOut, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { authClient } from '../lib/auth-client'
+import { TradingDragIcon } from './icons/TradingDragIcon'
 
 export default function Header() {
   const router = useRouter()
@@ -35,13 +36,14 @@ export default function Header() {
 
   return (
     <header >
-      <nav className="flex items-center justify-between">
+      <nav className="flex items-center justify-between py-2">
         <div className="flex items-center gap-4">
           <Link
             to="/"
-            className="text-lg hover:text-primary transition-colors"
+            className="flex items-center gap-2 text-lg hover:text-primary transition-colors"
             activeProps={{ className: 'font-bold text-primary' }}
           >
+            <TradingDragIcon size={32} className="text-primary" />
             Trading
           </Link>
 

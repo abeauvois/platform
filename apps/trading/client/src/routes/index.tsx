@@ -5,7 +5,6 @@ import { useRef } from 'react'
 import { DragOrderPanel } from '../components/DragOrderPanel'
 import { DragOverlayBadge } from '../components/DragOverlayBadge'
 import { MarginAccountCard } from '../components/MarginAccountCard'
-import { OrderCard } from '../components/OrderCard'
 import { OrdersTable } from '../components/OrdersTable'
 import { PortfolioSummaryCard } from '../components/PortfolioSummaryCard'
 import { SpotBalancesCard } from '../components/SpotBalancesCard'
@@ -147,7 +146,7 @@ function HomePage() {
 
           <OrdersTable orders={placedOrders} onCancelOrder={cancelOrder} />
 
-          <OrderCard
+          {/* <OrderCard
             baseAsset={baseAsset}
             quoteAsset={quoteAsset}
             currentPrice={currentPrice}
@@ -155,7 +154,7 @@ function HomePage() {
             baseBalance={baseBalance}
             marginLevel={1.89}
             leverage="3x"
-          />
+          /> */}
         </div>
       </section>
 

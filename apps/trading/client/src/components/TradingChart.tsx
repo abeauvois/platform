@@ -265,7 +265,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             <Card className={isOver ? 'ring-2 ring-yellow-500' : ''}>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-accent" />
+                        <TrendingUp className="w-6 h-6 text-primary" />
                         {symbol} Chart ({interval})
                     </CardTitle>
                     <Button
