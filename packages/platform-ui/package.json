@@ -23,7 +23,7 @@
     "@fontsource-variable/figtree": "^5.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.536.0",
+    "lucide-react": "^0.562.0",
     "shadcn": "^2.3.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
