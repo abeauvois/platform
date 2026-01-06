@@ -1,7 +1,7 @@
 import { Bookmark } from '../../domain/entities/Bookmark';
 import { IContentAnalyser } from '../../domain/ports/IContentAnalyser';
 import { ILogger } from '../../domain/ports/ILogger';
-import { ITweetClient } from '../../domain/ports/ITweetClient';
+import { IRateLimitedClient } from '../../domain/ports/IRateLimitedClient';
 
 import { ExtractLinksConfig } from '../config/ExtractLinksConfig';
 import { QueuedLink } from '../QueuedLink.types';
@@ -20,7 +20,7 @@ export interface RetryResult {
  */
 export class RetryHandlerService {
     constructor(
-        private readonly tweetScraper: ITweetClient,
+        private readonly rateLimitedClient: IRateLimitedClient,
         private readonly linkAnalyzer: IContentAnalyser,
         private readonly logger: ILogger,
         private readonly maxAttempts: number = ExtractLinksConfig.RATE_LIMIT.MAX_RETRY_ATTEMPTS
@@ -72,7 +72,7 @@ export class RetryHandlerService {
                     categorizedLinks[queuedLink.index] = result.enriched;
                     updatedUrls.add(queuedLink.link.url);
                     successCount++;
-                    this.logger.info(`    ✓ Enriched with tag: ${result.enriched.tag}`);
+                    this.logger.info(`    ✓ Enriched with tags: ${result.enriched.tags.join(', ')}`);
                 } else if (result.shouldRetryAgain && queuedLink.attempts + 1 < this.maxAttempts) {
                     // Re-queue for another retry attempt
                     remainingQueue.push({
@@ -107,11 +107,11 @@ export class RetryHandlerService {
         shouldRetryAgain: boolean;
     }> {
         try {
-            const tweetContent = await this.tweetScraper.fetchTweetContent(queuedLink.link.url);
+            const content = await this.rateLimitedClient.fetchContent(queuedLink.link.url);
 
-            if (!tweetContent) {
+            if (!content) {
                 // Check if we hit rate limit again
-                const isRateLimited = this.tweetScraper.isRateLimited();
+                const isRateLimited = this.rateLimitedClient.isRateLimited();
                 return {
                     success: false,
                     enriched: null,
@@ -119,9 +119,9 @@ export class RetryHandlerService {
                 };
             }
 
-            this.logger.info(`    ✓ Tweet content retrieved`);
-            const analysis = await this.linkAnalyzer.analyze(queuedLink.link.url, tweetContent);
-            const enriched = queuedLink.link.withCategorization(analysis.tag, analysis.description);
+            this.logger.info(`    ✓ Content retrieved`);
+            const analysis = await this.linkAnalyzer.analyze(queuedLink.link.url, content);
+            const enriched = queuedLink.link.withCategorization(analysis.tags, analysis.summary);
 
             return { success: true, enriched, shouldRetryAgain: false };
         } catch (error) {
@@ -134,7 +134,7 @@ export class RetryHandlerService {
      * Get seconds until rate limit reset
      */
     private getRateLimitWaitTime(): number {
-        const resetTime = this.tweetScraper.getRateLimitResetTime();
+        const resetTime = this.rateLimitedClient.getRateLimitResetTime();
         return Math.ceil((resetTime - Date.now()) / 1000);
     }
 
@@ -142,7 +142,7 @@ export class RetryHandlerService {
      * Wait for rate limit reset with countdown display
      */
     private async waitForRateLimitReset(): Promise<void> {
-        const resetTime = this.tweetScraper.getRateLimitResetTime();
+        const resetTime = this.rateLimitedClient.getRateLimitResetTime();
         const endWait = resetTime + ExtractLinksConfig.RATE_LIMIT.BUFFER_MS;
         const totalWaitSeconds = Math.ceil((endWait - Date.now()) / 1000);
 
@@ -160,7 +160,7 @@ export class RetryHandlerService {
         spinner.stop();
 
         // Clear the rate limit now that we've waited
-        this.tweetScraper.clearRateLimit();
+        this.rateLimitedClient.clearRateLimit();
 
         this.logger.info(`✅ Rate limit reset! Retrying...\n`);
     }
