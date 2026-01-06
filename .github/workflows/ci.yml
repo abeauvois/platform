@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BUN_VERSION: '1.1.45'
+  BUN_VERSION: '1.2.23'
 
 jobs:
   # Code quality checks
@@ -38,7 +38,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -83,7 +83,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -132,7 +132,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -176,7 +176,8 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/${{ matrix.app }}
+          context: .
+          file: ./apps/${{ matrix.app }}/Dockerfile
           push: false
           tags: platform-${{ matrix.app }}:${{ github.sha }}
           cache-from: type=gha
@@ -220,7 +221,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -274,7 +275,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 

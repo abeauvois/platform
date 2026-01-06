@@ -19,7 +19,7 @@ permissions:
   actions: read
 
 env:
-  BUN_VERSION: '1.1.45'
+  BUN_VERSION: '1.2.23'
 
 jobs:
   # Dependency vulnerability scanning

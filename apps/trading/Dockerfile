@@ -1,22 +1,72 @@
-FROM oven/bun:1 AS base
+# Trading App Dockerfile
+# Must be built from repository root: docker build -f apps/trading/Dockerfile .
+
+FROM oven/bun:1.2.23 AS base
 WORKDIR /app
 
+# Install dependencies
+FROM base AS deps
+COPY package.json bun.lock ./
+
+# Copy all workspace package.json files for lockfile resolution
+COPY apps/trading/package.json ./apps/trading/
+COPY apps/trading/client/package.json ./apps/trading/client/
+COPY apps/api/package.json ./apps/api/
+COPY apps/cli/package.json ./apps/cli/
+COPY apps/cli-landing/package.json ./apps/cli-landing/
+COPY apps/dashboard/package.json ./apps/dashboard/
+
+COPY packages/cached-http-client/package.json ./packages/cached-http-client/
+COPY packages/platform-auth/package.json ./packages/platform-auth/
+COPY packages/platform-db/package.json ./packages/platform-db/
+COPY packages/platform-domain/package.json ./packages/platform-domain/
+COPY packages/platform-sdk/package.json ./packages/platform-sdk/
+COPY packages/platform-task/package.json ./packages/platform-task/
+COPY packages/platform-ui/package.json ./packages/platform-ui/
+COPY packages/platform-utils/package.json ./packages/platform-utils/
+COPY packages/sdk-cli/package.json ./packages/sdk-cli/
+COPY packages/trading-domain/package.json ./packages/trading-domain/
+COPY packages/trading-sdk/package.json ./packages/trading-sdk/
+
+RUN bun install --frozen-lockfile
+
+# Build
 FROM base AS build
-COPY package.json bun.lock* ./
-COPY client/package.json client/bun.lock* ./client/
-RUN bun install
-WORKDIR /app/client
-RUN bun install
-WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN bun run build
 
-FROM oven/bun:1 AS release
+# Build packages first (required by trading app and client)
+RUN cd packages/cached-http-client && bun run build || true
+RUN cd packages/platform-task && bun run build || true
+RUN cd packages/platform-utils && bun run build || true
+RUN cd packages/platform-domain && bun run build || true
+RUN cd packages/platform-ui && bun run build || true
+RUN cd packages/trading-domain && bun run build || true
+
+# Build trading server
+WORKDIR /app/apps/trading
+RUN bun build ./server/index.ts --outdir ./dist/server --target bun
+
+# Build trading client
+WORKDIR /app/apps/trading/client
+RUN bunx vite build
+
+# Production image
+FROM oven/bun:1.2.23 AS release
 WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/client/dist ./client/dist
-COPY package.json bun.lock* ./
-RUN bun install --production
 
-EXPOSE 3000
-CMD ["bun", "run", "start"]
+# Copy built artifacts
+COPY --from=build /app/apps/trading/dist/server ./dist/server
+COPY --from=build /app/apps/trading/client/dist ./client/dist
+COPY --from=build /app/apps/trading/package.json ./
+
+# Copy workspace packages (needed at runtime)
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/node_modules ./node_modules
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+EXPOSE 3001
+
+CMD ["bun", "run", "./dist/server/index.js"]
