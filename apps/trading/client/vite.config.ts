@@ -5,6 +5,11 @@ import tailwindcss from '@tailwindcss/vite'
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import { resolve } from 'node:path'
 
+// Environment-based configuration
+const TRADING_CLIENT_PORT = Number(process.env.TRADING_CLIENT_PORT) || 5001
+const TRADING_SERVER_URL = process.env.TRADING_SERVER_URL || `http://localhost:${process.env.TRADING_SERVER_PORT || '3001'}`
+const API_URL = process.env.API_URL || `http://localhost:${process.env.API_PORT || '3000'}`
+
 /**
  * Vite Configuration for Trading Client
  *
@@ -19,8 +24,8 @@ import { resolve } from 'node:path'
  *    - '@': Maps to './src' for cleaner imports (e.g., '@/components/Header')
  *
  * 3. Development Server Proxy (Hybrid Backend):
- *    - Trading APIs (/api/trading/*) -> Trading server (port 3001)
- *    - Auth & shared APIs (/api/auth/*, /api/bookmarks/*) -> Platform API (port 3000)
+ *    - Trading APIs (/api/trading/*) -> Trading server (configured via TRADING_SERVER_URL)
+ *    - Auth & shared APIs (/api/auth/*, /api/bookmarks/*) -> Platform API (configured via API_URL)
  *
  * 4. Testing:
  *    - Uses jsdom environment for browser-like testing
@@ -40,27 +45,27 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5001,
+    port: TRADING_CLIENT_PORT,
     proxy: {
       // Trading-specific APIs -> Trading server
       '/api/trading': {
-        target: 'http://localhost:3001',
+        target: TRADING_SERVER_URL,
         changeOrigin: true,
         secure: false,
       },
       '/api/docs': {
-        target: 'http://localhost:3001',
+        target: TRADING_SERVER_URL,
         changeOrigin: true,
         secure: false,
       },
       // Auth and shared features -> Central platform server
       '/api/auth': {
-        target: 'http://localhost:3000',
+        target: API_URL,
         changeOrigin: true,
         secure: false,
       },
       '/api/bookmarks': {
-        target: 'http://localhost:3000',
+        target: API_URL,
         changeOrigin: true,
         secure: false,
       },

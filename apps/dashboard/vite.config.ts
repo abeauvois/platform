@@ -6,6 +6,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 import tanstackRouter from '@tanstack/router-plugin/vite'
 
+// Environment-based configuration
+const DASHBOARD_PORT = Number(process.env.DASHBOARD_PORT) || 5000
+const API_URL = process.env.API_URL || `http://localhost:${process.env.API_PORT || '3000'}`
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -19,10 +23,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5000,
+    port: DASHBOARD_PORT,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: API_URL,
         changeOrigin: true,
         secure: false,
       },

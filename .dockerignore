@@ -1,0 +1,20 @@
+# Ignore non-essential files for Docker builds
+.git
+.gitignore
+*.md
+.env*
+.vscode
+.idea
+
+# Ignore test files
+**/*.test.ts
+**/*.spec.ts
+**/coverage
+**/__tests__
+
+# Ignore build artifacts (will be rebuilt in Docker)
+**/*.tsbuildinfo
+
+# Don't ignore node_modules or dist at package level - they're rebuilt
+# But exclude worktrees
+worktrees

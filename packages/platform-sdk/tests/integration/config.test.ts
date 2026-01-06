@@ -1,12 +1,13 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { PlatformApiClient, ApiConfigProvider } from '../../src/index.js';
 import type { ILogger } from '@platform/platform-domain';
+import { TEST_API_URL } from '../test-config.js';
 
 /**
  * Integration tests for Configuration API
  *
  * Prerequisites:
- * 1. API server must be running at http://localhost:3000
+ * 1. API server must be running (URL configured via API_URL or API_PORT env vars)
  * 2. Test user must exist with credentials:
  *    - Email: test@example.com
  *    - Password: password123
@@ -16,7 +17,7 @@ import type { ILogger } from '@platform/platform-domain';
  *    - etc.
  *
  * To create test user:
- * curl -X POST http://localhost:3000/api/auth/sign-up/email \
+ * curl -X POST ${API_URL}/api/auth/sign-up/email \
  *   -H "Content-Type: application/json" \
  *   -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
  *
@@ -47,7 +48,7 @@ class TestLogger implements ILogger {
 }
 
 describe('Config API Integration Tests', () => {
-    const API_BASE_URL = 'http://localhost:3000';
+    const API_BASE_URL = TEST_API_URL;
     let client: PlatformApiClient;
     let logger: ILogger;
     let sessionToken: string | undefined;

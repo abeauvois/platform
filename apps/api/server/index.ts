@@ -13,6 +13,10 @@ import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgro
 
 const app = new Hono();
 
+// Environment-based URL configuration for CORS
+const DASHBOARD_URL = process.env.DASHBOARD_URL || `http://localhost:${process.env.DASHBOARD_PORT || '5000'}`;
+const TRADING_CLIENT_URL = process.env.TRADING_CLIENT_URL || `http://localhost:${process.env.TRADING_CLIENT_PORT || '5001'}`;
+
 const router = app
   .use(logger())
   .use(
@@ -20,8 +24,8 @@ const router = app
     cors({
       origin: (origin) => {
         const allowedOrigins = [
-          'http://localhost:5000', // dashboard
-          'http://localhost:5001', // trading client
+          DASHBOARD_URL,
+          TRADING_CLIENT_URL,
           ...(process.env.CLIENT_URLS?.split(',') || []),
         ];
         if (allowedOrigins.includes(origin)) {

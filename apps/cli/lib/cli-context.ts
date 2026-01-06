@@ -4,15 +4,13 @@ import { AuthManager } from './AuthManager.js';
 import { createClackLogger } from './clack-logger.js';
 
 /**
- * Default Platform API URL
- */
-const DEFAULT_API_URL = 'http://localhost:3000';
-
-/**
  * Get the Platform API URL from environment or default
+ * Checks PLATFORM_API_URL, API_URL, or constructs from API_PORT
  */
 export function getApiUrl(): string {
-    return process.env.PLATFORM_API_URL || DEFAULT_API_URL;
+    return process.env.PLATFORM_API_URL
+        || process.env.API_URL
+        || `http://localhost:${process.env.API_PORT || '3000'}`;
 }
 
 /**

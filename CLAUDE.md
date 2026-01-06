@@ -354,3 +354,57 @@ bun run it:twitter    # Integration tests for Twitter
 - **Auth**: better-auth
 - **Job Queue**: pg-boss (v12+, via @platform/task)
 - **CLI**: cleye
+
+## Creating New Apps or Packages
+
+When creating a new app in `/apps` or a new package in `/packages` that requires:
+- A new port (server or client)
+- A new URL endpoint
+
+You MUST:
+1. Add the new port/URL variables to `/.env.example`
+2. Update `scripts/worktree.sh` to include the new port in the offset calculation
+3. Update CORS allowlists in relevant servers if the new app needs API access
+4. Update Dockerfile files that copy workspace `package.json` files (see below)
+
+### Dockerfile Updates for Workspace Changes
+
+When adding, removing, or renaming apps/packages, you MUST update the affected Dockerfiles:
+- `apps/api/Dockerfile` - copies all workspace `package.json` files for lockfile resolution
+- `apps/trading/Dockerfile` - if trading dependencies change
+
+The API Dockerfile must list ALL workspace packages for `bun install --frozen-lockfile` to work:
+```dockerfile
+# All apps
+COPY apps/api/package.json ./apps/api/
+COPY apps/cli/package.json ./apps/cli/
+# ... all other apps
+
+# All packages
+COPY packages/cached-http-client/package.json ./packages/cached-http-client/
+# ... all other packages
+```
+
+Failure to update Dockerfiles will cause CI/CD builds to fail with "lockfile had changes" errors.
+
+## Git Worktree for Parallel Development
+
+Use the worktree script to create isolated environments for parallel PR development:
+
+```bash
+# Create a new worktree with port offset
+./scripts/worktree.sh create feature-branch 100
+
+# List all worktrees
+./scripts/worktree.sh list
+
+# Remove a worktree
+./scripts/worktree.sh remove feature-branch
+```
+
+Port offset scheme:
+| Offset | API  | Dashboard | Trading Server | Trading Client |
+|--------|------|-----------|----------------|----------------|
+| 0      | 3000 | 5000      | 3001           | 5001           |
+| 100    | 3100 | 5100      | 3101           | 5101           |
+| 200    | 3200 | 5200      | 3201           | 5201           |

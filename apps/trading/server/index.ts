@@ -32,6 +32,11 @@ const createAuthenticatedClient = () => {
 
 const app = new OpenAPIHono();
 
+// Environment-based URL configuration for CORS and OpenAPI
+const TRADING_CLIENT_URL = process.env.TRADING_CLIENT_URL || `http://localhost:${process.env.TRADING_CLIENT_PORT || '5001'}`;
+const API_URL = process.env.API_URL || `http://localhost:${process.env.API_PORT || '3000'}`;
+const TRADING_SERVER_URL = process.env.TRADING_SERVER_URL || `http://localhost:${process.env.PORT || '3001'}`;
+
 // Middleware
 app.use(logger());
 app.use(
@@ -39,8 +44,8 @@ app.use(
   cors({
     origin: (origin) => {
       const allowedOrigins = [
-        'http://localhost:5001', // trading client
-        'http://localhost:3000', // platform API
+        TRADING_CLIENT_URL,
+        API_URL,
         ...(process.env.CLIENT_URLS?.split(',') || []),
       ];
       if (allowedOrigins.includes(origin)) {
@@ -75,12 +80,11 @@ app.doc('/api/docs/openapi.json', {
   info: {
     title: 'Trading API',
     version: '1.0.0',
-    description:
-      'Trading-specific API for Binance exchange integration. For authentication and shared features, see the Platform API at http://localhost:3000.',
+    description: `Trading-specific API for Binance exchange integration. For authentication and shared features, see the Platform API at ${API_URL}.`,
   },
   servers: [
     {
-      url: 'http://localhost:3001',
+      url: TRADING_SERVER_URL,
       description: 'Trading API (Development)',
     },
   ],
