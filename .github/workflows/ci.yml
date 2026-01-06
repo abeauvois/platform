@@ -170,6 +170,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug - List packages
+        run: |
+          echo "=== Listing packages directory ==="
+          ls -la packages/
+          echo "=== Checking trading-sdk ==="
+          ls -la packages/trading-sdk/ || echo "trading-sdk not found"
+          cat packages/trading-sdk/package.json || echo "package.json not found"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -180,8 +188,7 @@ jobs:
           file: ./apps/${{ matrix.app }}/Dockerfile
           push: false
           tags: platform-${{ matrix.app }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VCS_REF=${{ github.sha }}
