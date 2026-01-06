@@ -6,8 +6,11 @@ import type { IConfigProvider } from '@platform/platform-domain';
  */
 export class EnvConfigProvider implements IConfigProvider {
     private config: Map<string, string> = new Map();
+    private loaded = false;
+    private lastEnvPath: string = '.env';
 
     async load(envPath: string = '.env'): Promise<void> {
+        this.lastEnvPath = envPath;
         try {
             const file = Bun.file(envPath);
 
@@ -39,11 +42,18 @@ export class EnvConfigProvider implements IConfigProvider {
 
                 this.config.set(key, value);
             }
+            this.loaded = true;
         } catch (error) {
             throw new Error(
                 `Failed to load .env file: ${error instanceof Error ? error.message : 'Unknown error'}`
             );
         }
+    }
+
+    async reload(): Promise<void> {
+        this.loaded = false;
+        this.config.clear();
+        await this.load(this.lastEnvPath);
     }
 
     get(key: string): string {
@@ -60,5 +70,13 @@ export class EnvConfigProvider implements IConfigProvider {
 
     has(key: string): boolean {
         return this.config.has(key);
+    }
+
+    isLoaded(): boolean {
+        return this.loaded;
+    }
+
+    keys(): string[] {
+        return Array.from(this.config.keys());
     }
 }

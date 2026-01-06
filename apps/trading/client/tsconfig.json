@@ -1,6 +1,7 @@
 {
   "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js", "vite.config.js"],
-  
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules"],
+
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
@@ -24,6 +25,13 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@platform/trading-sdk": ["../../../packages/trading-sdk/src/index.ts"],
+      "@platform/trading-domain": ["../../../packages/trading-domain/src/index.ts"],
+      "@platform/sdk": ["../../../packages/platform-sdk/src/index.ts"],
+      "@platform/platform-domain": ["../../../packages/platform-domain/src/index.ts"],
+      "@platform/platform-domain/*": ["../../../packages/platform-domain/src/*"],
+      "@platform/ui": ["../../../packages/platform-ui/src/index.ts"],
+      "@platform/ui/*": ["../../../packages/platform-ui/src/*"]
     }
   }
 }

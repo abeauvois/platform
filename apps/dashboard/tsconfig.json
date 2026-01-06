@@ -24,6 +24,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@platform/sdk": ["../../packages/platform-sdk/src/index.ts"],
+      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"],
+      "@platform/platform-domain/*": ["../../packages/platform-domain/src/*"],
+      "@platform/ui": ["../../packages/platform-ui/src/index.ts"],
+      "@platform/ui/*": ["../../packages/platform-ui/src/*"]
     }
   }
 }

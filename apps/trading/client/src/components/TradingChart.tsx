@@ -6,7 +6,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
 
 import { useKlines } from '../hooks/queries'
 
-import type { IChartApi, IPriceLine } from 'lightweight-charts'
+import type { IChartApi, IPriceLine, Time } from 'lightweight-charts'
 import type { Candlestick } from '../lib/api'
 
 export interface OrderLine {
@@ -199,7 +199,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
 
             // Transform data for Lightweight Charts
             const chartData = klinesData.klines.map((k: Candlestick) => ({
-                time: Math.floor(k.openTime / 1000), // Convert to seconds
+                time: Math.floor(k.openTime / 1000) as Time, // Convert to seconds
                 open: k.open,
                 high: k.high,
                 low: k.low,

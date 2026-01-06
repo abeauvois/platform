@@ -1,5 +1,5 @@
-import { SourceAdapter } from "./SourceAdapter";
-import { FileType } from "./RawFile";
+import type { SourceAdapter } from "./SourceAdapter";
+import type { FileType } from "./RawFile";
 
 /**
  * Domain Entity: Represents extracted content with metadata

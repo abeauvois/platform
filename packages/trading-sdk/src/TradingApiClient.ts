@@ -1,4 +1,4 @@
-import { PlatformApiClient } from '@platform/sdk';
+import { BaseClient } from '@platform/sdk';
 import type { ILogger } from '@platform/platform-domain';
 import type {
     Position,
@@ -18,10 +18,10 @@ interface TradingApiClientConfig {
 
 /**
  * Trading API Client
- * Extends PlatformApiClient to reuse authentication functionality
+ * Extends BaseClient to reuse authentication functionality
  * Adds trading-specific operations for positions, orders, and market data
  */
-export class TradingApiClient extends PlatformApiClient {
+export class TradingApiClient extends BaseClient {
     constructor(config: TradingApiClientConfig) {
         super(config);
     }

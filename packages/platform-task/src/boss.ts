@@ -83,7 +83,7 @@ export async function createQueue(queueName: string): Promise<void> {
  * );
  */
 export async function scheduleRecurringTask<T extends object>(
-    name: string,
+    _name: string,
     cronExpression: string,
     queueName: string,
     data?: T,

@@ -42,7 +42,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
+      // Resolve workspace packages from source for build
+      '@platform/trading-sdk': resolve(__dirname, '../../../packages/trading-sdk/src/index.ts'),
+      '@platform/trading-domain': resolve(__dirname, '../../../packages/trading-domain/src/index.ts'),
+      '@platform/sdk': resolve(__dirname, '../../../packages/platform-sdk/src/index.ts'),
+      '@platform/platform-domain/browser': resolve(__dirname, '../../../packages/platform-domain/src/browser.ts'),
+      '@platform/platform-domain': resolve(__dirname, '../../../packages/platform-domain/src/index.ts'),
+      '@platform/ui/globals.css': resolve(__dirname, '../../../packages/platform-ui/src/styles/globals.css'),
+      '@platform/ui': resolve(__dirname, '../../../packages/platform-ui/src/index.ts'),
     },
+  },
+  optimizeDeps: {
+    include: ['@platform/trading-sdk', '@platform/trading-domain', '@platform/sdk', '@platform/platform-domain', '@platform/ui'],
   },
   server: {
     port: TRADING_CLIENT_PORT,

@@ -17,6 +17,11 @@ const createTestLogger = () => ({
     debug: function (msg: string) {
         this.logs.push({ level: 'debug', message: msg });
     },
+    await: (_message: string) => ({
+        start: () => {},
+        update: () => {},
+        stop: () => {},
+    }),
 });
 
 // Create a testable subclass to expose private methods

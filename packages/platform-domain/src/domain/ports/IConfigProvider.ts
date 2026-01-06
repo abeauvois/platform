@@ -13,6 +13,11 @@ export interface IConfigProvider {
     load(options?: unknown): Promise<void>;
 
     /**
+     * Reload configuration from the source
+     */
+    reload(): Promise<void>;
+
+    /**
      * Get a required configuration value
      * @param key - The configuration key
      * @throws Error if the key is not found
@@ -31,4 +36,14 @@ export interface IConfigProvider {
      * @param key - The configuration key
      */
     has(key: string): boolean;
+
+    /**
+     * Check if configuration has been loaded
+     */
+    isLoaded(): boolean;
+
+    /**
+     * Get all loaded configuration keys
+     */
+    keys(): string[];
 }

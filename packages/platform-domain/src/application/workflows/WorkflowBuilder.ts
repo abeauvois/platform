@@ -103,7 +103,7 @@ export interface WorkflowLifecycleHooks<T> {
  * Executable workflow that runs a sequence of steps
  * @typeParam T - The type of items being processed in the workflow
  */
-export interface IWorkflow<T> {
+export interface IWorkflow<_T> {
     /** Execute the workflow */
     execute: (userId: string, sourcePath: string, outputPath: string) => Promise<void>;
     /** Get the names of steps in this workflow */

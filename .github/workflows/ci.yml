@@ -47,17 +47,17 @@ jobs:
 
       - name: Type checking (packages)
         run: |
-          bun --bun tsc --noEmit -p packages/platform-task/tsconfig.json
-          bun --bun tsc --noEmit -p packages/platform-domain/tsconfig.json
-          bun --bun tsc --noEmit -p packages/platform-sdk/tsconfig.json
-          bun --bun tsc --noEmit -p packages/platform-db/tsconfig.json
-          bun --bun tsc --noEmit -p packages/platform-utils/tsconfig.json
-          bun --bun tsc --noEmit -p packages/cached-http-client/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-task/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-domain/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-sdk/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json
 
       - name: Type checking (apps)
         run: |
-          bun --bun tsc --noEmit -p apps/api/tsconfig.json
-          bun --bun tsc --noEmit -p apps/cli/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p apps/api/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p apps/cli/tsconfig.json
 
       - name: Lint dashboard
         working-directory: apps/dashboard

@@ -1,5 +1,5 @@
-import { SourceAdapter } from "./SourceAdapter";
-import { FileType } from "./RawFile";
+import type { SourceAdapter } from "./SourceAdapter";
+import type { FileType } from "./RawFile";
 
 /**
  * Status lifecycle for pending content:
