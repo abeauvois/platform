@@ -184,8 +184,8 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./apps/${{ matrix.app }}/Dockerfile
+          context: ${{ github.workspace }}
+          file: ${{ github.workspace }}/apps/${{ matrix.app }}/Dockerfile
           push: false
           tags: platform-${{ matrix.app }}:${{ github.sha }}
           no-cache: true
