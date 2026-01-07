@@ -41,7 +41,46 @@ const ErrorSchema = z.object({
     error: z.string().openapi({ example: 'Order creation failed', description: 'Error message' }),
 }).openapi('OrderError');
 
+// Query schemas
+const GetOrdersQuerySchema = z.object({
+    symbol: z.string().optional().openapi({
+        example: 'BTCUSDT',
+        description: 'Trading pair symbol (optional - if omitted, returns all open orders)',
+    }),
+}).openapi('GetOrdersQuery');
+
+const OrdersListResponseSchema = z.array(OrderResponseSchema).openapi('OrdersListResponse');
+
 // Route definitions
+const getOrdersRoute = createRoute({
+    method: 'get',
+    path: '/',
+    tags: ['Orders'],
+    summary: 'Get open orders',
+    description: 'Get all open orders for a symbol, or all open orders if no symbol specified.',
+    request: {
+        query: GetOrdersQuerySchema,
+    },
+    responses: {
+        200: {
+            description: 'List of open orders',
+            content: {
+                'application/json': {
+                    schema: OrdersListResponseSchema,
+                },
+            },
+        },
+        500: {
+            description: 'Server error',
+            content: {
+                'application/json': {
+                    schema: ErrorSchema,
+                },
+            },
+        },
+    },
+});
+
 const createOrderRoute = createRoute({
     method: 'post',
     path: '/',
@@ -92,6 +131,31 @@ const createOrderRoute = createRoute({
  */
 export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
     return new OpenAPIHono<HonoEnv>()
+        .openapi(getOrdersRoute, async (c) => {
+            try {
+                const { symbol } = c.req.valid('query');
+
+                // Fetch open orders from exchange
+                const orders = await exchangeClient.getOrders(symbol);
+
+                return c.json(orders.map((order) => ({
+                    id: order.id,
+                    symbol: order.symbol,
+                    side: order.side,
+                    type: order.type,
+                    quantity: order.quantity,
+                    price: order.price,
+                    status: order.status,
+                    filledQuantity: order.filledQuantity,
+                    createdAt: order.createdAt.toISOString(),
+                    updatedAt: order.updatedAt.toISOString(),
+                })), 200);
+            } catch (error) {
+                console.error('Failed to fetch orders:', error);
+                const message = error instanceof Error ? error.message : 'Failed to fetch orders';
+                return c.json({ error: message }, 500);
+            }
+        })
         .openapi(createOrderRoute, async (c) => {
             try {
                 const data = c.req.valid('json');

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 
 import type { RefObject } from 'react'
 
@@ -8,6 +8,7 @@ import type { OrderUpdateEvent } from './useOrderUpdates'
 
 import { useCreateOrder } from './useCreateOrder'
 import { useOrderUpdates } from './useOrderUpdates'
+import { useFetchOrders } from './useFetchOrders'
 
 export interface CreateOrderParams {
   symbol: string
@@ -39,13 +40,51 @@ export interface UseOrderManagementReturn {
  *
  * Integrates useCreateOrder mutation and useOrderUpdates SSE stream.
  * Manages chart line updates via chartRef.
+ * Fetches existing open orders on initialization to persist across page reloads.
  */
 export function useOrderManagement(
   chartRef: RefObject<TradingChartHandle | null>,
   refetchBalances: () => void
 ): UseOrderManagementReturn {
   const [placedOrders, setPlacedOrders] = useState<PlacedOrder[]>([])
+  const [hasInitialized, setHasInitialized] = useState(false)
   const createOrderMutation = useCreateOrder()
+
+  // Fetch existing open orders on initialization
+  const { data: fetchedOrders } = useFetchOrders()
+
+  // Initialize placedOrders and chart order lines when orders are fetched
+  useEffect(() => {
+    if (fetchedOrders && !hasInitialized) {
+      const orders: PlacedOrder[] = fetchedOrders.map((order) => ({
+        id: order.id,
+        symbol: order.symbol,
+        side: order.side,
+        price: order.price ?? 0,
+        quantity: order.quantity,
+        status: order.status,
+        createdAt: new Date(order.createdAt),
+      }))
+
+      setPlacedOrders(orders)
+      setHasInitialized(true)
+
+      // Add order lines to chart for pending/partially_filled orders
+      // Small delay to ensure chart is ready
+      setTimeout(() => {
+        for (const order of orders) {
+          if (order.status === 'pending' || order.status === 'partially_filled') {
+            chartRef.current?.addOrderLine({
+              id: order.id,
+              side: order.side,
+              price: order.price,
+              quantity: order.quantity,
+            })
+          }
+        }
+      }, 100)
+    }
+  }, [fetchedOrders, hasInitialized, chartRef])
 
   // Handle real-time order updates from SSE stream
   const handleOrderUpdate = useCallback(

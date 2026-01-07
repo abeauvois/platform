@@ -78,7 +78,7 @@ interface BinanceMarginAccountResponse {
 }
 
 /**
- * Binance order response type
+ * Binance order response type (for POST /order)
  */
 interface BinanceOrderResponse {
     symbol: string;
@@ -94,6 +94,26 @@ interface BinanceOrderResponse {
     timeInForce: string;
     type: string;
     side: 'BUY' | 'SELL';
+}
+
+/**
+ * Binance open order response type (for GET /openOrders)
+ */
+interface BinanceOpenOrderResponse {
+    symbol: string;
+    orderId: number;
+    orderListId: number;
+    clientOrderId: string;
+    price: string;
+    origQty: string;
+    executedQty: string;
+    cummulativeQuoteQty: string;
+    status: 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'EXPIRED';
+    timeInForce: string;
+    type: string;
+    side: 'BUY' | 'SELL';
+    time: number;
+    updateTime: number;
 }
 
 /**
@@ -485,13 +505,84 @@ export class BinanceClient implements IExchangeClient {
     }
 
     /**
-     * Get all orders for a symbol (requires authentication)
+     * Get all open orders for a symbol (requires authentication)
+     * If no symbol is provided, returns all open orders across all symbols.
      * @param symbol - Trading pair (optional)
-     * @returns Array of orders
+     * @returns Array of open orders
      */
     async getOrders(symbol?: string): Promise<Array<Order>> {
-        // TODO: Implement order fetching for production Binance
-        throw new Error('getOrders not yet implemented for production Binance');
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        const timestamp = Date.now();
+        const params = new URLSearchParams({
+            timestamp: timestamp.toString(),
+        });
+
+        // Add symbol if provided (convert format if needed)
+        if (symbol) {
+            const binanceSymbol = this.convertSymbol(symbol);
+            params.append('symbol', binanceSymbol);
+        }
+
+        const queryString = params.toString();
+        const signature = await this.sign(queryString);
+        const url = `${this.baseUrl}/openOrders?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: Array<BinanceOpenOrderResponse> = await response.json();
+
+        return data.map((order) => this.mapBinanceOpenOrderToOrder(order));
+    }
+
+    /**
+     * Map Binance open order response to Order domain model
+     */
+    private mapBinanceOpenOrderToOrder(data: BinanceOpenOrderResponse): Order {
+        const statusMap: Record<BinanceOpenOrderResponse['status'], Order['status']> = {
+            'NEW': 'pending',
+            'PARTIALLY_FILLED': 'partially_filled',
+            'FILLED': 'filled',
+            'CANCELED': 'cancelled',
+            'REJECTED': 'rejected',
+            'EXPIRED': 'cancelled',
+        };
+
+        const typeMap: Record<string, Order['type']> = {
+            'MARKET': 'market',
+            'LIMIT': 'limit',
+            'STOP_LOSS': 'stop',
+            'STOP_LOSS_LIMIT': 'stop_limit',
+            'TAKE_PROFIT': 'stop',
+            'TAKE_PROFIT_LIMIT': 'stop_limit',
+        };
+
+        const price = Number.parseFloat(data.price);
+
+        return {
+            id: data.orderId.toString(),
+            symbol: data.symbol,
+            side: data.side.toLowerCase() as 'buy' | 'sell',
+            type: typeMap[data.type] ?? 'limit',
+            quantity: Number.parseFloat(data.origQty),
+            price: price > 0 ? price : undefined,
+            status: statusMap[data.status],
+            filledQuantity: Number.parseFloat(data.executedQty),
+            createdAt: new Date(data.time),
+            updatedAt: new Date(data.updateTime),
+        };
     }
 
     /**
