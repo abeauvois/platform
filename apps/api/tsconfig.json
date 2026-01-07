@@ -13,7 +13,8 @@
     "paths": {
       "@/*": ["./server/*"],
       "@platform/auth": ["../../packages/platform-auth/src/index.ts"],
-      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"]
+      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"],
+      "@platform/cached-http-client": ["../../packages/cached-http-client/src/index.ts"]
     }
   }
 }

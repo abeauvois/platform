@@ -19,6 +19,8 @@ export interface MarginAccountCardProps {
   isPricesLoading: boolean
   error: Error | null
   refetch: () => void
+  selectedAsset?: string
+  onAssetSelect?: (asset: string) => void
 }
 
 export function MarginAccountCard({
@@ -30,6 +32,8 @@ export function MarginAccountCard({
   isPricesLoading,
   error,
   refetch,
+  selectedAsset,
+  onAssetSelect,
 }: Readonly<MarginAccountCardProps>) {
   return (
     <TradingCard
@@ -73,6 +77,8 @@ export function MarginAccountCard({
                   priceChangePercent={priceChangePercent}
                   isPricesLoading={isPricesLoading}
                   valueColorClass={valueColorClass}
+                  isSelected={selectedAsset === balance.asset}
+                  onClick={onAssetSelect}
                 />
               )
             })

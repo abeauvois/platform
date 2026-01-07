@@ -19,7 +19,7 @@ permissions:
   actions: read
 
 env:
-  BUN_VERSION: '1.1.45'
+  BUN_VERSION: '1.2.23'
 
 jobs:
   # Dependency vulnerability scanning
@@ -115,12 +115,12 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/${{ matrix.app }}
+          context: ${{ github.workspace }}
+          file: ${{ github.workspace }}/apps/${{ matrix.app }}/Dockerfile
           push: false
           load: true
           tags: platform-${{ matrix.app }}:scan
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
       - name: Run Trivy container scan
         uses: aquasecurity/trivy-action@master

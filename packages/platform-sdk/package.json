@@ -3,15 +3,18 @@
     "version": "0.0.1",
     "type": "module",
     "main": "./dist/platform-sdk/src/index.js",
+    "module": "./dist/platform-sdk/src/index.js",
     "types": "./dist/platform-sdk/src/index.d.ts",
     "exports": {
         ".": {
+            "types": "./dist/platform-sdk/src/index.d.ts",
             "import": "./dist/platform-sdk/src/index.js",
-            "types": "./dist/platform-sdk/src/index.d.ts"
+            "default": "./dist/platform-sdk/src/index.js"
         },
         "./server": {
+            "types": "./dist/platform-sdk/src/server.d.ts",
             "import": "./dist/platform-sdk/src/server.js",
-            "types": "./dist/platform-sdk/src/server.d.ts"
+            "default": "./dist/platform-sdk/src/server.js"
         }
     },
     "scripts": {

@@ -8,6 +8,7 @@ import { BookmarkForm } from '../components/BookmarkForm'
 import { platformClient } from '../../platformClient'
 
 import type { SourceAdapter } from '@platform/platform-domain/browser'
+import type { Bookmark } from '@platform/sdk'
 import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/bookmarks')({
@@ -136,7 +137,7 @@ function RouteComponent() {
 
         {bookmarks && bookmarks.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {bookmarks.map((bookmark) => {
+            {bookmarks.map((bookmark: Bookmark) => {
               const created = (() => {
                 if (!bookmark.createdAt) return null
                 try {
@@ -175,7 +176,7 @@ function RouteComponent() {
                     )}
                     {bookmark.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
-                        {bookmark.tags.map((tag) => (
+                        {bookmark.tags.map((tag: string) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
                           </Badge>

@@ -31,4 +31,5 @@ export interface IExportService {
  */
 export interface ILinkRepository {
     saveMany(links: import('@platform/platform-domain').Bookmark[]): Promise<import('@platform/platform-domain').Bookmark[]>;
+    existsByUrls(userId: string, urls: string[]): Promise<Set<string>>;
 }

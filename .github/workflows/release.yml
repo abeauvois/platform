@@ -21,7 +21,7 @@ permissions:
   pull-requests: write
 
 env:
-  BUN_VERSION: '1.1.45'
+  BUN_VERSION: '1.2.23'
 
 jobs:
   release:
@@ -46,7 +46,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 

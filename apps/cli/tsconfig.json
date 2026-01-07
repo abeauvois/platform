@@ -11,7 +11,12 @@
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
-        "types": ["bun-types"]
+        "types": ["bun-types"],
+        "baseUrl": ".",
+        "paths": {
+            "@platform/sdk": ["../../packages/platform-sdk/src/index.ts"],
+            "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"]
+        }
     },
     "include": ["**/*.ts"],
     "exclude": ["node_modules", "dist"]

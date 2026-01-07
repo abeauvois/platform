@@ -137,6 +137,13 @@ class InMemoryPendingContentRepository implements IPendingContentRepository {
         return this.items.get(id) || null;
     }
 
+    async existsByUrls(userId: string, urls: string[]): Promise<Set<string>> {
+        const existing = Array.from(this.items.values())
+            .filter((item) => item.userId === userId && urls.includes(item.url))
+            .map((item) => item.url);
+        return new Set(existing);
+    }
+
     // Test helpers
     getAll(): PendingContent[] {
         return Array.from(this.items.values());
@@ -225,6 +232,13 @@ class InMemoryBookmarkRepository implements ILinkRepository {
     async clear(): Promise<void> {
         this.items.clear();
     }
+
+    async existsByUrls(userId: string, urls: string[]): Promise<Set<string>> {
+        const existing = Array.from(this.items.values())
+            .filter((item) => item.userId === userId && urls.includes(item.url))
+            .map((item) => item.url);
+        return new Set(existing);
+    }
 }
 
 describe('BookmarkEnrichmentStep', () => {
@@ -259,6 +273,7 @@ describe('BookmarkEnrichmentStep', () => {
         );
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-123',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),
@@ -311,6 +326,7 @@ describe('BookmarkEnrichmentStep', () => {
 
         // Convert pending content to BaseContent for workflow
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-123',
             items: [
                 new BaseContent(
                     pendingItem.url,
@@ -373,6 +389,7 @@ describe('BookmarkEnrichmentStep', () => {
         );
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-123',
             items: [
                 new BaseContent(
                     pendingItem.url,
@@ -434,6 +451,7 @@ describe('BookmarkEnrichmentStep', () => {
         const progressCalls: { index: number; total: number; stepName: string }[] = [];
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-123',
             items: [
                 new BaseContent(
                     pendingItem.url,
@@ -506,6 +524,7 @@ describe('BookmarkEnrichmentStep', () => {
         );
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-123',
             items: [
                 new BaseContent(pendingItem1.url, pendingItem1.sourceAdapter, [], '', pendingItem1.rawContent),
                 new BaseContent(pendingItem2.url, pendingItem2.sourceAdapter, [], '', pendingItem2.rawContent),
@@ -573,6 +592,7 @@ describe('BookmarkEnrichmentStep', () => {
             );
 
             const context: WorkflowContext<BaseContent> = {
+                userId: 'user-123',
                 items: [new BaseContent(pendingItem.url, pendingItem.sourceAdapter, [], '', pendingItem.rawContent)],
                 outputPath: '',
                 updatedIds: new Set<string>(),
@@ -629,6 +649,7 @@ describe('BookmarkEnrichmentStep', () => {
             );
 
             const context: WorkflowContext<BaseContent> = {
+                userId: 'user-123',
                 items: [new BaseContent(pendingItem.url, pendingItem.sourceAdapter, [], '', pendingItem.rawContent)],
                 outputPath: '',
                 updatedIds: new Set<string>(),
@@ -682,6 +703,7 @@ describe('BookmarkEnrichmentStep', () => {
             );
 
             const context: WorkflowContext<BaseContent> = {
+                userId: 'user-123',
                 items: [new BaseContent(pendingItem.url, pendingItem.sourceAdapter, [], '', pendingItem.rawContent)],
                 outputPath: '',
                 updatedIds: new Set<string>(),
@@ -735,6 +757,7 @@ describe('BookmarkEnrichmentStep', () => {
             );
 
             const context: WorkflowContext<BaseContent> = {
+                userId: 'user-123',
                 items: [new BaseContent(pendingItem.url, pendingItem.sourceAdapter, [], '', pendingItem.rawContent)],
                 outputPath: '',
                 updatedIds: new Set<string>(),

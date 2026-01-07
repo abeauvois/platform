@@ -108,8 +108,8 @@ export async function createCliContext(
         apiClient,
         config,
         baseUrl,
-        userId: credentials.user?.id || '',
-        email: credentials.user?.email || '',
+        userId: credentials.userId || '',
+        email: credentials.email || '',
     };
 }
 

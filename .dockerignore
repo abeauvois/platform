@@ -15,6 +15,8 @@
 # Ignore build artifacts (will be rebuilt in Docker)
 **/*.tsbuildinfo
 
-# Don't ignore node_modules or dist at package level - they're rebuilt
-# But exclude worktrees
+# Ignore node_modules - must be rebuilt in Docker for correct native binaries
+**/node_modules
+
+# Exclude worktrees
 worktrees

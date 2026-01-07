@@ -86,21 +86,21 @@ describe.skipIf(!serverAvailable)('CLI Gmail Source Integration Tests', () => {
         let finalProcessedItems: unknown[] = [];
 
         await workflow.execute({
-            onStart: ({ logger }) => {
+            onStart: ({ logger }: { logger: typeof testLogger }) => {
                 started = true;
                 logger.info('Workflow started');
             },
-            onItemProcessed: ({ index, total, stepName, success }) => {
+            onItemProcessed: ({ index, total, stepName, success }: { index: number; total: number; stepName: string; success: boolean }) => {
                 testLogger.info(`${stepName}: ${index + 1}/${total} (success: ${success})`);
                 processedIndices.push(index);
             },
-            onComplete: ({ stats, processedItems, logger }) => {
+            onComplete: ({ stats, processedItems, logger }: { stats: { itemsProcessed: number; itemsCreated: number; durationMs: number }; processedItems: unknown[]; logger: typeof testLogger }) => {
                 completed = true;
                 finalProcessedItems = processedItems;
                 logger.info(`Completed: ${stats.itemsProcessed} items processed, ${stats.itemsCreated} created in ${stats.durationMs}ms`);
                 logger.info(`Processed items: ${JSON.stringify(processedItems)}`);
             },
-            onError: ({ logger }) => {
+            onError: ({ logger }: { logger: typeof testLogger }) => {
                 logger.error('Workflow error occurred');
             },
         });

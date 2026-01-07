@@ -125,14 +125,14 @@ export const ingestGmailCommand = command({
         };
 
         await workflow.execute({
-            onItemProcessed: ({ index, total }) => {
+            onItemProcessed: ({ index, total }: { index: number; total: number }) => {
                 ctx.logger.info(`Processed ${index + 1}/${total} items`);
             },
             onError: () => {
                 p.log.error('An error occurred during ingestion.');
             },
-            onComplete: ({ processedItems }) => {
-                processedItems.forEach((item) => p.note(`${item.tags.join(',')} \n ${item.summary}`));
+            onComplete: ({ processedItems }: { processedItems: Array<{ tags: string[]; summary?: string }> }) => {
+                processedItems.forEach((item: { tags: string[]; summary?: string }) => p.note(`${item.tags.join(',')} \n ${item.summary}`));
             }
         });
 

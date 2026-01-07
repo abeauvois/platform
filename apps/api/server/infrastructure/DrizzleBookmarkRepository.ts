@@ -88,7 +88,7 @@ export class DrizzleBookmarkRepository implements ILinkRepository {
         const result = await db
             .delete(bookmarks)
             .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)))
-            .returning({ id: bookmarks.id });
+            .returning();
         return result.length > 0;
     }
 

@@ -110,6 +110,8 @@ function HomePage() {
             isPricesLoading={tradingData.isPricesLoading}
             error={tradingData.marginError}
             refetch={tradingData.refetch}
+            selectedAsset={selectedAsset}
+            onAssetSelect={handleAssetSelect}
           />
         </div>
 

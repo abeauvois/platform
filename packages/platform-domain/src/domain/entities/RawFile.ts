@@ -1,7 +1,7 @@
 /**
  * Supported file types for content detection
  */
-export type FileType = 'email' | 'csv' | 'json' | 'text' | 'markdown' | 'html' | 'unknown';
+export type FileType = 'email' | 'csv' | 'json' | 'text' | 'markdown' | 'html' | 'article' | 'unknown';
 
 /**
  * Generic file entity for directory/zip sources

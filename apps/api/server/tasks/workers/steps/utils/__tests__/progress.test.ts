@@ -11,17 +11,23 @@ describe('reportProgress', () => {
         onItemProcessed,
     });
 
-    const createMockItem = (url: string): BaseContent => ({
-        url,
-        sourceAdapter: 'test',
-        tags: [],
-        summary: '',
-        rawContent: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        contentType: 'article',
-        withCategorization: () => ({} as BaseContent),
-    } as BaseContent);
+    const createMockItem = (url: string): BaseContent => {
+        const item = {
+            url,
+            sourceAdapter: 'test' as const,
+            tags: [] as string[],
+            summary: '',
+            rawContent: '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            contentType: 'article' as const,
+            withCategorization: () => item,
+            withUpdatedTimestamp: () => item,
+            isValid: () => true,
+            isEnriched: () => false,
+        };
+        return item as unknown as BaseContent;
+    };
 
     test('should not call callback when onItemProcessed is undefined', async () => {
         const context = createMockContext(undefined);
@@ -44,8 +50,10 @@ describe('reportProgress', () => {
 
         expect(onItemProcessed).toHaveBeenCalledTimes(3);
 
+        const calls = onItemProcessed.mock.calls as unknown as Array<[unknown]>;
+
         // Check first call
-        expect(onItemProcessed.mock.calls[0][0]).toEqual({
+        expect(calls[0][0]).toEqual({
             item: items[0],
             index: 0,
             total: 3,
@@ -54,7 +62,7 @@ describe('reportProgress', () => {
         });
 
         // Check second call
-        expect(onItemProcessed.mock.calls[1][0]).toEqual({
+        expect(calls[1][0]).toEqual({
             item: items[1],
             index: 1,
             total: 3,
@@ -63,7 +71,7 @@ describe('reportProgress', () => {
         });
 
         // Check third call
-        expect(onItemProcessed.mock.calls[2][0]).toEqual({
+        expect(calls[2][0]).toEqual({
             item: items[2],
             index: 2,
             total: 3,
@@ -91,8 +99,10 @@ describe('reportProgress', () => {
 
         expect(onItemProcessed).toHaveBeenCalledTimes(2);
 
+        const calls = onItemProcessed.mock.calls as unknown as Array<[unknown]>;
+
         // First item: success
-        expect(onItemProcessed.mock.calls[0][0]).toEqual({
+        expect(calls[0][0]).toEqual({
             item: items[0],
             index: 0,
             total: 2,
@@ -101,7 +111,7 @@ describe('reportProgress', () => {
         });
 
         // Second item: failure with error
-        expect(onItemProcessed.mock.calls[1][0]).toEqual({
+        expect(calls[1][0]).toEqual({
             item: items[1],
             index: 1,
             total: 2,

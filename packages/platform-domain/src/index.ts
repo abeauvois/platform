@@ -13,6 +13,7 @@ export * from './domain/entities/GmailMessage'
 export * from './domain/entities/SourceAdapter'
 export * from './domain/entities/BackgroundTask'
 export * from './domain/entities/PendingContent'
+export * from './domain/entities/RawFile'
 
 // Core ports commonly needed across apps
 export * from './domain/ports/IConfigProvider'

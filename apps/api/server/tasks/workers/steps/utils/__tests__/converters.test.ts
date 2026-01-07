@@ -6,7 +6,7 @@ describe('converters', () => {
     const createMockBaseContent = (overrides: Partial<BaseContent> = {}): BaseContent => {
         return new BaseContent(
             overrides.url ?? 'https://example.com/article',
-            overrides.sourceAdapter ?? 'gmail',
+            overrides.sourceAdapter ?? 'Gmail',
             overrides.tags ?? ['tech', 'ai'],
             overrides.summary ?? 'An article about AI',
             overrides.rawContent ?? 'Full article content here...',
@@ -26,7 +26,7 @@ describe('converters', () => {
             expect(bookmark).toBeInstanceOf(Bookmark);
             expect(bookmark.url).toBe('https://example.com/article');
             expect(bookmark.userId).toBe('user-123');
-            expect(bookmark.sourceAdapter).toBe('gmail');
+            expect(bookmark.sourceAdapter).toBe('Gmail');
             expect(bookmark.tags).toEqual(['tech', 'ai']);
             expect(bookmark.summary).toBe('An article about AI');
             expect(bookmark.rawContent).toBe('Full article content here...');
@@ -60,7 +60,7 @@ describe('converters', () => {
 
             expect(pending).toBeInstanceOf(PendingContent);
             expect(pending.url).toBe('https://example.com/article');
-            expect(pending.sourceAdapter).toBe('gmail');
+            expect(pending.sourceAdapter).toBe('Gmail');
             expect(pending.rawContent).toBe('Full article content here...');
             expect(pending.contentType).toBe('article');
             expect(pending.status).toBe('pending');
@@ -89,33 +89,33 @@ describe('converters', () => {
             const bookmark = new Bookmark(
                 'https://example.com/bookmark',
                 'user-789',
-                'twitter',
+                'Other',
                 ['social', 'news'],
-                'A tweet about news',
-                'Tweet content...',
+                'A post about news',
+                'Post content...',
                 new Date('2024-02-01T08:00:00Z'),
                 new Date('2024-02-01T09:00:00Z'),
-                'tweet'
+                'article'
             );
 
             const baseContent = toBaseContent(bookmark);
 
             expect(baseContent).toBeInstanceOf(BaseContent);
             expect(baseContent.url).toBe('https://example.com/bookmark');
-            expect(baseContent.sourceAdapter).toBe('twitter');
+            expect(baseContent.sourceAdapter).toBe('Other');
             expect(baseContent.tags).toEqual(['social', 'news']);
-            expect(baseContent.summary).toBe('A tweet about news');
-            expect(baseContent.rawContent).toBe('Tweet content...');
+            expect(baseContent.summary).toBe('A post about news');
+            expect(baseContent.rawContent).toBe('Post content...');
             expect(baseContent.createdAt).toEqual(new Date('2024-02-01T08:00:00Z'));
             expect(baseContent.updatedAt).toEqual(new Date('2024-02-01T09:00:00Z'));
-            expect(baseContent.contentType).toBe('tweet');
+            expect(baseContent.contentType).toBe('article');
         });
 
         test('should handle empty fields', () => {
             const bookmark = new Bookmark(
                 'https://example.com',
                 'user-1',
-                'manual',
+                'Other',
                 [],
                 '',
                 '',

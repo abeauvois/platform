@@ -47,6 +47,11 @@ describe('BaseWorkflowStep', () => {
             error: mock(() => {}),
             warning: mock(() => {}),
             debug: mock(() => {}),
+            await: () => ({
+                start: () => {},
+                update: () => {},
+                stop: () => {},
+            }),
         };
         config = {
             logger: mockLogger,
@@ -62,17 +67,23 @@ describe('BaseWorkflowStep', () => {
         metadata: {},
     });
 
-    const createMockItem = (url: string): BaseContent => ({
-        url,
-        sourceAdapter: 'test',
-        tags: [],
-        summary: '',
-        rawContent: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        contentType: 'article',
-        withCategorization: () => ({} as BaseContent),
-    } as BaseContent);
+    const createMockItem = (url: string): BaseContent => {
+        const item = {
+            url,
+            sourceAdapter: 'test' as const,
+            tags: [] as string[],
+            summary: '',
+            rawContent: '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            contentType: 'article' as const,
+            withCategorization: () => item,
+            withUpdatedTimestamp: () => item,
+            isValid: () => true,
+            isEnriched: () => false,
+        };
+        return item as unknown as BaseContent;
+    };
 
     describe('execute', () => {
         test('should skip execution and return empty result when items are empty', async () => {
@@ -201,9 +212,10 @@ describe('BaseWorkflowStep', () => {
                 error: index === 1 ? 'Failed' : undefined,
             }));
 
-            expect(onItemProcessed.mock.calls[0][0].success).toBe(true);
-            expect(onItemProcessed.mock.calls[1][0].success).toBe(false);
-            expect(onItemProcessed.mock.calls[1][0].error).toBe('Failed');
+            const calls = onItemProcessed.mock.calls as unknown as Array<[{ success: boolean; error?: string }]>;
+            expect(calls[0][0].success).toBe(true);
+            expect(calls[1][0].success).toBe(false);
+            expect(calls[1][0].error).toBe('Failed');
         });
     });
 

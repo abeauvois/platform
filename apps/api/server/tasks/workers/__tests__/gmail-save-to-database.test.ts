@@ -102,7 +102,7 @@ describe('Gmail Preset - Save to Database', () => {
         const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user-123', logger), bookmarkRepository);
 
         // Act - Execute all steps
-        let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
+        let context: WorkflowContext<BaseContent> = { userId: 'test-user-123', items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
         const readResult = await readStep.execute(context);
         context = readResult.context;
         await saveStep.execute(context);
@@ -148,7 +148,7 @@ describe('Gmail Preset - Save to Database', () => {
         const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user', logger), bookmarkRepository);
 
         // Act
-        let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
+        let context: WorkflowContext<BaseContent> = { userId: 'test-user', items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
         const readResult = await readStep.execute(context);
         context = readResult.context;
         await saveStep.execute(context);
@@ -177,7 +177,7 @@ describe('Gmail Preset - Save to Database', () => {
         const saveStep = new SaveToBookmarkStep(createSaveStepConfig('user-with-full-data', logger), bookmarkRepository);
 
         // Act
-        let context: WorkflowContext<BaseContent> = { items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
+        let context: WorkflowContext<BaseContent> = { userId: 'user-with-full-data', items: [], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
         const readResult = await readStep.execute(context);
         context = readResult.context;
         await saveStep.execute(context);
@@ -211,7 +211,7 @@ describe('Gmail Preset - Save to Database', () => {
         const saveStep = new SaveToBookmarkStep(createSaveStepConfig('test-user', logger), undefined);
 
         // Act
-        const context: WorkflowContext<BaseContent> = { items: [testItem], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
+        const context: WorkflowContext<BaseContent> = { userId: 'test-user', items: [testItem], outputPath: '', updatedIds: new Set<string>(), metadata: {} };
         const result = await saveStep.execute(context);
 
         // Assert - should continue without error
