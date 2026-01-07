@@ -1,37 +1,16 @@
-// Balance types
-export interface Balance {
-  asset: string
-  free: number
-  locked: number
-  total: number
-}
+import type {
+  AccountBalance,
+  MarginBalance,
+  SymbolPrice,
+  BalanceResponse,
+  MarginBalanceResponse,
+} from '@platform/trading-domain'
 
-export interface MarginBalance {
-  asset: string
-  free: number
-  locked: number
-  borrowed: number
-  interest: number
-  netAsset: number
-}
+// Re-export domain types for backward compatibility
+export type { AccountBalance, MarginBalance, SymbolPrice, BalanceResponse, MarginBalanceResponse }
 
-export interface BalanceResponse {
-  exchange: string
-  balances: Balance[]
-  count: number
-}
-
-export interface MarginBalanceResponse {
-  exchange: string
-  balances: MarginBalance[]
-  count: number
-}
-
-export interface SymbolPrice {
-  symbol: string
-  price: number
-  priceChangePercent24h?: number
-}
+// Alias for backward compat
+export type Balance = AccountBalance
 
 // Constants
 export const MIN_USD_VALUE_FILTER = 20

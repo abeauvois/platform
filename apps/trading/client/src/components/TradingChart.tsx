@@ -1,13 +1,14 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
+import { calculateEMA } from '@platform/trading-domain'
 import { useDroppable } from '@dnd-kit/core'
-import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts'
+import { CandlestickSeries, ColorType, createChart, LineSeries } from 'lightweight-charts'
 import { RefreshCw, TrendingUp } from 'lucide-react'
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 
 import { useKlines } from '../hooks/queries'
 
-import type { IChartApi, IPriceLine, Time } from 'lightweight-charts'
-import type { Candlestick } from '../lib/api'
+import type { IChartApi, IPriceLine, ISeriesApi, Time } from 'lightweight-charts'
+import type { Candlestick } from '@platform/trading-domain'
 
 export interface OrderLine {
     id: string
@@ -41,6 +42,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
         const chartContainerRef = useRef<HTMLDivElement>(null)
         const chartRef = useRef<IChartApi | null>(null)
         const candlestickSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null)
+        const ema20SeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
         const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map())
         const previewLineRef = useRef<IPriceLine | null>(null)
 
@@ -171,8 +173,18 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 wickDownColor: '#ef4444',
             })
 
+            // Add EMA 20 line series
+            const ema20Series = chart.addSeries(LineSeries, {
+                color: '#f59e0b', // Amber color for EMA
+                lineWidth: 2,
+                title: 'EMA 20',
+                priceLineVisible: false,
+                lastValueVisible: true,
+            })
+
             chartRef.current = chart
             candlestickSeriesRef.current = candlestickSeries
+            ema20SeriesRef.current = ema20Series
 
             // Handle window resize
             const handleResize = () => {
@@ -193,6 +205,16 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             }
         }, [symbol, interval, limit])
 
+        // Calculate EMA data when klines change
+        const ema20Data = useMemo(() => {
+            if (!klinesData?.klines) return []
+            // Cast time to chart library's Time type
+            return calculateEMA(klinesData.klines, 20).map(p => ({
+                ...p,
+                time: p.time as Time,
+            }))
+        }, [klinesData])
+
         // Update chart when klines data changes
         useEffect(() => {
             if (!klinesData || !candlestickSeriesRef.current) return
@@ -208,9 +230,14 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
 
             candlestickSeriesRef.current.setData(chartData)
 
+            // Update EMA 20 data
+            if (ema20SeriesRef.current && ema20Data.length > 0) {
+                ema20SeriesRef.current.setData(ema20Data)
+            }
+
             // Fit content to view
             chartRef.current?.timeScale().fitContent()
-        }, [klinesData])
+        }, [klinesData, ema20Data])
 
         // Redraw order lines when orders change or chart re-initializes
         useEffect(() => {
