@@ -56,7 +56,8 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@platform/trading-sdk', '@platform/trading-domain', '@platform/sdk', '@platform/platform-domain', '@platform/ui'],
+    // Exclude aliased packages from pre-bundling since we resolve them to source
+    exclude: ['@platform/trading-sdk', '@platform/trading-domain', '@platform/sdk', '@platform/platform-domain', '@platform/ui'],
   },
   server: {
     port: TRADING_CLIENT_PORT,
