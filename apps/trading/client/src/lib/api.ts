@@ -1,21 +1,12 @@
 import type {
+  Candlestick,
   BalanceResponse,
   MarginBalanceResponse,
   SymbolPrice,
-} from '../utils/balance'
+} from '@platform/trading-domain'
 
-/**
- * Candlestick data for charting
- */
-export interface Candlestick {
-  openTime: number
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
-  closeTime: number
-}
+// Re-export for convenience
+export type { Candlestick }
 
 /**
  * Klines API response

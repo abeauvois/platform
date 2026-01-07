@@ -1,14 +1,14 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
+import { calculateEMA } from '@platform/trading-domain'
 import { useDroppable } from '@dnd-kit/core'
 import { CandlestickSeries, ColorType, createChart, LineSeries } from 'lightweight-charts'
 import { RefreshCw, TrendingUp } from 'lucide-react'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 
 import { useKlines } from '../hooks/queries'
-import { calculateEMA } from '../utils/indicators'
 
 import type { IChartApi, IPriceLine, ISeriesApi, Time } from 'lightweight-charts'
-import type { Candlestick } from '../lib/api'
+import type { Candlestick } from '@platform/trading-domain'
 
 export interface OrderLine {
     id: string
@@ -208,7 +208,11 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
         // Calculate EMA data when klines change
         const ema20Data = useMemo(() => {
             if (!klinesData?.klines) return []
-            return calculateEMA(klinesData.klines, 20)
+            // Cast time to chart library's Time type
+            return calculateEMA(klinesData.klines, 20).map(p => ({
+                ...p,
+                time: p.time as Time,
+            }))
         }, [klinesData])
 
         // Update chart when klines data changes

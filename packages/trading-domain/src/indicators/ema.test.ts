@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { calculateEMA } from './indicators'
-import type { Candlestick } from '../lib/api'
+import { describe, expect, it } from 'bun:test'
+import { calculateEMA } from './ema.js'
+import type { Candlestick } from '../types.js'
 
 describe('calculateEMA', () => {
   // Helper to create candlestick data

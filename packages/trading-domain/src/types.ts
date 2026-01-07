@@ -231,3 +231,29 @@ export type UserDataEvent = OrderUpdateEvent | BalanceUpdateEvent;
  * Callback type for user data stream events
  */
 export type UserDataEventCallback = (event: UserDataEvent) => void;
+
+/**
+ * EMA (Exponential Moving Average) data point for chart rendering
+ */
+export interface EMADataPoint {
+    time: number;  // Unix seconds (generic, client casts to chart-specific Time type)
+    value: number;
+}
+
+/**
+ * API response envelope for spot balance data
+ */
+export interface BalanceResponse {
+    exchange: string;
+    balances: AccountBalance[];
+    count: number;
+}
+
+/**
+ * API response envelope for margin balance data
+ */
+export interface MarginBalanceResponse {
+    exchange: string;
+    balances: MarginBalance[];
+    count: number;
+}

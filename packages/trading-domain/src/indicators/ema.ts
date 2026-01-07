@@ -1,13 +1,4 @@
-import type { Candlestick } from '../lib/api'
-import type { Time } from 'lightweight-charts'
-
-/**
- * EMA data point for chart rendering
- */
-export interface EMADataPoint {
-  time: Time
-  value: number
-}
+import type { Candlestick, EMADataPoint } from '../types.js'
 
 /**
  * Calculate Exponential Moving Average (EMA) from candlestick data
@@ -21,12 +12,12 @@ export interface EMADataPoint {
  * @param period - EMA period (e.g., 20 for EMA 20)
  * @returns Array of EMA data points aligned with the candlestick timestamps
  */
-export function calculateEMA(data: Candlestick[], period: number): EMADataPoint[] {
+export function calculateEMA(data: Array<Candlestick>, period: number): Array<EMADataPoint> {
   if (data.length < period) {
     return []
   }
 
-  const result: EMADataPoint[] = []
+  const result: Array<EMADataPoint> = []
   const multiplier = 2 / (period + 1)
 
   // Calculate SMA for the first EMA value
@@ -38,7 +29,7 @@ export function calculateEMA(data: Candlestick[], period: number): EMADataPoint[
 
   // First EMA point
   result.push({
-    time: Math.floor(data[period - 1].openTime / 1000) as Time,
+    time: Math.floor(data[period - 1].openTime / 1000),
     value: sma,
   })
 
@@ -49,7 +40,7 @@ export function calculateEMA(data: Candlestick[], period: number): EMADataPoint[
     const currentEMA = (currentClose - prevEMA) * multiplier + prevEMA
 
     result.push({
-      time: Math.floor(data[i].openTime / 1000) as Time,
+      time: Math.floor(data[i].openTime / 1000),
       value: currentEMA,
     })
 
