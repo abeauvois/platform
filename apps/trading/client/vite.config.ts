@@ -1,14 +1,17 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import { resolve } from 'node:path'
 
-// Environment-based configuration
-const TRADING_CLIENT_PORT = Number(process.env.TRADING_CLIENT_PORT) || 5001
-const TRADING_SERVER_URL = process.env.TRADING_SERVER_URL || `http://localhost:${process.env.TRADING_SERVER_PORT || '3001'}`
-const API_URL = process.env.API_URL || `http://localhost:${process.env.API_PORT || '3000'}`
+// Load env from monorepo root for worktree port configuration
+const rootEnv = loadEnv('development', resolve(__dirname, '../../..'), '')
+
+// Environment-based configuration (prefer root env, fallback to process.env)
+const TRADING_CLIENT_PORT = Number(rootEnv.TRADING_CLIENT_PORT || process.env.TRADING_CLIENT_PORT) || 5001
+const TRADING_SERVER_URL = rootEnv.TRADING_SERVER_URL || process.env.TRADING_SERVER_URL || `http://localhost:${rootEnv.TRADING_SERVER_PORT || process.env.TRADING_SERVER_PORT || '3001'}`
+const API_URL = rootEnv.API_URL || process.env.API_URL || `http://localhost:${rootEnv.API_PORT || process.env.API_PORT || '3000'}`
 
 /**
  * Vite Configuration for Trading Client
