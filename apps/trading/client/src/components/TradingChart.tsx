@@ -1,5 +1,5 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
-import { calculateEMA } from '@platform/trading-domain'
+import { calculateEMA, calculatePricePrecision, formatPrice, getMinMove } from '@platform/trading-domain'
 import { useDroppable } from '@dnd-kit/core'
 import { CandlestickSeries, ColorType, createChart, LineSeries } from 'lightweight-charts'
 import { RefreshCw, TrendingUp } from 'lucide-react'
@@ -45,6 +45,8 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
         const ema20SeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
         const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map())
         const previewLineRef = useRef<IPriceLine | null>(null)
+        // Track if chart data has been initially loaded (to preserve zoom/pan on data refreshes)
+        const chartInitializedRef = useRef(false)
 
         // Use TanStack Query for klines data
         const { data: klinesData, refetch: refetchKlines } = useKlines({
@@ -90,7 +92,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                     lineWidth: 2,
                     lineStyle: 2, // Dashed
                     axisLabelVisible: true,
-                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${order.price.toFixed(2)}`,
+                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${formatPrice(order.price)}`,
                 })
                 priceLinesRef.current.set(order.id, priceLine)
             },
@@ -124,7 +126,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                     lineWidth: 2,
                     lineStyle: 0, // Solid line for preview
                     axisLabelVisible: true,
-                    title: `${side.toUpperCase()} @ ${price.toFixed(2)}${percentLabel}`,
+                    title: `${side.toUpperCase()} @ ${formatPrice(price)}${percentLabel}`,
                 })
             },
             hidePreviewLine: () => {
@@ -202,6 +204,8 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 window.removeEventListener('resize', handleResize)
                 priceLinesRef.current.clear()
                 chart.remove()
+                // Reset initialized flag so next symbol load will fitContent
+                chartInitializedRef.current = false
             }
         }, [symbol, interval, limit])
 
@@ -228,6 +232,31 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 close: k.close,
             }))
 
+            // Calculate price precision based on data
+            const lastCandle = klinesData.klines[klinesData.klines.length - 1]
+            const pricePrecision = lastCandle ? calculatePricePrecision(lastCandle.close) : 2
+            const minMove = getMinMove(pricePrecision)
+
+            // Update series price format for low-value tokens
+            candlestickSeriesRef.current.applyOptions({
+                priceFormat: {
+                    type: 'price',
+                    precision: pricePrecision,
+                    minMove: minMove,
+                },
+            })
+
+            // Update EMA series price format too
+            if (ema20SeriesRef.current) {
+                ema20SeriesRef.current.applyOptions({
+                    priceFormat: {
+                        type: 'price',
+                        precision: pricePrecision,
+                        minMove: minMove,
+                    },
+                })
+            }
+
             candlestickSeriesRef.current.setData(chartData)
 
             // Update EMA 20 data
@@ -235,8 +264,11 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 ema20SeriesRef.current.setData(ema20Data)
             }
 
-            // Fit content to view
-            chartRef.current?.timeScale().fitContent()
+            // Only fit content on initial load, preserve zoom/pan on data refreshes
+            if (!chartInitializedRef.current) {
+                chartRef.current?.timeScale().fitContent()
+                chartInitializedRef.current = true
+            }
         }, [klinesData, ema20Data])
 
         // Redraw order lines when orders change or chart re-initializes
@@ -258,7 +290,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                     lineWidth: 2,
                     lineStyle: 2, // Dashed
                     axisLabelVisible: true,
-                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${order.price.toFixed(2)}`,
+                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${formatPrice(order.price)}`,
                 })
                 priceLinesRef.current.set(order.id, priceLine)
             }

@@ -8,26 +8,61 @@ import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
 import { validateOrderValue } from '@platform/trading-domain';
 
+// Order types enum
+const OrderTypeEnum = z.enum([
+    'limit',
+    'market',
+    'stop_loss',
+    'stop_loss_limit',
+    'take_profit',
+    'take_profit_limit',
+]);
+
 // OpenAPI schemas
 const CreateOrderRequestSchema = z.object({
     symbol: z.string().openapi({ example: 'BTCUSDT', description: 'Trading pair symbol' }),
     side: z.enum(['buy', 'sell']).openapi({ example: 'buy', description: 'Order side' }),
-    type: z.enum(['limit', 'market']).default('limit').openapi({ example: 'limit', description: 'Order type' }),
+    type: OrderTypeEnum.default('limit').openapi({
+        example: 'stop_loss_limit',
+        description: 'Order type (limit, market, stop_loss, stop_loss_limit, take_profit, take_profit_limit)',
+    }),
     quantity: z.number().positive().openapi({ example: 0.001, description: 'Order quantity in base asset' }),
-    price: z.number().positive().openapi({ example: 42000, description: 'Limit price' }),
+    price: z.number().positive().optional().openapi({ example: 42000, description: 'Limit price (required for limit order types)' }),
+    stopPrice: z.number().positive().optional().openapi({ example: 41000, description: 'Stop/trigger price (required for stop order types)' }),
     timeInForce: z.enum(['GTC', 'IOC', 'FOK']).optional().default('GTC').openapi({
         example: 'GTC',
         description: 'Time in force (GTC=Good Till Cancel, IOC=Immediate Or Cancel, FOK=Fill Or Kill)',
     }),
-}).openapi('CreateOrderRequest');
+}).refine(
+    (data) => {
+        // Validate price is provided for limit orders
+        const limitTypes = ['limit', 'stop_loss_limit', 'take_profit_limit'];
+        if (limitTypes.includes(data.type)) {
+            return data.price !== undefined;
+        }
+        return true;
+    },
+    { message: 'Price is required for limit order types' }
+).refine(
+    (data) => {
+        // Validate stopPrice is provided for stop orders
+        const stopTypes = ['stop_loss', 'stop_loss_limit', 'take_profit', 'take_profit_limit'];
+        if (stopTypes.includes(data.type)) {
+            return data.stopPrice !== undefined;
+        }
+        return true;
+    },
+    { message: 'Stop price is required for stop order types' }
+).openapi('CreateOrderRequest');
 
 const OrderResponseSchema = z.object({
     id: z.string().openapi({ example: '12345678', description: 'Order ID' }),
     symbol: z.string().openapi({ example: 'BTCUSDT', description: 'Trading pair symbol' }),
     side: z.enum(['buy', 'sell']).openapi({ example: 'buy', description: 'Order side' }),
-    type: z.enum(['market', 'limit', 'stop', 'stop_limit']).openapi({ example: 'limit', description: 'Order type' }),
+    type: OrderTypeEnum.openapi({ example: 'stop_loss_limit', description: 'Order type' }),
     quantity: z.number().openapi({ example: 0.001, description: 'Order quantity' }),
     price: z.number().optional().openapi({ example: 42000, description: 'Limit price' }),
+    stopPrice: z.number().optional().openapi({ example: 41000, description: 'Stop/trigger price' }),
     status: z.enum(['pending', 'filled', 'partially_filled', 'cancelled', 'rejected']).openapi({
         example: 'pending',
         description: 'Order status',
@@ -145,6 +180,7 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
                     type: order.type,
                     quantity: order.quantity,
                     price: order.price,
+                    stopPrice: order.stopPrice,
                     status: order.status,
                     filledQuantity: order.filledQuantity,
                     createdAt: order.createdAt.toISOString(),
@@ -160,8 +196,11 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
             try {
                 const data = c.req.valid('json');
 
+                // Determine price for validation (use stopPrice for market stop orders, price for limit orders)
+                const priceForValidation = data.price ?? data.stopPrice ?? 0;
+
                 // Validate order value (max $500 limit)
-                const validation = validateOrderValue(data.quantity, data.price);
+                const validation = validateOrderValue(data.quantity, priceForValidation);
                 if (!validation.valid) {
                     return c.json({ error: validation.error }, 400);
                 }
@@ -173,6 +212,7 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
                     type: data.type,
                     quantity: data.quantity,
                     price: data.price,
+                    stopPrice: data.stopPrice,
                     timeInForce: data.timeInForce,
                 });
 
@@ -183,6 +223,7 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
                     type: order.type,
                     quantity: order.quantity,
                     price: order.price,
+                    stopPrice: order.stopPrice,
                     status: order.status,
                     filledQuantity: order.filledQuantity,
                     createdAt: order.createdAt.toISOString(),

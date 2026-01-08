@@ -1,6 +1,6 @@
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { createFileRoute } from '@tanstack/react-router'
-import { useRef } from 'react'
+import { useRef, useState, useCallback } from 'react'
 
 import { DragOrderPanel } from '../components/DragOrderPanel'
 import { DragOverlayBadge } from '../components/DragOverlayBadge'
@@ -8,14 +8,17 @@ import { MarginAccountCard } from '../components/MarginAccountCard'
 import { OrdersTable } from '../components/OrdersTable'
 import { PortfolioSummaryCard } from '../components/PortfolioSummaryCard'
 import { SpotBalancesCard } from '../components/SpotBalancesCard'
+import { StopPriceModal } from '../components/StopPriceModal'
 import { TradingChart } from '../components/TradingChart'
 import { useCurrentPrice } from '../hooks/useCurrentPrice'
 import { useDragOrder } from '../hooks/useDragOrder'
 import { useOrderAmounts } from '../hooks/useOrderAmounts'
 import { useOrderManagement } from '../hooks/useOrderManagement'
+import { useOrderMode } from '../hooks/useOrderMode'
 import { useSelectedAsset } from '../hooks/useSelectedAsset'
 import { useTradingBalances } from '../hooks/useTradingBalances'
 import { useTradingData } from '../hooks/useTradingData'
+import { detectStopOrderCategory } from '@platform/trading-domain'
 
 import type { TradingChartHandle } from '../components/TradingChart'
 
@@ -45,14 +48,68 @@ function HomePage() {
   const { buyAmount, sellAmount, setBuyAmount, setSellAmount } = useOrderAmounts(
     currentPrice,
     baseBalance,
-    quoteBalance
+    quoteBalance,
+    tradingSymbol
   )
+
+  // Order mode state (stop_limit or limit)
+  const { orderMode, setOrderMode } = useOrderMode()
+
+  // Stop price modal state
+  const [stopMarketModal, setStopMarketModal] = useState<{
+    isOpen: boolean
+    side: 'buy' | 'sell'
+  }>({ isOpen: false, side: 'buy' })
 
   // Order CRUD operations and real-time updates
   const { placedOrders, createOrder, cancelOrder } = useOrderManagement(
     chartRef,
     tradingData.refetch
   )
+
+  // Handle stop-market order confirmation from modal
+  const handleStopMarketConfirm = useCallback(
+    (stopPrice: number) => {
+      const side = stopMarketModal.side
+      const quantity = side === 'buy' ? buyAmount : sellAmount
+
+      // Detect stop order category (stop_loss or take_profit)
+      const category = detectStopOrderCategory(side, stopPrice, currentPrice)
+      const orderType = category === 'stop_loss' ? 'stop_loss' : 'take_profit'
+
+      createOrder(
+        {
+          symbol: tradingSymbol,
+          side,
+          type: orderType,
+          quantity,
+          stopPrice,
+        },
+        {
+          onError: (error) => {
+            alert(`Failed to create order: ${error.message}`)
+          },
+        }
+      )
+
+      setStopMarketModal({ isOpen: false, side: 'buy' })
+    },
+    [stopMarketModal.side, buyAmount, sellAmount, currentPrice, tradingSymbol, createOrder]
+  )
+
+  // Handle buy button click (opens stop-market modal in stop mode)
+  const handleBuyClick = useCallback(() => {
+    if (orderMode === 'stop_limit') {
+      setStopMarketModal({ isOpen: true, side: 'buy' })
+    }
+  }, [orderMode])
+
+  // Handle sell button click (opens stop-market modal in stop mode)
+  const handleSellClick = useCallback(() => {
+    if (orderMode === 'stop_limit') {
+      setStopMarketModal({ isOpen: true, side: 'sell' })
+    }
+  }, [orderMode])
 
   // Drag-and-drop order placement
   const { sensors, activeDragId, handleDragStart, handleDragMove, handleDragEnd } = useDragOrder({
@@ -66,6 +123,8 @@ function HomePage() {
     baseLockedBalance,
     quoteBalance,
     quoteLockedBalance,
+    orderMode,
+    currentPrice,
     createOrder,
   })
 
@@ -143,6 +202,10 @@ function HomePage() {
             sellAmount={sellAmount}
             onBuyAmountChange={setBuyAmount}
             onSellAmountChange={setSellAmount}
+            orderMode={orderMode}
+            onOrderModeChange={setOrderMode}
+            onBuyClick={handleBuyClick}
+            onSellClick={handleSellClick}
           />
 
           <OrdersTable orders={placedOrders} onCancelOrder={cancelOrder} />
@@ -165,6 +228,17 @@ function HomePage() {
           <DragOverlayBadge side={activeDragId === 'drag-buy' ? 'buy' : 'sell'} />
         )}
       </DragOverlay>
+
+      {/* Stop Price Modal for stop-market orders */}
+      <StopPriceModal
+        isOpen={stopMarketModal.isOpen}
+        side={stopMarketModal.side}
+        currentPrice={currentPrice}
+        quantity={stopMarketModal.side === 'buy' ? buyAmount : sellAmount}
+        baseAsset={baseAsset}
+        onConfirm={handleStopMarketConfirm}
+        onCancel={() => setStopMarketModal({ isOpen: false, side: 'buy' })}
+      />
     </DndContext>
   )
 }

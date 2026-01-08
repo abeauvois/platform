@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Maximum order value in USD
 const MAX_ORDER_VALUE_USD = 500
@@ -14,18 +14,32 @@ export interface UseOrderAmountsReturn {
  * Hook to manage buy/sell order amounts with auto-calculated defaults
  *
  * Default calculation: min($500 worth / price, 25% of available balance)
+ *
+ * Amounts are only auto-calculated on:
+ * - Initial load (when transitioning from 0 to valid price)
+ * - Symbol change (user selects a different trading pair)
+ *
+ * After initialization, user changes are preserved and not overwritten by data syncs.
  */
 export function useOrderAmounts(
   currentPrice: number,
   baseBalance: number,
-  quoteBalance: number
+  quoteBalance: number,
+  symbol?: string
 ): UseOrderAmountsReturn {
   const [buyAmount, setBuyAmount] = useState(0)
   const [sellAmount, setSellAmount] = useState(0)
 
-  // Calculate default amounts when price or balances change
+  // Track the last symbol we initialized for (to reset on symbol change)
+  const lastSymbolRef = useRef<string | undefined>(undefined)
+
+  // Calculate default amounts only on initial load or symbol change
   useEffect(() => {
-    if (currentPrice > 0) {
+    // Check if symbol changed (need to recalculate defaults)
+    const symbolChanged = symbol !== undefined && symbol !== lastSymbolRef.current
+
+    // Only initialize when we first get valid data or when symbol changes
+    if (currentPrice > 0 && (lastSymbolRef.current === undefined || symbolChanged)) {
       // For BUY: use quote balance (USDC) to calculate max buy amount
       const maxBuyByValue = MAX_ORDER_VALUE_USD / currentPrice
       const maxBuyByBalance = quoteBalance / currentPrice
@@ -36,11 +50,10 @@ export function useOrderAmounts(
       const maxSellByValue = MAX_ORDER_VALUE_USD / currentPrice
       const defaultSell = Math.min(maxSellByValue, baseBalance * 0.25)
       setSellAmount(defaultSell > 0 ? Math.floor(defaultSell * 10000) / 10000 : 0)
-    } else {
-      setBuyAmount(0)
-      setSellAmount(0)
+
+      lastSymbolRef.current = symbol
     }
-  }, [baseBalance, quoteBalance, currentPrice])
+  }, [baseBalance, quoteBalance, currentPrice, symbol])
 
   return {
     buyAmount,

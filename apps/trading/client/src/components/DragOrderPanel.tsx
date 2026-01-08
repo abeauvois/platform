@@ -1,8 +1,9 @@
-import { Card, CardContent, Input } from '@platform/ui'
+import { Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@platform/ui'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 
 import { formatPrice } from '../utils/balance'
+import type { OrderMode } from '../hooks/useOrderMode'
 
 const MAX_ORDER_VALUE_USD = 500
 
@@ -11,9 +12,10 @@ interface DraggableButtonProps {
   side: 'buy' | 'sell'
   disabled?: boolean
   children: React.ReactNode
+  onClick?: () => void
 }
 
-function DraggableButton({ id, side, disabled = false, children }: Readonly<DraggableButtonProps>) {
+function DraggableButton({ id, side, disabled = false, children, onClick }: Readonly<DraggableButtonProps>) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     data: { side },
@@ -36,6 +38,7 @@ function DraggableButton({ id, side, disabled = false, children }: Readonly<Drag
       style={style}
       {...(disabled ? {} : listeners)}
       {...attributes}
+      onClick={disabled ? undefined : onClick}
       className={`${bgColor} text-white font-bold py-4 px-6 rounded-lg text-lg shadow-lg transition-all select-none touch-none`}
       type="button"
       disabled={disabled}
@@ -56,6 +59,14 @@ export interface DragOrderPanelProps {
   sellAmount: number
   onBuyAmountChange: (amount: number) => void
   onSellAmountChange: (amount: number) => void
+  /** Current order mode */
+  orderMode: OrderMode
+  /** Callback when order mode changes */
+  onOrderModeChange: (mode: OrderMode) => void
+  /** Callback when BUY button is clicked (for stop-market orders) */
+  onBuyClick: () => void
+  /** Callback when SELL button is clicked (for stop-market orders) */
+  onSellClick: () => void
 }
 
 export function DragOrderPanel({
@@ -67,6 +78,10 @@ export function DragOrderPanel({
   sellAmount,
   onBuyAmountChange,
   onSellAmountChange,
+  orderMode,
+  onOrderModeChange,
+  onBuyClick,
+  onSellClick,
 }: Readonly<DragOrderPanelProps>) {
   // Calculate order values in USD
   const buyOrderValue = buyAmount * currentPrice
@@ -83,16 +98,39 @@ export function DragOrderPanel({
     return amount.toFixed(6)
   }
 
+  // Get instruction text based on order mode
+  const instructionText = orderMode === 'stop_limit'
+    ? 'Drag to place stop-limit order • Click for stop-market'
+    : 'Drag to place limit order at that price level'
+
   return (
     <Card className="bg-card/50 backdrop-blur">
       <CardContent className="p-4">
+        {/* Order Mode Selector */}
+        <div className="flex justify-center mb-4">
+          <Select value={orderMode} onValueChange={(value) => onOrderModeChange(value as OrderMode)}>
+            <SelectTrigger className="w-[200px] bg-input/50 border-input">
+              <SelectValue placeholder="Select order mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="stop_limit">Stop-Limit (default)</SelectItem>
+              <SelectItem value="limit">Limit Order</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="flex items-center justify-center gap-8">
           {/* BUY Section */}
           <div className="flex flex-col items-center gap-2">
             <div className="text-xs text-muted-foreground">
               Available: <span className="text-green-400 font-medium">{formatPrice(availableQuote)}</span>
             </div>
-            <DraggableButton id="drag-buy" side="buy" disabled={isBuyDisabled}>
+            <DraggableButton
+              id="drag-buy"
+              side="buy"
+              disabled={isBuyDisabled}
+              onClick={orderMode === 'stop_limit' ? onBuyClick : undefined}
+            >
               BUY
             </DraggableButton>
             <div className="flex items-center gap-1 bg-input/20 dark:bg-input/30 border border-input rounded-md px-2 py-1">
@@ -132,7 +170,12 @@ export function DragOrderPanel({
             <div className="text-xs text-muted-foreground">
               Available: <span className="text-red-400 font-medium">{formatAmount(availableBase)} {baseAsset}</span>
             </div>
-            <DraggableButton id="drag-sell" side="sell" disabled={isSellDisabled}>
+            <DraggableButton
+              id="drag-sell"
+              side="sell"
+              disabled={isSellDisabled}
+              onClick={orderMode === 'stop_limit' ? onSellClick : undefined}
+            >
               SELL
             </DraggableButton>
             <div className="flex items-center gap-1 bg-input/20 dark:bg-input/30 border border-input rounded-md px-2 py-1">
@@ -163,7 +206,7 @@ export function DragOrderPanel({
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-3">
-          Drag a button onto the chart to place an order at that price level
+          {instructionText}
         </p>
       </CardContent>
     </Card>

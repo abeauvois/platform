@@ -13,9 +13,10 @@ import { useFetchOrders } from './useFetchOrders'
 export interface CreateOrderParams {
   symbol: string
   side: 'buy' | 'sell'
-  type: 'limit' | 'market'
+  type: 'limit' | 'market' | 'stop_loss' | 'stop_loss_limit' | 'take_profit' | 'take_profit_limit'
   quantity: number
-  price: number
+  price?: number
+  stopPrice?: number
 }
 
 export interface UseOrderManagementReturn {

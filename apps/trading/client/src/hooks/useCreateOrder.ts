@@ -2,12 +2,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { onOrderCompleted } from '../lib/cache-utils'
 
+export type OrderType = 'limit' | 'market' | 'stop_loss' | 'stop_loss_limit' | 'take_profit' | 'take_profit_limit'
+
 export interface CreateOrderRequest {
     symbol: string
     side: 'buy' | 'sell'
-    type: 'limit' | 'market'
+    type: OrderType
     quantity: number
-    price: number
+    price?: number
+    stopPrice?: number
     timeInForce?: 'GTC' | 'IOC' | 'FOK'
 }
 
@@ -15,9 +18,10 @@ export interface OrderResponse {
     id: string
     symbol: string
     side: 'buy' | 'sell'
-    type: 'limit' | 'market'
+    type: OrderType
     quantity: number
-    price: number
+    price?: number
+    stopPrice?: number
     status: 'pending' | 'filled' | 'partially_filled' | 'cancelled' | 'rejected'
     filledQuantity: number
     createdAt: string

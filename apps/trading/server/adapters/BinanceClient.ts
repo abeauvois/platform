@@ -166,6 +166,56 @@ interface BinanceBalanceUpdate {
 }
 
 /**
+ * Binance LOT_SIZE filter - defines quantity precision
+ */
+interface BinanceLotSizeFilter {
+    filterType: 'LOT_SIZE';
+    minQty: string;
+    maxQty: string;
+    stepSize: string;
+}
+
+/**
+ * Binance PRICE_FILTER - defines price precision
+ */
+interface BinancePriceFilter {
+    filterType: 'PRICE_FILTER';
+    minPrice: string;
+    maxPrice: string;
+    tickSize: string;
+}
+
+/**
+ * Binance symbol info from exchange info endpoint
+ */
+interface BinanceSymbolInfo {
+    symbol: string;
+    status: string;
+    baseAsset: string;
+    quoteAsset: string;
+    filters: Array<BinanceLotSizeFilter | BinancePriceFilter | { filterType: string }>;
+}
+
+/**
+ * Binance exchange info response
+ */
+interface BinanceExchangeInfoResponse {
+    symbols: Array<BinanceSymbolInfo>;
+}
+
+/**
+ * Cached symbol filter info for quantity/price precision
+ */
+interface SymbolFilterInfo {
+    stepSize: number;
+    tickSize: number;
+    minQty: number;
+    maxQty: number;
+    minPrice: number;
+    maxPrice: number;
+}
+
+/**
  * Configuration options for BinanceClient
  */
 export interface BinanceClientConfig {
@@ -190,6 +240,9 @@ export class BinanceClient implements IExchangeClient {
     private userDataWs: WebSocket | null = null;
     private listenKeyRefreshInterval: ReturnType<typeof setInterval> | null = null;
     private userDataCallbacks: Set<UserDataEventCallback> = new Set();
+
+    // Symbol filter cache (for quantity/price precision)
+    private symbolFilterCache: Map<string, SymbolFilterInfo> = new Map();
 
     constructor(config?: BinanceClientConfig) {
         this.apiKey = config?.apiKey;
@@ -412,6 +465,104 @@ export class BinanceClient implements IExchangeClient {
     }
 
     /**
+     * Get symbol filter info (LOT_SIZE and PRICE_FILTER) from exchange info
+     * Results are cached to avoid repeated API calls
+     * @param symbol - Trading pair symbol
+     * @returns Symbol filter info with step/tick sizes
+     */
+    async getSymbolFilterInfo(symbol: string): Promise<SymbolFilterInfo> {
+        const binanceSymbol = this.convertSymbol(symbol);
+
+        // Check cache first
+        const cached = this.symbolFilterCache.get(binanceSymbol);
+        if (cached) {
+            return cached;
+        }
+
+        // Fetch from exchange info endpoint
+        const url = `${this.baseUrl}/exchangeInfo?symbol=${binanceSymbol}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: BinanceExchangeInfoResponse = await response.json();
+
+        if (!data.symbols || data.symbols.length === 0) {
+            throw new Error(`Symbol ${binanceSymbol} not found on Binance`);
+        }
+
+        const symbolInfo = data.symbols[0];
+        const lotSizeFilter = symbolInfo.filters.find(
+            (f): f is BinanceLotSizeFilter => f.filterType === 'LOT_SIZE'
+        );
+        const priceFilter = symbolInfo.filters.find(
+            (f): f is BinancePriceFilter => f.filterType === 'PRICE_FILTER'
+        );
+
+        const filterInfo: SymbolFilterInfo = {
+            stepSize: lotSizeFilter ? Number.parseFloat(lotSizeFilter.stepSize) : 1,
+            minQty: lotSizeFilter ? Number.parseFloat(lotSizeFilter.minQty) : 0,
+            maxQty: lotSizeFilter ? Number.parseFloat(lotSizeFilter.maxQty) : Number.MAX_SAFE_INTEGER,
+            tickSize: priceFilter ? Number.parseFloat(priceFilter.tickSize) : 0.00000001,
+            minPrice: priceFilter ? Number.parseFloat(priceFilter.minPrice) : 0,
+            maxPrice: priceFilter ? Number.parseFloat(priceFilter.maxPrice) : Number.MAX_SAFE_INTEGER,
+        };
+
+        // Cache the result
+        this.symbolFilterCache.set(binanceSymbol, filterInfo);
+
+        return filterInfo;
+    }
+
+    /**
+     * Round a value down to the nearest step size
+     * Uses floor to avoid exceeding available balance
+     * @param value - The value to round
+     * @param stepSize - The step size to round to
+     * @returns The rounded value as a string (to preserve precision)
+     */
+    private roundToStepSize(value: number, stepSize: number): string {
+        if (stepSize === 0 || stepSize === 1) {
+            return Math.floor(value).toString();
+        }
+
+        // Calculate precision from step size (e.g., 0.01 -> 2 decimals)
+        const precision = this.getPrecisionFromStepSize(stepSize);
+
+        // Round down to the nearest step size
+        const rounded = Math.floor(value / stepSize) * stepSize;
+
+        // Format with the correct number of decimal places
+        return rounded.toFixed(precision);
+    }
+
+    /**
+     * Get the number of decimal places from a step size
+     * @param stepSize - The step size (e.g., 0.001)
+     * @returns Number of decimal places (e.g., 3)
+     */
+    private getPrecisionFromStepSize(stepSize: number): number {
+        if (stepSize >= 1) {
+            return 0;
+        }
+
+        const stepStr = stepSize.toString();
+        if (stepStr.includes('e-')) {
+            // Handle scientific notation (e.g., 1e-8)
+            return parseInt(stepStr.split('e-')[1], 10);
+        }
+
+        const decimalPart = stepStr.split('.')[1];
+        return decimalPart ? decimalPart.length : 0;
+    }
+
+    /**
      * Create a new order (requires authentication)
      * @param data - Order details
      * @returns Created order with ID and status
@@ -424,29 +575,41 @@ export class BinanceClient implements IExchangeClient {
         const timestamp = Date.now();
         const binanceSymbol = this.convertSymbol(data.symbol);
 
+        // Get symbol filter info for quantity/price precision
+        const filterInfo = await this.getSymbolFilterInfo(data.symbol);
+
+        // Round quantity to step size (floor to avoid exceeding balance)
+        const roundedQuantity = this.roundToStepSize(data.quantity, filterInfo.stepSize);
+
         // Build order parameters
         const params = new URLSearchParams({
             symbol: binanceSymbol,
             side: data.side.toUpperCase(),
-            type: data.type.toUpperCase(),
-            quantity: data.quantity.toString(),
+            type: this.mapOrderTypeToBinance(data.type),
+            quantity: roundedQuantity,
             timestamp: timestamp.toString(),
+            newOrderRespType: 'RESULT', // Request full response with status, side, etc.
         });
 
-        // Add price for limit orders
-        if (data.type === 'limit' && data.price !== undefined) {
-            params.append('price', data.price.toString());
+        // Add price for limit orders (including stop_loss_limit, take_profit_limit)
+        if (this.isLimitType(data.type) && data.price !== undefined) {
+            const roundedPrice = this.roundToStepSize(data.price, filterInfo.tickSize);
+            params.append('price', roundedPrice);
             params.append('timeInForce', data.timeInForce || 'GTC');
         }
 
-        // Add stop price for stop orders
-        if ((data.type === 'stop' || data.type === 'stop_limit') && data.stopPrice !== undefined) {
-            params.append('stopPrice', data.stopPrice.toString());
+        // Add stop price for all stop orders
+        if (this.isStopType(data.type) && data.stopPrice !== undefined) {
+            const roundedStopPrice = this.roundToStepSize(data.stopPrice, filterInfo.tickSize);
+            params.append('stopPrice', roundedStopPrice);
         }
 
         const queryString = params.toString();
         const signature = await this.sign(queryString);
         const url = `${this.baseUrl}/order?${queryString}&signature=${signature}`;
+
+        // Log request parameters for debugging
+        console.log('[BinanceClient] Creating order with params:', Object.fromEntries(params));
 
         const response = await fetch(url, {
             method: 'POST',
@@ -455,13 +618,63 @@ export class BinanceClient implements IExchangeClient {
             },
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        const responseText = await response.text();
+        let orderResponse: BinanceOrderResponse;
+
+        try {
+            orderResponse = JSON.parse(responseText);
+        } catch {
+            throw new Error(`Binance API error: Invalid JSON response - ${responseText}`);
         }
 
-        const orderResponse: BinanceOrderResponse = await response.json();
+        // Log the response for debugging
+        console.log('[BinanceClient] Order response:', JSON.stringify(orderResponse, null, 2));
+
+        if (!response.ok) {
+            const errorMsg = (orderResponse as { msg?: string }).msg || response.statusText;
+            throw new Error(`Binance API error: ${response.status} - ${errorMsg}`);
+        }
+
+        // Check if response contains an error (Binance sometimes returns errors with 200)
+        if ((orderResponse as { code?: number }).code && (orderResponse as { msg?: string }).msg) {
+            throw new Error(`Binance API error: ${(orderResponse as { code?: number }).code} - ${(orderResponse as { msg?: string }).msg}`);
+        }
+
+        // Validate required fields exist
+        if (!orderResponse.orderId || !orderResponse.side || !orderResponse.symbol) {
+            throw new Error(`Binance API error: Invalid order response - ${responseText}`);
+        }
+
         return this.mapBinanceOrderToOrder(orderResponse);
+    }
+
+    /**
+     * Map domain order type to Binance API order type
+     */
+    private mapOrderTypeToBinance(domainType: CreateOrderData['type']): string {
+        const typeMap: Record<string, string> = {
+            'market': 'MARKET',
+            'limit': 'LIMIT',
+            'stop_loss': 'STOP_LOSS',
+            'stop_loss_limit': 'STOP_LOSS_LIMIT',
+            'take_profit': 'TAKE_PROFIT',
+            'take_profit_limit': 'TAKE_PROFIT_LIMIT',
+        };
+        return typeMap[domainType] || domainType.toUpperCase();
+    }
+
+    /**
+     * Check if order type requires a price (limit orders)
+     */
+    private isLimitType(type: string): boolean {
+        return ['limit', 'stop_loss_limit', 'take_profit_limit'].includes(type);
+    }
+
+    /**
+     * Check if order type requires a stop price
+     */
+    private isStopType(type: string): boolean {
+        return ['stop_loss', 'stop_loss_limit', 'take_profit', 'take_profit_limit'].includes(type);
     }
 
     /**
@@ -480,10 +693,10 @@ export class BinanceClient implements IExchangeClient {
         const typeMap: Record<string, Order['type']> = {
             'MARKET': 'market',
             'LIMIT': 'limit',
-            'STOP_LOSS': 'stop',
-            'STOP_LOSS_LIMIT': 'stop_limit',
-            'TAKE_PROFIT': 'stop',
-            'TAKE_PROFIT_LIMIT': 'stop_limit',
+            'STOP_LOSS': 'stop_loss',
+            'STOP_LOSS_LIMIT': 'stop_loss_limit',
+            'TAKE_PROFIT': 'take_profit',
+            'TAKE_PROFIT_LIMIT': 'take_profit_limit',
         };
 
         const now = new Date(data.transactTime);
@@ -563,10 +776,10 @@ export class BinanceClient implements IExchangeClient {
         const typeMap: Record<string, Order['type']> = {
             'MARKET': 'market',
             'LIMIT': 'limit',
-            'STOP_LOSS': 'stop',
-            'STOP_LOSS_LIMIT': 'stop_limit',
-            'TAKE_PROFIT': 'stop',
-            'TAKE_PROFIT_LIMIT': 'stop_limit',
+            'STOP_LOSS': 'stop_loss',
+            'STOP_LOSS_LIMIT': 'stop_loss_limit',
+            'TAKE_PROFIT': 'take_profit',
+            'TAKE_PROFIT_LIMIT': 'take_profit_limit',
         };
 
         const price = Number.parseFloat(data.price);
@@ -870,10 +1083,10 @@ export class BinanceClient implements IExchangeClient {
             const typeMap: Record<string, Order['type']> = {
                 'MARKET': 'market',
                 'LIMIT': 'limit',
-                'STOP_LOSS': 'stop',
-                'STOP_LOSS_LIMIT': 'stop_limit',
-                'TAKE_PROFIT': 'stop',
-                'TAKE_PROFIT_LIMIT': 'stop_limit',
+                'STOP_LOSS': 'stop_loss',
+                'STOP_LOSS_LIMIT': 'stop_loss_limit',
+                'TAKE_PROFIT': 'take_profit',
+                'TAKE_PROFIT_LIMIT': 'take_profit_limit',
             };
 
             const price = Number.parseFloat(report.p);

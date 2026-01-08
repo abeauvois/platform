@@ -6,6 +6,7 @@ import type { RefObject } from 'react'
 
 import type { TradingChartHandle } from '../components/TradingChart'
 import type { CreateOrderParams } from './useOrderManagement'
+import type { OrderMode } from './useOrderMode'
 
 import {
   getPricePrecision,
@@ -14,6 +15,7 @@ import {
   validateBalance,
   validateOrderValue,
 } from '../utils/order'
+import { detectStopOrderCategory } from '@platform/trading-domain'
 
 // Maximum order value in USD
 const MAX_ORDER_VALUE = 500
@@ -29,6 +31,10 @@ export interface UseDragOrderConfig {
   baseLockedBalance: number
   quoteBalance: number
   quoteLockedBalance: number
+  /** Order mode: 'stop_limit' creates stop-limit orders, 'limit' creates regular limit orders */
+  orderMode: OrderMode
+  /** Current market price (needed for stop order type detection) */
+  currentPrice: number
   createOrder: (
     params: CreateOrderParams,
     callbacks?: {
@@ -58,6 +64,7 @@ export interface UseDragOrderReturn {
  * - DnD sensor configuration
  * - Preview line display during drag
  * - Order validation and placement on drop
+ * - Stop-limit vs limit order creation based on orderMode
  */
 export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
   const {
@@ -71,6 +78,8 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
     baseLockedBalance,
     quoteBalance,
     quoteLockedBalance,
+    orderMode,
+    currentPrice,
     createOrder,
   } = config
 
@@ -145,12 +154,12 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
       }
 
       // Round price and quantity to appropriate precision for Binance
-      const price = roundToPrecision(rawPrice, getPricePrecision(rawPrice))
+      const dragPrice = roundToPrecision(rawPrice, getPricePrecision(rawPrice))
       const orderAmount = side === 'buy' ? buyAmount : sellAmount
       const quantity = roundToPrecision(orderAmount, getQuantityPrecision(rawPrice))
 
       // Validate order amount
-      const valueValidation = validateOrderValue(quantity, price, MAX_ORDER_VALUE)
+      const valueValidation = validateOrderValue(quantity, dragPrice, MAX_ORDER_VALUE)
       if (!valueValidation.valid) {
         console.warn('[DragOrder]', valueValidation.error)
         alert(valueValidation.error)
@@ -159,7 +168,7 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
 
       // For BUY orders, check if we have enough quote balance
       if (side === 'buy') {
-        const orderValue = quantity * price
+        const orderValue = quantity * dragPrice
         const balanceValidation = validateBalance(
           orderValue,
           quoteBalance,
@@ -188,13 +197,45 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
         }
       }
 
-      const orderValue = quantity * price
+      // Determine order type and prices based on mode
+      let orderType: CreateOrderParams['type']
+      let orderPrice: number | undefined
+      let stopPrice: number | undefined
+
+      if (orderMode === 'stop_limit') {
+        // Stop-limit mode: drag position is the stop price
+        const category = detectStopOrderCategory(side, dragPrice, currentPrice)
+        orderType = category === 'stop_loss' ? 'stop_loss_limit' : 'take_profit_limit'
+        stopPrice = dragPrice
+
+        // Set limit price slightly beyond stop to ensure fill
+        // For BUY: limit price slightly above stop (willing to pay more)
+        // For SELL: limit price slightly below stop (willing to accept less)
+        const slippage = 0.001 // 0.1% slippage tolerance
+        orderPrice = side === 'buy'
+          ? roundToPrecision(dragPrice * (1 + slippage), getPricePrecision(dragPrice))
+          : roundToPrecision(dragPrice * (1 - slippage), getPricePrecision(dragPrice))
+
+        console.log('[DragOrder] Stop-limit order:', {
+          category,
+          orderType,
+          stopPrice,
+          orderPrice,
+        })
+      } else {
+        // Regular limit mode
+        orderType = 'limit'
+        orderPrice = dragPrice
+      }
+
+      const orderValue = quantity * dragPrice
       console.log('[DragOrder] Creating order:', {
         symbol: tradingSymbol,
         side,
-        type: 'limit',
+        type: orderType,
         quantity,
-        price,
+        price: orderPrice,
+        stopPrice,
         value: orderValue.toFixed(2),
         quoteBalance,
         baseBalance,
@@ -205,9 +246,10 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
         {
           symbol: tradingSymbol,
           side,
-          type: 'limit',
+          type: orderType,
           quantity,
-          price,
+          price: orderPrice,
+          stopPrice,
         },
         {
           onError: (error) => {
@@ -227,6 +269,8 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
       baseLockedBalance,
       quoteBalance,
       quoteLockedBalance,
+      orderMode,
+      currentPrice,
       createOrder,
     ]
   )
