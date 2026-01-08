@@ -20,6 +20,7 @@
     "@hono/zod-validator": "^0.7.2",
     "@neondatabase/serverless": "^1.0.1",
     "@platform/auth": "workspace:*",
+    "@platform/env": "workspace:*",
     "@platform/db": "workspace:*",
     "@platform/platform-domain": "workspace:*",
     "@platform/trading-domain": "workspace:*",

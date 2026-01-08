@@ -53,7 +53,10 @@ export function useOrderUpdates(
             return
         }
 
-        const eventSource = new EventSource('/api/trading/order-stream/stream')
+        // EventSource with credentials to send session cookies
+        const eventSource = new EventSource('/api/trading/order-stream/stream', {
+            withCredentials: true,
+        })
         eventSourceRef.current = eventSource
 
         eventSource.addEventListener('connected', (e) => {

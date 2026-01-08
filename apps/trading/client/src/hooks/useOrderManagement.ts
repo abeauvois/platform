@@ -34,6 +34,8 @@ export interface UseOrderManagementReturn {
   cancelOrder: (orderId: string) => void
   /** Whether an order is being created */
   isCreating: boolean
+  /** Whether the user is authenticated (required for trading) */
+  isAuthenticated: boolean
 }
 
 /**
@@ -51,8 +53,8 @@ export function useOrderManagement(
   const [hasInitialized, setHasInitialized] = useState(false)
   const createOrderMutation = useCreateOrder()
 
-  // Fetch existing open orders on initialization
-  const { data: fetchedOrders } = useFetchOrders()
+  // Fetch existing open orders on initialization (only when authenticated)
+  const { data: fetchedOrders } = useFetchOrders(undefined, createOrderMutation.isAuthenticated)
 
   // Initialize placedOrders and chart order lines when orders are fetched
   useEffect(() => {
@@ -136,8 +138,8 @@ export function useOrderManagement(
     [chartRef, refetchBalances]
   )
 
-  // Subscribe to real-time order updates
-  useOrderUpdates(handleOrderUpdate)
+  // Subscribe to real-time order updates (only when authenticated)
+  useOrderUpdates(handleOrderUpdate, createOrderMutation.isAuthenticated)
 
   // Create a new order
   const createOrder = useCallback(
@@ -197,5 +199,6 @@ export function useOrderManagement(
     createOrder,
     cancelOrder,
     isCreating: createOrderMutation.isPending,
+    isAuthenticated: createOrderMutation.isAuthenticated,
   }
 }

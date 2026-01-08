@@ -1,3 +1,6 @@
+// Validate environment variables first - fail fast if misconfigured
+import { env } from './env';
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -13,9 +16,9 @@ import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgro
 
 const app = new Hono();
 
-// Environment-based URL configuration for CORS
-const DASHBOARD_URL = process.env.DASHBOARD_URL || `http://localhost:${process.env.DASHBOARD_PORT || '5000'}`;
-const TRADING_CLIENT_URL = process.env.TRADING_CLIENT_URL || `http://localhost:${process.env.TRADING_CLIENT_PORT || '5001'}`;
+// Environment-based URL configuration for CORS (using validated env)
+const DASHBOARD_URL = env.DASHBOARD_URL || `http://localhost:${env.DASHBOARD_PORT}`;
+const TRADING_CLIENT_URL = env.TRADING_CLIENT_URL || `http://localhost:${env.TRADING_CLIENT_PORT}`;
 
 const router = app
   .use(logger())

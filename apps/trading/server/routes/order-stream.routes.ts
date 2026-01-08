@@ -1,12 +1,13 @@
 /**
  * Order Stream Routes (Server-Sent Events)
- * Real-time order updates via SSE
+ * Real-time order updates via SSE - requires user authentication
  */
 
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 /**
  * Create SSE routes for order updates
@@ -15,11 +16,15 @@ import type { IExchangeClient } from '@platform/trading-domain';
 export function createOrderStreamRoutes(exchangeClient: IExchangeClient) {
     const app = new Hono<HonoEnv>();
 
+    // Require user authentication for all order stream routes
+    app.use('/*', authMiddleware);
+
     /**
      * GET /stream - Server-Sent Events endpoint for order updates
      *
      * Streams real-time order updates from Binance user data stream
      * Client should connect with EventSource API
+     * Requires authentication.
      */
     app.get('/stream', async (c) => {
         // Check if user data stream is supported

@@ -1,12 +1,13 @@
 /**
  * Order Routes with OpenAPI documentation
- * Protected endpoints for order operations
+ * Protected endpoints for order operations - requires user authentication
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
 import type { IExchangeClient } from '@platform/trading-domain';
 import { validateOrderValue } from '@platform/trading-domain';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 // Order types enum
 const OrderTypeEnum = z.enum([
@@ -76,6 +77,10 @@ const ErrorSchema = z.object({
     error: z.string().openapi({ example: 'Order creation failed', description: 'Error message' }),
 }).openapi('OrderError');
 
+const UnauthorizedSchema = z.object({
+    error: z.string().openapi({ example: 'Unauthorized', description: 'Authentication required' }),
+}).openapi('UnauthorizedError');
+
 // Query schemas
 const GetOrdersQuerySchema = z.object({
     symbol: z.string().optional().openapi({
@@ -92,7 +97,8 @@ const getOrdersRoute = createRoute({
     path: '/',
     tags: ['Orders'],
     summary: 'Get open orders',
-    description: 'Get all open orders for a symbol, or all open orders if no symbol specified.',
+    description: 'Get all open orders for a symbol, or all open orders if no symbol specified. Requires authentication.',
+    security: [{ session: [] }],
     request: {
         query: GetOrdersQuerySchema,
     },
@@ -102,6 +108,14 @@ const getOrdersRoute = createRoute({
             content: {
                 'application/json': {
                     schema: OrdersListResponseSchema,
+                },
+            },
+        },
+        401: {
+            description: 'Unauthorized - authentication required',
+            content: {
+                'application/json': {
+                    schema: UnauthorizedSchema,
                 },
             },
         },
@@ -121,7 +135,8 @@ const createOrderRoute = createRoute({
     path: '/',
     tags: ['Orders'],
     summary: 'Create a new order',
-    description: 'Create a new limit or market order. Validates order value against safety limits.',
+    description: 'Create a new limit or market order. Validates order value against safety limits. Requires authentication.',
+    security: [{ session: [] }],
     request: {
         body: {
             content: {
@@ -148,6 +163,14 @@ const createOrderRoute = createRoute({
                 },
             },
         },
+        401: {
+            description: 'Unauthorized - authentication required',
+            content: {
+                'application/json': {
+                    schema: UnauthorizedSchema,
+                },
+            },
+        },
         500: {
             description: 'Server error',
             content: {
@@ -162,11 +185,15 @@ const createOrderRoute = createRoute({
 /**
  * Create order OpenAPI routes with dependency injection
  * @param exchangeClient - Authenticated exchange client instance (injected)
- * @returns OpenAPIHono app with order routes
+ * @returns OpenAPIHono app with order routes (protected by auth middleware applied at registration)
  */
 export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
-    return new OpenAPIHono<HonoEnv>()
-        .openapi(getOrdersRoute, async (c) => {
+    const app = new OpenAPIHono<HonoEnv>();
+
+    // Require user authentication for all order routes
+    app.use('/*', authMiddleware);
+
+    return app.openapi(getOrdersRoute, async (c) => {
             try {
                 const { symbol } = c.req.valid('query');
 

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { authClient } from '../lib/auth-client'
 import { onOrderCompleted } from '../lib/cache-utils'
 
 export type OrderType = 'limit' | 'market' | 'stop_loss' | 'stop_loss_limit' | 'take_profit' | 'take_profit_limit'
@@ -31,6 +32,7 @@ export interface OrderResponse {
 async function createOrder(data: CreateOrderRequest): Promise<OrderResponse> {
     const response = await fetch('/api/trading/order', {
         method: 'POST',
+        credentials: 'include', // Send session cookies
         headers: {
             'Content-Type': 'application/json',
         },
@@ -51,12 +53,24 @@ async function createOrder(data: CreateOrderRequest): Promise<OrderResponse> {
 
 export function useCreateOrder() {
     const queryClient = useQueryClient()
+    const { data: session } = authClient.useSession()
 
-    return useMutation({
-        mutationFn: createOrder,
+    const mutation = useMutation({
+        mutationFn: async (data: CreateOrderRequest) => {
+            // Check authentication before submitting order
+            if (!session) {
+                throw new Error('Authentication required: Please sign in to place orders')
+            }
+            return createOrder(data)
+        },
         onSuccess: () => {
             // Invalidate order and balance queries using centralized cache utils
             onOrderCompleted(queryClient)
         },
     })
+
+    return {
+        ...mutation,
+        isAuthenticated: !!session,
+    }
 }

@@ -38,6 +38,7 @@
         "@platform/auth": "workspace:*",
         "@platform/cached-http-client": "workspace:*",
         "@platform/db": "workspace:*",
+        "@platform/env": "workspace:*",
         "@platform/platform-domain": "workspace:*",
         "@platform/task": "workspace:*",
         "@platform/utils": "workspace:*",
@@ -132,6 +133,7 @@
         "@neondatabase/serverless": "^1.0.1",
         "@platform/auth": "workspace:*",
         "@platform/db": "workspace:*",
+        "@platform/env": "workspace:*",
         "@platform/platform-domain": "workspace:*",
         "@platform/trading-domain": "workspace:*",
         "@scalar/hono-api-reference": "^0.9.25",
@@ -195,6 +197,10 @@
       "devDependencies": {
         "typescript": "^5.0.0",
       },
+    },
+    "packages/platform-env": {
+      "name": "@platform/env",
+      "version": "1.0.0",
     },
     "packages/platform-sdk": {
       "name": "@platform/sdk",
@@ -554,6 +560,8 @@
     "@platform/cached-http-client": ["@platform/cached-http-client@workspace:packages/cached-http-client"],
 
     "@platform/db": ["@platform/db@workspace:packages/platform-db"],
+
+    "@platform/env": ["@platform/env@workspace:packages/platform-env"],
 
     "@platform/platform-domain": ["@platform/platform-domain@workspace:packages/platform-domain"],
 

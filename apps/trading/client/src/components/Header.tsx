@@ -63,22 +63,23 @@ export default function Header() {
           {session ? (
             <Tooltip>
               <TooltipTrigger
-                render={
+                render={(props) => (
                   <Button
+                    {...props}
                     variant="ghost"
                     size="icon"
                     className="rounded-full"
                     onClick={handleSignOut}
                     disabled={loading}
-                  />
-                }
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
-                ) : (
-                  <LogOut className="h-5 w-5 text-yellow-500" />
+                  >
+                    {loading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
+                    ) : (
+                      <LogOut className="h-5 w-5 text-yellow-500" />
+                    )}
+                  </Button>
                 )}
-              </TooltipTrigger>
+              />
               <TooltipContent>
                 <p>Sign out</p>
               </TooltipContent>
@@ -86,22 +87,23 @@ export default function Header() {
           ) : (
             <Tooltip>
               <TooltipTrigger
-                render={
+                render={(props) => (
                   <Button
+                    {...props}
                     variant="ghost"
                     size="icon"
                     className="rounded-full"
                     onClick={handleSignIn}
                     disabled={loading}
-                  />
-                }
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
-                ) : (
-                  <LogIn className="h-5 w-5 text-primary" />
+                  >
+                    {loading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
+                    ) : (
+                      <LogIn className="h-5 w-5 text-primary" />
+                    )}
+                  </Button>
                 )}
-              </TooltipTrigger>
+              />
               <TooltipContent>
                 <p>Sign in</p>
               </TooltipContent>

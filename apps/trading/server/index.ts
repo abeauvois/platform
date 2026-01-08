@@ -1,3 +1,6 @@
+// Validate environment variables first - fail fast if misconfigured
+import { env, hasBinanceCredentials } from './env';
+
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { cors } from 'hono/cors';
@@ -18,24 +21,24 @@ const publicExchangeClient = new BinanceClient();
 
 // Authenticated client for account operations (balances, orders)
 const createAuthenticatedClient = () => {
-  const apiKey = process.env.BINANCE_API_KEY;
-  const apiSecret = process.env.BINANCE_API_SECRET;
-
-  if (!apiKey || !apiSecret) {
+  if (!hasBinanceCredentials()) {
     throw new Error(
       'BINANCE_API_KEY and BINANCE_API_SECRET must be set in environment'
     );
   }
 
-  return new BinanceClient({ apiKey, apiSecret });
+  return new BinanceClient({
+    apiKey: env.BINANCE_API_KEY,
+    apiSecret: env.BINANCE_API_SECRET
+  });
 };
 
 const app = new OpenAPIHono();
 
-// Environment-based URL configuration for CORS and OpenAPI
-const TRADING_CLIENT_URL = process.env.TRADING_CLIENT_URL || `http://localhost:${process.env.TRADING_CLIENT_PORT || '5001'}`;
-const API_URL = process.env.API_URL || `http://localhost:${process.env.API_PORT || '3000'}`;
-const TRADING_SERVER_URL = process.env.TRADING_SERVER_URL || `http://localhost:${process.env.PORT || '3001'}`;
+// Environment-based URL configuration for CORS and OpenAPI (using validated env)
+const TRADING_CLIENT_URL = env.TRADING_CLIENT_URL;
+const API_URL = env.API_URL;
+const TRADING_SERVER_URL = env.TRADING_SERVER_URL;
 
 // Middleware
 app.use(logger());
@@ -46,7 +49,7 @@ app.use(
       const allowedOrigins = [
         TRADING_CLIENT_URL,
         API_URL,
-        ...(process.env.CLIENT_URLS?.split(',') || []),
+        ...(env.CLIENT_URLS ? env.CLIENT_URLS.split(',').filter(Boolean) : []),
       ];
       if (allowedOrigins.includes(origin)) {
         return origin;

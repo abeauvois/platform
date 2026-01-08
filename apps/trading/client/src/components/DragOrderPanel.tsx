@@ -67,6 +67,8 @@ export interface DragOrderPanelProps {
   onBuyClick: () => void
   /** Callback when SELL button is clicked (for stop-market orders) */
   onSellClick: () => void
+  /** Whether the user is authenticated (required for trading) */
+  isAuthenticated: boolean
 }
 
 export function DragOrderPanel({
@@ -82,14 +84,15 @@ export function DragOrderPanel({
   onOrderModeChange,
   onBuyClick,
   onSellClick,
+  isAuthenticated,
 }: Readonly<DragOrderPanelProps>) {
   // Calculate order values in USD
   const buyOrderValue = buyAmount * currentPrice
   const sellOrderValue = sellAmount * currentPrice
 
-  // Determine if buttons should be disabled
-  const isBuyDisabled = buyAmount <= 0 || buyOrderValue > MAX_ORDER_VALUE_USD || buyOrderValue > availableQuote
-  const isSellDisabled = sellAmount <= 0 || sellOrderValue > MAX_ORDER_VALUE_USD || sellAmount > availableBase
+  // Determine if buttons should be disabled (also disabled when not authenticated)
+  const isBuyDisabled = !isAuthenticated || buyAmount <= 0 || buyOrderValue > MAX_ORDER_VALUE_USD || buyOrderValue > availableQuote
+  const isSellDisabled = !isAuthenticated || sellAmount <= 0 || sellOrderValue > MAX_ORDER_VALUE_USD || sellAmount > availableBase
 
   // Format available amounts
   const formatAmount = (amount: number, decimals = 4) => {
@@ -98,10 +101,12 @@ export function DragOrderPanel({
     return amount.toFixed(6)
   }
 
-  // Get instruction text based on order mode
-  const instructionText = orderMode === 'stop_limit'
-    ? 'Drag to place stop-limit order • Click for stop-market'
-    : 'Drag to place limit order at that price level'
+  // Get instruction text based on auth state and order mode
+  const instructionText = !isAuthenticated
+    ? 'Sign in to place orders'
+    : orderMode === 'stop_limit'
+      ? 'Drag to place stop-limit order • Click for stop-market'
+      : 'Drag to place limit order at that price level'
 
   return (
     <Card className="bg-card/50 backdrop-blur">

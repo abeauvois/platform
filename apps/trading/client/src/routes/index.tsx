@@ -1,7 +1,8 @@
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { createFileRoute } from '@tanstack/react-router'
-import { useRef, useState, useCallback } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
+import { detectStopOrderCategory } from '@platform/trading-domain'
 import { DragOrderPanel } from '../components/DragOrderPanel'
 import { DragOverlayBadge } from '../components/DragOverlayBadge'
 import { MarginAccountCard } from '../components/MarginAccountCard'
@@ -18,7 +19,6 @@ import { useOrderMode } from '../hooks/useOrderMode'
 import { useSelectedAsset } from '../hooks/useSelectedAsset'
 import { useTradingBalances } from '../hooks/useTradingBalances'
 import { useTradingData } from '../hooks/useTradingData'
-import { detectStopOrderCategory } from '@platform/trading-domain'
 
 import type { TradingChartHandle } from '../components/TradingChart'
 
@@ -62,7 +62,7 @@ function HomePage() {
   }>({ isOpen: false, side: 'buy' })
 
   // Order CRUD operations and real-time updates
-  const { placedOrders, createOrder, cancelOrder } = useOrderManagement(
+  const { placedOrders, createOrder, cancelOrder, isAuthenticated } = useOrderManagement(
     chartRef,
     tradingData.refetch
   )
@@ -206,6 +206,7 @@ function HomePage() {
             onOrderModeChange={setOrderMode}
             onBuyClick={handleBuyClick}
             onSellClick={handleSellClick}
+            isAuthenticated={isAuthenticated}
           />
 
           <OrdersTable orders={placedOrders} onCancelOrder={cancelOrder} />
