@@ -31,4 +31,7 @@ export const tradingKeys = {
 
   // Order history queries
   orderHistory: (symbol: string) => [...tradingKeys.all, 'order-history', symbol] as const,
+
+  // Watchlist queries
+  watchlist: () => [...tradingKeys.all, 'watchlist'] as const,
 }

@@ -13,11 +13,21 @@ import { createOrderOpenApiRoutes } from './routes/order.openapi.routes';
 import { createOrderStreamRoutes } from './routes/order-stream.routes';
 import { createTickerOpenApiRoutes } from './routes/ticker.openapi.routes';
 import { createTickersOpenApiRoutes } from './routes/tickers.openapi.routes';
+import { createWatchlistOpenApiRoutes } from './routes/watchlist.openapi.routes';
 import { BinanceClient } from './adapters/BinanceClient';
+import { DrizzleWatchlistRepository } from './infrastructure/DrizzleWatchlistRepository';
 
 // Create exchange clients (dependency injection at composition root)
 // Public client for market data (ticker, klines)
 const publicExchangeClient = new BinanceClient();
+
+// Watchlist repository for user watchlist persistence
+const watchlistRepository = new DrizzleWatchlistRepository();
+
+// Simple ID generator for watchlist items
+const idGenerator = {
+  generate: () => `wl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+};
 
 // Authenticated client for account operations (balances, orders)
 const createAuthenticatedClient = () => {
@@ -65,6 +75,13 @@ app.route('/api/trading/ticker', createTickerOpenApiRoutes(publicExchangeClient)
 app.route('/api/trading/tickers', createTickersOpenApiRoutes(publicExchangeClient));
 app.route('/api/trading/klines', createKlinesOpenApiRoutes(publicExchangeClient));
 
+// Watchlist route (requires user auth, uses public client for price data)
+app.route('/api/trading/watchlist', createWatchlistOpenApiRoutes(
+  watchlistRepository,
+  publicExchangeClient,
+  idGenerator
+));
+
 // Balance and order routes require authentication - create client lazily to allow startup without credentials
 try {
   const authenticatedClient = createAuthenticatedClient();
@@ -100,6 +117,10 @@ app.doc('/api/docs/openapi.json', {
       name: 'Market Data',
       description:
         'Historical candlestick data endpoints - no authentication required',
+    },
+    {
+      name: 'Watchlist',
+      description: 'User watchlist management - requires user authentication',
     },
     {
       name: 'Balance',

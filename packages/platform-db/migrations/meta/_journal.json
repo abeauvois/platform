@@ -50,6 +50,13 @@
       "when": 1766942029181,
       "tag": "0006_add_pending_content_user_url_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1736380800000,
+      "tag": "0007_add_watchlist_table",
+      "breakpoints": true
     }
   ]
 }

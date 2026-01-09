@@ -11,6 +11,7 @@ import { PortfolioSummaryCard } from '../components/PortfolioSummaryCard'
 import { SpotBalancesCard } from '../components/SpotBalancesCard'
 import { StopPriceModal } from '../components/StopPriceModal'
 import { TradingChart } from '../components/TradingChart'
+import { WatchlistCard } from '../components/WatchlistCard'
 import { useCurrentPrice } from '../hooks/useCurrentPrice'
 import { useDragOrder } from '../hooks/useDragOrder'
 import { useFetchOrderHistory } from '../hooks/useFetchOrderHistory'
@@ -20,6 +21,7 @@ import { useOrderMode } from '../hooks/useOrderMode'
 import { useSelectedAsset } from '../hooks/useSelectedAsset'
 import { useTradingBalances } from '../hooks/useTradingBalances'
 import { useTradingData } from '../hooks/useTradingData'
+import { useWatchlistActions } from '../hooks/useWatchlistActions'
 
 import type { TradingChartHandle } from '../components/TradingChart'
 
@@ -70,6 +72,18 @@ function HomePage() {
 
   // Fetch order history for the current symbol
   const { data: orderHistoryData } = useFetchOrderHistory(tradingSymbol, isAuthenticated)
+
+  // Watchlist data and actions (consolidated hook)
+  const {
+    watchlistData,
+    isWatchlistLoading,
+    watchlistError,
+    refetchWatchlist,
+    isInWatchlist,
+    handleAddToWatchlist,
+    handleWatchlistSelect,
+    handleWatchlistRemove,
+  } = useWatchlistActions(tradingSymbol, isAuthenticated, handleAssetSelect)
 
   // Transform order history data for the chart
   const orderHistory = useMemo(() => {
@@ -191,7 +205,7 @@ function HomePage() {
           />
         </div>
 
-        {/* Right Column - Chart, Drag Panel, Orders Table, and Order Card */}
+        {/* Center Column - Chart, Drag Panel, Orders Table */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
           <TradingChart
             ref={chartRef}
@@ -207,6 +221,8 @@ function HomePage() {
               )
               .map((o) => ({ id: o.id, side: o.side, price: o.price, quantity: o.quantity }))}
             orderHistory={orderHistory}
+            isInWatchlist={isInWatchlist}
+            onAddToWatchlist={isAuthenticated ? handleAddToWatchlist : undefined}
           />
 
           <DragOrderPanel
@@ -228,16 +244,19 @@ function HomePage() {
           />
 
           <OrdersTable orders={placedOrders} onCancelOrder={cancelOrder} />
+        </div>
 
-          {/* <OrderCard
-            baseAsset={baseAsset}
-            quoteAsset={quoteAsset}
-            currentPrice={currentPrice}
-            quoteBalance={quoteBalance}
-            baseBalance={baseBalance}
-            marginLevel={1.89}
-            leverage="3x"
-          /> */}
+        {/* Right Column - Watchlist */}
+        <div className="w-64 flex flex-col gap-3">
+          <WatchlistCard
+            watchlist={watchlistData}
+            isLoading={isWatchlistLoading}
+            error={watchlistError}
+            refetch={refetchWatchlist}
+            selectedSymbol={tradingSymbol}
+            onSymbolSelect={handleWatchlistSelect}
+            onRemoveSymbol={handleWatchlistRemove}
+          />
         </div>
       </section>
 

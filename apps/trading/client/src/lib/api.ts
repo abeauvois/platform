@@ -71,3 +71,72 @@ export async function fetchKlines(params: {
   }
   return response.json()
 }
+
+/**
+ * Watchlist item response from API
+ */
+export interface WatchlistItemResponse {
+  symbol: string
+  price: number
+  priceChangePercent24h: number | null
+  addedAt: string
+}
+
+/**
+ * Fetch user watchlist with prices
+ */
+export async function fetchWatchlist(): Promise<Array<WatchlistItemResponse>> {
+  const response = await fetch('/api/trading/watchlist', {
+    credentials: 'include',
+  })
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Authentication required')
+    }
+    throw new Error('Failed to fetch watchlist')
+  }
+  return response.json()
+}
+
+/**
+ * Add symbol to watchlist
+ */
+export async function addToWatchlist(symbol: string): Promise<void> {
+  const response = await fetch('/api/trading/watchlist', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ symbol }),
+  })
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Authentication required')
+    }
+    if (response.status === 400) {
+      const error = await response.json()
+      throw new Error(error.error || 'Symbol already in watchlist')
+    }
+    throw new Error('Failed to add symbol to watchlist')
+  }
+}
+
+/**
+ * Remove symbol from watchlist
+ */
+export async function removeFromWatchlist(symbol: string): Promise<void> {
+  const response = await fetch(`/api/trading/watchlist/${encodeURIComponent(symbol)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Authentication required')
+    }
+    if (response.status === 404) {
+      throw new Error('Symbol not found in watchlist')
+    }
+    throw new Error('Failed to remove symbol from watchlist')
+  }
+}
