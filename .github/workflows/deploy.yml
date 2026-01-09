@@ -41,27 +41,32 @@ jobs:
     steps:
       - name: Set deployment parameters
         id: params
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_APP: ${{ inputs.app }}
+          INPUT_ENV: ${{ inputs.environment }}
+          TRADING_PROD_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_PROD_SERVICE_ID }}
+          TRADING_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_STAGING_SERVICE_ID }}
+          API_PROD_SERVICE_ID: ${{ secrets.RAILWAY_API_PROD_SERVICE_ID }}
+          API_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_API_STAGING_SERVICE_ID }}
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
+          if [[ "$EVENT_NAME" == "release" ]]; then
             echo "app=trading" >> $GITHUB_OUTPUT
             echo "environment=production" >> $GITHUB_OUTPUT
-            # Use production service ID from secrets
-            echo "service_id=${{ secrets.RAILWAY_TRADING_PROD_SERVICE_ID }}" >> $GITHUB_OUTPUT
+            echo "service_id=$TRADING_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
           else
-            APP="${{ inputs.app }}"
-            ENV="${{ inputs.environment }}"
-            echo "app=$APP" >> $GITHUB_OUTPUT
-            echo "environment=$ENV" >> $GITHUB_OUTPUT
+            echo "app=$INPUT_APP" >> $GITHUB_OUTPUT
+            echo "environment=$INPUT_ENV" >> $GITHUB_OUTPUT
 
             # Map app + environment to Railway service IDs
-            if [[ "$APP" == "trading" && "$ENV" == "staging" ]]; then
-              echo "service_id=${{ secrets.RAILWAY_TRADING_STAGING_SERVICE_ID }}" >> $GITHUB_OUTPUT
-            elif [[ "$APP" == "trading" && "$ENV" == "production" ]]; then
-              echo "service_id=${{ secrets.RAILWAY_TRADING_PROD_SERVICE_ID }}" >> $GITHUB_OUTPUT
-            elif [[ "$APP" == "api" && "$ENV" == "staging" ]]; then
-              echo "service_id=${{ secrets.RAILWAY_API_STAGING_SERVICE_ID }}" >> $GITHUB_OUTPUT
-            elif [[ "$APP" == "api" && "$ENV" == "production" ]]; then
-              echo "service_id=${{ secrets.RAILWAY_API_PROD_SERVICE_ID }}" >> $GITHUB_OUTPUT
+            if [[ "$INPUT_APP" == "trading" && "$INPUT_ENV" == "staging" ]]; then
+              echo "service_id=$TRADING_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
+            elif [[ "$INPUT_APP" == "trading" && "$INPUT_ENV" == "production" ]]; then
+              echo "service_id=$TRADING_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
+            elif [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "staging" ]]; then
+              echo "service_id=$API_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
+            elif [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "production" ]]; then
+              echo "service_id=$API_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
             fi
           fi
 
@@ -107,16 +112,17 @@ jobs:
           fi
 
       - name: Run smoke tests
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
         run: |
-          URL="${{ steps.deploy.outputs.url }}"
-          echo "Running smoke tests against $URL"
+          echo "Running smoke tests against $DEPLOY_URL"
 
           # Wait for service to be ready
           MAX_ATTEMPTS=10
           ATTEMPT=0
 
           while [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health" --max-time 10 || echo "000")
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL/health" --max-time 10 || echo "000")
 
             if [[ "$HTTP_STATUS" == "200" ]]; then
               echo "Health check passed!"
