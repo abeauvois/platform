@@ -3,7 +3,7 @@
  * Interface for fetching market data from cryptocurrency exchanges
  */
 
-import type { MarketTicker, AccountBalance, Candlestick, Order, CreateOrderData } from '../types.js';
+import type { MarketTicker, AccountBalance, MarginBalance, Candlestick, Order, CreateOrderData, SymbolPrice, UserDataEventCallback } from '../types.js';
 
 /**
  * Exchange client interface for fetching market data
@@ -15,6 +15,14 @@ export interface IExchangeClient {
      * @returns Market ticker data
      */
     getTicker(symbol: string): Promise<MarketTicker>;
+
+    /**
+     * Get prices for multiple trading pairs in a single request
+     * Uses lightweight endpoint that returns only symbol and price
+     * @param symbols - Array of trading pair symbols (e.g., ['BTCUSDT', 'ETHUSDT'])
+     * @returns Array of symbol prices
+     */
+    getTickers(symbols: string[]): Promise<SymbolPrice[]>;
 
     /**
      * Get the exchange name
@@ -33,6 +41,12 @@ export interface IExchangeClient {
      * @returns Account balance for the specified asset
      */
     getBalance(asset: string): Promise<AccountBalance | null>;
+
+    /**
+     * Get all margin account balances (requires authentication)
+     * @returns Array of margin balances for all assets with non-zero balance
+     */
+    getMarginBalances(): Promise<MarginBalance[]>;
 
     /**
      * Check if the client is authenticated
@@ -69,4 +83,24 @@ export interface IExchangeClient {
      * @returns void (throws error if cancellation fails)
      */
     cancelOrder(orderId: string, symbol: string): Promise<void>;
+
+    /**
+     * Get order history (filled orders) for a symbol
+     * @param symbol - Trading pair symbol (required)
+     * @param limit - Maximum number of orders to return (default: 50)
+     * @returns Array of filled orders sorted by time descending
+     */
+    getOrderHistory(symbol: string, limit?: number): Promise<Order[]>;
+
+    /**
+     * Subscribe to user data stream events (order updates, balance changes)
+     * @param callback - Function called when events are received
+     * @returns Unsubscribe function to stop receiving events
+     */
+    subscribeToUserData(callback: UserDataEventCallback): Promise<() => void>;
+
+    /**
+     * Check if user data stream is supported by this client
+     */
+    supportsUserDataStream(): boolean;
 }

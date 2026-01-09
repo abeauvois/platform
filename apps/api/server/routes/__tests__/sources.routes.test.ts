@@ -34,7 +34,7 @@ describe('Sources Routes', () => {
         app = new Hono();
         // Mock auth middleware - inject user into context
         app.use('*', async (c, next) => {
-            c.set('user', { id: 'test-user-id', email: 'test@example.com' });
+            (c as any).set('user', { id: 'test-user-id', email: 'test@example.com' });
             await next();
         });
         app.route('/api/sources', sources);
@@ -151,7 +151,7 @@ describe('Sources Routes', () => {
             const { sources: sourcesNoCredentials } = await import('../sources.routes');
             const appNoCredentials = new Hono();
             appNoCredentials.use('*', async (c, next) => {
-                c.set('user', { id: 'test-user-id', email: 'test@example.com' });
+                (c as any).set('user', { id: 'test-user-id', email: 'test@example.com' });
                 await next();
             });
             appNoCredentials.route('/api/sources', sourcesNoCredentials);

@@ -1,5 +1,6 @@
-import { ILogger } from '../../domain/ports/ILogger';
-import { IWorkflowStep, WorkflowContext, createWorkflowContext, ItemProcessedInfo } from './IWorkflowStep';
+import { createWorkflowContext } from './IWorkflowStep';
+import type { ILogger } from '../../domain/ports/ILogger';
+import type { IWorkflowStep, ItemProcessedInfo, WorkflowContext } from './IWorkflowStep';
 
 /**
  * Statistics about workflow execution
@@ -10,7 +11,7 @@ export interface WorkflowExecutionStats {
     /** Number of steps successfully completed */
     completedSteps: number;
     /** Names of steps that were executed */
-    executedStepNames: string[];
+    executedStepNames: Array<string>;
     /** Duration of the workflow execution in milliseconds */
     durationMs: number;
     /** Whether the workflow completed successfully */
@@ -24,7 +25,7 @@ export interface WorkflowExecutionStats {
  */
 export interface WorkflowStartInfo {
     /** Names of all steps that will be executed */
-    stepNames: string[];
+    stepNames: Array<string>;
     /** Source path for input */
     sourcePath: string;
     /** Output path for export */
@@ -64,7 +65,7 @@ export interface WorkflowCompleteInfo<T> {
     /** Final workflow context */
     context: WorkflowContext<T>;
     /** All items that were processed during the workflow */
-    processedItems: T[];
+    processedItems: Array<T>;
 }
 
 /**
@@ -102,11 +103,11 @@ export interface WorkflowLifecycleHooks<T> {
  * Executable workflow that runs a sequence of steps
  * @typeParam T - The type of items being processed in the workflow
  */
-export interface IWorkflow<T> {
+export interface IWorkflow<_T> {
     /** Execute the workflow */
-    execute(userId: string, sourcePath: string, outputPath: string): Promise<void>;
+    execute: (userId: string, sourcePath: string, outputPath: string) => Promise<void>;
     /** Get the names of steps in this workflow */
-    getStepNames(): string[];
+    getStepNames: () => Array<string>;
 }
 
 /**
@@ -125,7 +126,7 @@ export interface IWorkflow<T> {
  * ```
  */
 export class WorkflowBuilder<T> {
-    protected steps: IWorkflowStep<T>[] = [];
+    protected steps: Array<IWorkflowStep<T>> = [];
     protected hooks: WorkflowLifecycleHooks<T> = {};
 
     constructor(protected readonly logger: ILogger) { }
@@ -198,7 +199,7 @@ export class WorkflowBuilder<T> {
             execute: async (userId: string, sourcePath: string, outputPath: string) => {
                 const startTime = Date.now();
                 let context: WorkflowContext<T> = createWorkflowContext<T>(userId, sourcePath, outputPath);
-                const executedStepNames: string[] = [];
+                const executedStepNames: Array<string> = [];
                 let success = true;
 
                 // Inject onItemProcessed callback into context for steps to use

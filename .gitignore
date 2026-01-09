@@ -5,7 +5,7 @@ node_modules/
 .DS_Store
 ./output.csv
 ./*.csv
-bun.lockb
+# Keep bun.lockb tracked for reproducible builds
 .vscode/
 dist/
 *.d.ts

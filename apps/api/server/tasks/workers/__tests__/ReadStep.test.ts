@@ -72,6 +72,7 @@ describe('ReadStep', () => {
         const step = new ReadStep(config);
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'test-user',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),
@@ -96,6 +97,7 @@ describe('ReadStep', () => {
         const step = new ReadStep(config);
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'test-user',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),
@@ -126,6 +128,7 @@ describe('ReadStep', () => {
         const step = new ReadStep(config);
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'test-user',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),
@@ -136,8 +139,8 @@ describe('ReadStep', () => {
 
         expect(result.continue).toBe(true);
         expect(result.context.metadata.pendingContentIds).toEqual(pendingContentIds);
-        expect(result.context.metadata.pendingContentIds['https://example.com/1']).toBe('pending-123');
-        expect(result.context.metadata.pendingContentIds['https://example.com/2']).toBe('pending-456');
+        expect((result.context.metadata.pendingContentIds as Record<string, string>)['https://example.com/1']).toBe('pending-123');
+        expect((result.context.metadata.pendingContentIds as Record<string, string>)['https://example.com/2']).toBe('pending-456');
     });
 
     test('should transfer userId to context metadata', async () => {
@@ -147,6 +150,7 @@ describe('ReadStep', () => {
         const step = new ReadStep(config);
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-abc',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),
@@ -166,6 +170,7 @@ describe('ReadStep', () => {
         const step = new ReadStep(config);
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'user-abc',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),
@@ -174,7 +179,7 @@ describe('ReadStep', () => {
 
         const result = await step.execute(context);
 
-        expect(result.context.metadata.existingKey).toBe('existingValue');
+        expect((result.context.metadata as any).existingKey).toBe('existingValue');
         expect(result.context.metadata.pendingContentIds).toEqual(pendingContentIds);
         expect(result.context.metadata.userId).toBe('user-abc');
     });
@@ -191,6 +196,7 @@ describe('ReadStep', () => {
         const progressCalls: { index: number; total: number; stepName: string }[] = [];
 
         const context: WorkflowContext<BaseContent> = {
+            userId: 'test-user',
             items: [],
             outputPath: '',
             updatedIds: new Set<string>(),

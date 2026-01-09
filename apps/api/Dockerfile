@@ -1,20 +1,33 @@
 # API Server Dockerfile
 # Must be built from repository root: docker build -f apps/api/Dockerfile .
 
-FROM oven/bun:1 AS base
+FROM oven/bun:1.3.5 AS base
 WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
+
+# Copy all workspace package.json files for lockfile resolution
 COPY apps/api/package.json ./apps/api/
-COPY packages/platform-db/package.json ./packages/platform-db/
-COPY packages/platform-auth/package.json ./packages/platform-auth/
-COPY packages/platform-domain/package.json ./packages/platform-domain/
-COPY packages/platform-task/package.json ./packages/platform-task/
-COPY packages/platform-utils/package.json ./packages/platform-utils/
-COPY packages/platform-sdk/package.json ./packages/platform-sdk/
+COPY apps/cli/package.json ./apps/cli/
+COPY apps/cli-landing/package.json ./apps/cli-landing/
+COPY apps/dashboard/package.json ./apps/dashboard/
+COPY apps/trading/package.json ./apps/trading/
+
 COPY packages/cached-http-client/package.json ./packages/cached-http-client/
+COPY packages/platform-auth/package.json ./packages/platform-auth/
+COPY packages/platform-db/package.json ./packages/platform-db/
+COPY packages/platform-domain/package.json ./packages/platform-domain/
+COPY packages/platform-sdk/package.json ./packages/platform-sdk/
+COPY packages/platform-task/package.json ./packages/platform-task/
+COPY packages/platform-ui/package.json ./packages/platform-ui/
+COPY packages/platform-utils/package.json ./packages/platform-utils/
+COPY packages/sdk-cli/package.json ./packages/sdk-cli/
+COPY packages/trading-domain/package.json ./packages/trading-domain/
+COPY packages/trading-sdk/package.json ./packages/trading-sdk/
+COPY packages/platform-env/package.json ./packages/platform-env/
+
 RUN bun install --frozen-lockfile
 
 # Build
@@ -33,7 +46,7 @@ WORKDIR /app/apps/api
 RUN bun run build
 
 # Production image
-FROM oven/bun:1 AS release
+FROM oven/bun:1.3.5 AS release
 WORKDIR /app
 
 # Copy built artifacts

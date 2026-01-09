@@ -1,17 +1,24 @@
+// Validate environment variables first - fail fast if misconfigured
+import { env } from './env';
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { createQueue, initBoss, scheduleRecurringTask, stopBoss } from '@platform/task';
 import { auth } from './lib/auth';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { workflows } from './routes/workflow.routes';
 import { sources } from './routes/sources.routes';
-import { initBoss, stopBoss, createQueue, scheduleRecurringTask } from '@platform/task';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
 import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgroundTaskRepository';
 
 const app = new Hono();
+
+// Environment-based URL configuration for CORS (using validated env)
+const DASHBOARD_URL = env.DASHBOARD_URL || `http://localhost:${env.DASHBOARD_PORT}`;
+const TRADING_CLIENT_URL = env.TRADING_CLIENT_URL || `http://localhost:${env.TRADING_CLIENT_PORT}`;
 
 const router = app
   .use(logger())
@@ -20,8 +27,8 @@ const router = app
     cors({
       origin: (origin) => {
         const allowedOrigins = [
-          'http://localhost:5000', // dashboard
-          'http://localhost:5001', // trading client
+          DASHBOARD_URL,
+          TRADING_CLIENT_URL,
           ...(process.env.CLIENT_URLS?.split(',') || []),
         ];
         if (allowedOrigins.includes(origin)) {

@@ -1,13 +1,14 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { PlatformApiClient } from '../../src/index.js';
 import { Bookmark, type ILogger } from '@platform/platform-domain';
+import { TEST_API_URL } from '../test-config.js';
 
 /**
  * API Bookmark type includes server-generated fields (id is guaranteed from API)
  */
 type ApiBookmark = Bookmark & { id: string };
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = TEST_API_URL;
 
 /**
  * Check if the API server is available before running integration tests.

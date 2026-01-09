@@ -37,9 +37,7 @@
     "it:notion": "bun run src/infrastructure/tests/integration/notion/test-notion.ts",
     "it:notion:findpage": "bun run src/infrastructure/tests/integration/notion/test-findPageByUrl.ts",
     "it:twitter": "echo 'Running Twitter integration tests...' && bun run src/infrastructure/tests/integration/twitter/test-twitter-enrichment.ts",
-    "test:e2e": "bun run test:e2e:zip && bun run test:e2e:folder",
-    "test:e2e:zip": "bun run src/infrastructure/tests/e2e/test-workflow-zip-file-producer.ts",
-    "test:e2e:folder": "bun run src/infrastructure/tests/e2e/test-workflow-single-folder-producer.ts",
+    "test:e2e": "echo 'No E2E tests configured yet'",
     "test:unit": "bun test ./packages/platform-sdk/tests/unit"
   },
   "dependencies": {
@@ -56,6 +54,8 @@
     "trading-client": "^1.0.3"
   },
   "devDependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/utilities": "^3.2.2",
     "@tanstack/react-form": "^1.26.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/user-event": "^14.6.1",

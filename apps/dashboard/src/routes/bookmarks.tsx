@@ -1,11 +1,15 @@
-import { useState } from 'react'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@platform/ui'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CircleX } from 'lucide-react'
-import { authClient } from '../lib/auth-client'
-import { platformClient } from '../../platformClient'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { AlertTriangle, CircleX, X } from 'lucide-react'
+import { useState } from 'react'
+
 import { BookmarkForm } from '../components/BookmarkForm'
+import { platformClient } from '../../platformClient'
+
 import type { SourceAdapter } from '@platform/platform-domain/browser'
+import type { Bookmark } from '@platform/sdk'
+import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/bookmarks')({
   component: RouteComponent,
@@ -64,29 +68,35 @@ function RouteComponent() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl flex-grow">
       {/* Create Bookmark Form */}
-      <div className="bg-base-300 shadow-lg rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-6 text-center">Add New Bookmark</h2>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-center">Add New Bookmark</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {createBookmarkError && (
+            <div className="flex items-center justify-between gap-2 p-3 mb-4 rounded-md bg-destructive/10 text-destructive">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-5" />
+                <span>{createBookmarkError}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setCreateBookmarkError(null)}
+                aria-label="Dismiss error"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+          )}
 
-        {createBookmarkError && (
-          <div role="alert" className="alert alert-error mb-4">
-            <AlertTriangle className="size-5" />
-            <span>{createBookmarkError}</span>
-            <button
-              className="btn btn-sm btn-ghost btn-circle"
-              onClick={() => setCreateBookmarkError(null)}
-              aria-label="Dismiss error"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        <BookmarkForm
-          onSubmit={async (data) => {
-            await createBookmark.mutateAsync(data)
-          }}
-        />
-      </div>
+          <BookmarkForm
+            onSubmit={async (data) => {
+              await createBookmark.mutateAsync(data)
+            }}
+          />
+        </CardContent>
+      </Card>
 
       {/* Bookmarks Section */}
       <div>
@@ -95,8 +105,8 @@ function RouteComponent() {
         </h2>
 
         {isError && (
-          <div role="alert" className="alert alert-error mb-6">
-            <CircleX />
+          <div className="flex items-center gap-2 p-3 mb-6 rounded-md bg-destructive/10 text-destructive">
+            <CircleX className="size-5" />
             <span>Error: {error.message}</span>
           </div>
         )}
@@ -104,22 +114,22 @@ function RouteComponent() {
         {isLoading && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="card bg-base-100 shadow-md">
-                <div className="card-body">
-                  <div className="skeleton h-4 flex-1 mb-2"></div>
-                  <div className="skeleton h-3 w-full mb-2"></div>
-                  <div className="skeleton h-3 w-2/3"></div>
-                </div>
-              </div>
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-3 w-full mb-2" />
+                  <Skeleton className="h-3 w-2/3" />
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
 
-        {bookmarks && bookmarks.length === 0 && (
+        {bookmarks?.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔖</div>
             <h3 className="text-xl font-semibold mb-2">No bookmarks yet</h3>
-            <p className="text-base-content/70">
+            <p className="text-muted-foreground">
               Create your first bookmark above to get started!
             </p>
           </div>
@@ -127,12 +137,12 @@ function RouteComponent() {
 
         {bookmarks && bookmarks.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {bookmarks.map((bookmark) => {
+            {bookmarks.map((bookmark: Bookmark) => {
               const created = (() => {
                 if (!bookmark.createdAt) return null
                 try {
                   const d = new Date(bookmark.createdAt)
-                  if (isNaN(d.getTime())) return null
+                  if (Number.isNaN(d.getTime())) return null
                   return d.toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'short',
@@ -144,47 +154,41 @@ function RouteComponent() {
               })()
 
               return (
-                <div
+                <Card
                   key={bookmark.url}
-                  className="card bg-base-300 shadow-md hover:shadow-lg transition-all duration-200"
+                  className="hover:ring-2 hover:ring-primary/20 transition-all duration-200"
                 >
-                  <div className="card-body">
-                    <h3 className="card-title text-lg leading-tight break-words">
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold text-lg leading-tight break-words mb-2">
                       <a
                         href={bookmark.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="link link-hover"
+                        className="hover:text-primary hover:underline transition-colors"
                       >
                         {new URL(bookmark.url).hostname}
                       </a>
                     </h3>
                     {bookmark.summary && (
-                      <p className="text-sm text-base-content/80 mt-2">
+                      <p className="text-sm text-muted-foreground mt-2">
                         {bookmark.summary}
                       </p>
                     )}
                     {bookmark.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {bookmark.tags.map((tag) => (
-                          <span key={tag} className="badge badge-sm">
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {bookmark.tags.map((tag: string) => (
+                          <Badge key={tag} variant="secondary">
                             {tag}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     )}
-                    <div className="flex justify-between items-center mt-3">
-                      <span className="text-xs text-base-content/60">
-                        {bookmark.sourceAdapter}
-                      </span>
-                      {created && (
-                        <span className="text-xs text-base-content/60">
-                          {created}
-                        </span>
-                      )}
+                    <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
+                      <span>{bookmark.sourceAdapter}</span>
+                      {created && <span>{created}</span>}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>

@@ -1,6 +1,6 @@
 import { BaseContent } from "./BaseContent";
-import { FileType } from "./RawFile";
-import { SourceAdapter } from "./SourceAdapter";
+import type { FileType } from "./RawFile";
+import type { SourceAdapter } from "./SourceAdapter";
 
 /**
  * Domain Entity: Represents an extracted email link with metadata

@@ -118,7 +118,7 @@ describe('BookmarkForm', () => {
     })
 
     it('should show loading state during submission', async () => {
-        const onSubmit = vi.fn(() => new Promise(resolve => setTimeout(resolve, 1000)))
+        const onSubmit = vi.fn((): Promise<void> => new Promise(resolve => setTimeout(resolve, 1000)))
         render(<BookmarkForm onSubmit={onSubmit} />)
 
         const urlInput = screen.getByLabelText(/url/i)

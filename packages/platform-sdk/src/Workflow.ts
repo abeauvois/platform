@@ -1,10 +1,11 @@
 import type {
-    WorkflowPreset,
-    WorkflowOptions,
-    WorkflowExecuteOptions,
-    IWorkflow,
     ILogger,
+    IWorkflow,
+    ItemProcessedInfo,
     ProcessedItem,
+    WorkflowExecuteOptions,
+    WorkflowOptions,
+    WorkflowPreset,
 } from './types.js';
 import type { ApiClient } from './clients/ApiClient.js';
 
@@ -42,9 +43,9 @@ interface WorkflowTaskStatus {
     result?: {
         itemsProcessed: number;
         itemsCreated: number;
-        errors: string[];
+        errors: Array<string>;
         /** All processed items for display by outer apps */
-        processedItems?: ProcessedItem[];
+        processedItems?: Array<ProcessedItem>;
     };
 }
 
@@ -145,7 +146,7 @@ export class Workflow implements IWorkflow {
      */
     private async pollTaskStatus(
         taskId: string,
-        onItemProcessed?: (info: import('./types.js').ItemProcessedInfo) => void | Promise<void>
+        onItemProcessed?: (info: ItemProcessedInfo) => void | Promise<void>
     ): Promise<WorkflowTaskStatus> {
         const { logger, apiClient } = this.config;
         let attempts = 0;
@@ -210,8 +211,8 @@ export class Workflow implements IWorkflow {
      * Internal method to run the actual workflow via API
      */
     private async runWorkflow(
-        onItemProcessed?: (info: import('./types.js').ItemProcessedInfo) => void | Promise<void>
-    ): Promise<{ itemsProcessed: number; itemsCreated: number; errors: string[]; processedItems: ProcessedItem[] }> {
+        onItemProcessed?: (info: ItemProcessedInfo) => void | Promise<void>
+    ): Promise<{ itemsProcessed: number; itemsCreated: number; errors: Array<string>; processedItems: Array<ProcessedItem> }> {
         const { preset, options, logger } = this.config;
 
         // Log configuration

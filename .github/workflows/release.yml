@@ -21,7 +21,7 @@ permissions:
   pull-requests: write
 
 env:
-  BUN_VERSION: '1.1.45'
+  BUN_VERSION: '1.2.23'
 
 jobs:
   release:
@@ -46,7 +46,7 @@ jobs:
             ~/.bun/install/cache
             node_modules
             **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -169,6 +169,23 @@ jobs:
               console.log('Release notes:');
               console.log(releaseNotes);
               return;
+            }
+
+            // Check if release already exists
+            try {
+              const existingRelease = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: `v${newVersion}`
+              });
+              console.log(`Release v${newVersion} already exists: ${existingRelease.data.html_url}`);
+              console.log('Skipping release creation.');
+              return;
+            } catch (error) {
+              // 404 means release doesn't exist, which is what we want
+              if (error.status !== 404) {
+                throw error;
+              }
             }
 
             // Create the release

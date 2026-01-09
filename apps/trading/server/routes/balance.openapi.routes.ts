@@ -5,20 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
-import { BinanceClient } from '../adapters/BinanceClient.js';
 import type { IExchangeClient } from '@platform/trading-domain';
-
-// Create authenticated exchange client using environment variables
-const createAuthenticatedClient = (): IExchangeClient => {
-    const apiKey = process.env.BINANCE_API_KEY;
-    const apiSecret = process.env.BINANCE_API_SECRET;
-
-    if (!apiKey || !apiSecret) {
-        throw new Error('BINANCE_API_KEY and BINANCE_API_SECRET must be set in environment');
-    }
-
-    return new BinanceClient({ apiKey, apiSecret });
-};
 
 // OpenAPI schemas
 const AccountBalanceSchema = z.object({
@@ -49,7 +36,7 @@ const getAllBalancesRoute = createRoute({
     path: '/',
     tags: ['Balance'],
     summary: 'Get all account balances',
-    description: 'Fetch all non-zero account balances from Binance spot wallet. Requires API credentials.',
+    description: 'Fetch all non-zero account balances from exchange spot wallet. Requires API credentials.',
     responses: {
         200: {
             description: 'Account balances retrieved successfully',
@@ -112,44 +99,48 @@ const getAssetBalanceRoute = createRoute({
     },
 });
 
-// Create OpenAPI Hono app
-export const balanceOpenApi = new OpenAPIHono<HonoEnv>()
-    .openapi(getAllBalancesRoute, async (c) => {
-        try {
-            const client = createAuthenticatedClient();
-            const allBalances = await client.getBalances();
+/**
+ * Create balance OpenAPI routes with dependency injection
+ * @param exchangeClient - Authenticated exchange client instance (injected)
+ * @returns OpenAPIHono app with balance routes
+ */
+export function createBalanceOpenApiRoutes(exchangeClient: IExchangeClient) {
+    return new OpenAPIHono<HonoEnv>()
+        .openapi(getAllBalancesRoute, async (c) => {
+            try {
+                const allBalances = await exchangeClient.getBalances();
 
-            // Filter to only show non-zero balances
-            const nonZeroBalances = allBalances.filter(b => b.total > 0);
+                // Filter to only show non-zero balances
+                const nonZeroBalances = allBalances.filter(b => b.total > 0);
 
-            return c.json({
-                exchange: client.getExchangeName(),
-                balances: nonZeroBalances,
-                count: nonZeroBalances.length,
-            }, 200);
-        } catch (error) {
-            console.error('Failed to fetch balances: ', error);
-            const message = error instanceof Error ? error.message : 'Failed to fetch balances';
-            return c.json({ error: message }, 500);
-        }
-    })
-    .openapi(getAssetBalanceRoute, async (c) => {
-        try {
-            const { asset } = c.req.valid('param');
-            const client = createAuthenticatedClient();
-            const balance = await client.getBalance(asset);
-
-            if (!balance) {
-                return c.json({ error: `Asset ${asset.toUpperCase()} not found` }, 404);
+                return c.json({
+                    exchange: exchangeClient.getExchangeName(),
+                    balances: nonZeroBalances,
+                    count: nonZeroBalances.length,
+                }, 200);
+            } catch (error) {
+                console.error('Failed to fetch balances: ', error);
+                const message = error instanceof Error ? error.message : 'Failed to fetch balances';
+                return c.json({ error: message }, 500);
             }
+        })
+        .openapi(getAssetBalanceRoute, async (c) => {
+            try {
+                const { asset } = c.req.valid('param');
+                const balance = await exchangeClient.getBalance(asset);
 
-            return c.json({
-                exchange: client.getExchangeName(),
-                balance,
-            }, 200);
-        } catch (error) {
-            console.error('Failed to fetch balance: ', error);
-            const message = error instanceof Error ? error.message : 'Failed to fetch balance';
-            return c.json({ error: message }, 500);
-        }
-    });
+                if (!balance) {
+                    return c.json({ error: `Asset ${asset.toUpperCase()} not found` }, 404);
+                }
+
+                return c.json({
+                    exchange: exchangeClient.getExchangeName(),
+                    balance,
+                }, 200);
+            } catch (error) {
+                console.error('Failed to fetch balance: ', error);
+                const message = error instanceof Error ? error.message : 'Failed to fetch balance';
+                return c.json({ error: message }, 500);
+            }
+        });
+}

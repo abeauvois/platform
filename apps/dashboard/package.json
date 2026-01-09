@@ -15,6 +15,7 @@
   "dependencies": {
     "@platform/platform-domain": "workspace:*",
     "@platform/sdk": "workspace:*",
+    "@platform/ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-form": "^0.36.0",
     "@tanstack/react-query": "^5.66.5",
@@ -23,7 +24,6 @@
     "@tanstack/react-router-devtools": "^1.130.2",
     "@tanstack/router-plugin": "^1.121.2",
     "better-auth": "^1.2.8",
-    "daisyui": "^5.0.50",
     "hono": "^4.8.12",
     "lucide-react": "^0.536.0",
     "react": "^19.0.0",

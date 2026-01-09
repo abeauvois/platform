@@ -1,4 +1,5 @@
-import { PendingContent, PendingContentStatus } from '../entities/PendingContent.js';
+import { PendingContent } from '../entities/PendingContent.js';
+import type { PendingContentStatus } from '../entities/PendingContent.js';
 
 /**
  * Repository Port: Abstract storage interface for PendingContent entities

@@ -36,7 +36,7 @@ export function createPendingContentSourceReader(logger: ILogger): ISourceReader
                     )
             );
 
-            // TODO: is this actually used anywhere? explain
+            // TODO: is this actually the right place? explain
             // Store ID mapping for use by BookmarkEnrichmentStep
             // This will be added to context.metadata
             const idMapping: Record<string, string> = {};

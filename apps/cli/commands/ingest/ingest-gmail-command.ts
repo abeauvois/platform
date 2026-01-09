@@ -1,8 +1,8 @@
 import { command } from 'cleye';
 import * as p from '@clack/prompts';
-import { truncateText } from '@platform/utils';
-import { SAVE_TO_DESTINATIONS, type SaveToDestination } from '@platform/sdk';
+import { SAVE_TO_DESTINATIONS } from '@platform/sdk';
 import { createCliContext, getDefaultEmail } from '../../lib/cli-context.js';
+import type { SaveToDestination } from '@platform/sdk';
 
 type GmailFlags = {
     filter?: string;
@@ -125,14 +125,14 @@ export const ingestGmailCommand = command({
         };
 
         await workflow.execute({
-            onItemProcessed: ({ index, total }) => {
+            onItemProcessed: ({ index, total }: { index: number; total: number }) => {
                 ctx.logger.info(`Processed ${index + 1}/${total} items`);
             },
             onError: () => {
                 p.log.error('An error occurred during ingestion.');
             },
-            onComplete: ({ processedItems }) => {
-                processedItems.forEach((item) => p.note(`${item.tags.join(',')} \n ${item.summary}`));
+            onComplete: ({ processedItems }: { processedItems: Array<{ tags: string[]; summary?: string }> }) => {
+                processedItems.forEach((item: { tags: string[]; summary?: string }) => p.note(`${item.tags.join(',')} \n ${item.summary}`));
             }
         });
 

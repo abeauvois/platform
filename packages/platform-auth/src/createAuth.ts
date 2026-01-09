@@ -9,16 +9,24 @@ interface CreateAuthConfig {
     trustedOrigins: string[];
 }
 
+// Shared secret for session cookie signing - must be same across all servers
+const AUTH_SECRET = process.env.AUTH_SECRET || process.env.BETTER_AUTH_SECRET;
+
+if (!AUTH_SECRET) {
+    console.warn('[Auth] WARNING: AUTH_SECRET not set. Sessions will not work across servers. Set AUTH_SECRET in your .env file.');
+}
+
 /**
  * Factory function to create a configured better-auth instance
  * Provides consistent auth configuration across all apps in the monorepo
- * 
+ *
  * @param config - Configuration object containing database, schema, and environment settings
  * @returns Configured better-auth instance
  */
 export function createAuth(config: CreateAuthConfig) {
     return betterAuth({
         basePath: '/api/auth',
+        secret: AUTH_SECRET,
         database: drizzleAdapter(config.db, {
             provider: config.provider,
             schema: config.schema,

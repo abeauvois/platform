@@ -1,12 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import {
-    type IBookmarkEnricher,
-    type UrlExtractionResult,
-    type ContentAnalysisResult,
-    type ILogger,
-    MAX_EXTRACTED_URLS,
-} from '@platform/platform-domain';
+import { MAX_EXTRACTED_URLS } from '@platform/platform-domain';
 import { parseJsonResponse } from './parseJsonResponse';
+import type { ContentAnalysisResult, IBookmarkEnricher, ILogger, UrlExtractionResult } from '@platform/platform-domain';
 
 /**
  * Adapter implementing IBookmarkEnricher using Anthropic Claude API
@@ -66,7 +61,7 @@ Only return valid, complete URLs starting with http:// or https://`,
                 return { extractedUrls: [] };
             }
 
-            const parsed = parseJsonResponse<{ urls: string[] }>(textContent.text);
+            const parsed = parseJsonResponse<{ urls: Array<string> }>(textContent.text);
             const urls = [...new Set(
                 (parsed?.urls || [])
                     .filter((u) => u.startsWith('http://') || u.startsWith('https://'))
@@ -114,7 +109,7 @@ Return ONLY a JSON object in this exact format:
                 return { tags: [], summary: '' };
             }
 
-            const parsed = parseJsonResponse<{ tags: string[]; summary: string }>(textContent.text);
+            const parsed = parseJsonResponse<{ tags: Array<string>; summary: string }>(textContent.text);
             return {
                 tags: parsed?.tags || [],
                 summary: parsed?.summary || '',

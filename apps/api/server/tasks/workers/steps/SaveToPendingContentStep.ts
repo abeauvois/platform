@@ -1,12 +1,9 @@
-import {
-    type WorkflowContext,
-    type StepResult,
-    type IPendingContentRepository,
-    BaseContent,
+import { toPendingContent } from './utils';
+import { BaseWorkflowStep } from './BaseWorkflowStep';
+import type {
+    BaseContent, IPendingContentRepository, StepResult, WorkflowContext
 } from '@platform/platform-domain';
 import type { StepFactoryConfig } from '../presets';
-import { BaseWorkflowStep } from './BaseWorkflowStep';
-import { toPendingContent } from './utils';
 
 /**
  * Save to pending content step - saves items to pending_content table for later enrichment

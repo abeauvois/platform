@@ -258,6 +258,7 @@ describe('Duplicate handling in ingestion', () => {
             );
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [
                     // Duplicate URL (should be skipped)
                     new BaseContent(
@@ -295,6 +296,7 @@ describe('Duplicate handling in ingestion', () => {
             const step = new SaveToPendingContentStep(createStepConfig(), pendingContentRepo);
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [
                     new BaseContent('https://unique1.example.com', 'Gmail', ['tag1'], 'Summary 1', 'content1'),
                     new BaseContent('https://unique2.example.com', 'Gmail', ['tag2'], 'Summary 2', 'content2'),
@@ -325,6 +327,7 @@ describe('Duplicate handling in ingestion', () => {
             const step = new SaveToPendingContentStep(createStepConfig(), pendingContentRepo);
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [
                     // All duplicates
                     new BaseContent('https://dup1.example.com', 'Gmail', [], '', ''),
@@ -363,6 +366,7 @@ describe('Duplicate handling in ingestion', () => {
             );
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [new BaseContent('https://duplicate.example.com', 'Gmail', [], '', '')],
                 outputPath: '',
                 updatedIds: new Set<string>(),
@@ -394,6 +398,7 @@ describe('Duplicate handling in ingestion', () => {
             const step = new SaveToBookmarkStep(createStepConfig(), bookmarkRepo);
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [
                     // Duplicate URL (should be skipped)
                     new BaseContent(
@@ -431,6 +436,7 @@ describe('Duplicate handling in ingestion', () => {
             const step = new SaveToBookmarkStep(createStepConfig(), bookmarkRepo);
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [
                     new BaseContent('https://unique1.example.com', 'Gmail', ['tag1'], 'Summary 1', 'content1'),
                     new BaseContent('https://unique2.example.com', 'Gmail', ['tag2'], 'Summary 2', 'content2'),
@@ -457,6 +463,7 @@ describe('Duplicate handling in ingestion', () => {
             const step = new SaveToBookmarkStep(createStepConfig(), bookmarkRepo);
 
             const context: WorkflowContext<BaseContent> = {
+                userId,
                 items: [
                     // All duplicates
                     new BaseContent('https://dup1.example.com', 'Gmail', [], '', ''),

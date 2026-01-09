@@ -4,3 +4,5 @@
  */
 
 export * from './IExchangeClient.js';
+export * from './IWatchlistRepository.js';
+export * from './IIdGenerator.js';

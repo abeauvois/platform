@@ -9,12 +9,15 @@
  */
 
 import type {
-    IExchangeClient,
-    MarketTicker,
     AccountBalance,
     Candlestick,
+    CreateOrderData,
+    IExchangeClient,
+    MarginBalance,
+    MarketTicker,
     Order,
-    CreateOrderData
+    SymbolPrice,
+    UserDataEventCallback
 } from '@platform/trading-domain';
 
 /**
@@ -30,6 +33,14 @@ interface BinanceTickerResponse {
     lowPrice: string;
     priceChange: string;
     priceChangePercent: string;
+}
+
+/**
+ * Binance API response type for price ticker (/ticker/price)
+ */
+interface BinancePriceResponse {
+    symbol: string;
+    price: string;
 }
 
 /**
@@ -60,6 +71,45 @@ interface BinanceAccountResponse {
         free: string;
         locked: string;
     }>;
+}
+
+/**
+ * Binance order response type (for POST /order)
+ */
+interface BinanceOrderResponse {
+    symbol: string;
+    orderId: number;
+    orderListId: number;
+    clientOrderId: string;
+    transactTime: number;
+    price: string;
+    origQty: string;
+    executedQty: string;
+    cummulativeQuoteQty: string;
+    status: 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'EXPIRED';
+    timeInForce: string;
+    type: string;
+    side: 'BUY' | 'SELL';
+}
+
+/**
+ * Binance open/all order response type (for GET /openOrders or /allOrders)
+ */
+interface BinanceOpenOrderResponse {
+    symbol: string;
+    orderId: number;
+    orderListId: number;
+    clientOrderId: string;
+    price: string;
+    origQty: string;
+    executedQty: string;
+    cummulativeQuoteQty: string;
+    status: 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'EXPIRED';
+    timeInForce: string;
+    type: string;
+    side: 'BUY' | 'SELL';
+    time: number;
+    updateTime: number;
 }
 
 /**
@@ -131,13 +181,62 @@ export class BinanceTestnetClient implements IExchangeClient {
     }
 
     /**
+     * Get prices for multiple trading pairs in a single request (public endpoint)
+     * Uses lightweight /ticker/price endpoint
+     * @param symbols - Array of trading pair symbols (e.g., ['BTCUSDT', 'BTC/USD'])
+     * @returns Array of symbol prices
+     */
+    async getTickers(symbols: Array<string>): Promise<Array<SymbolPrice>> {
+        if (symbols.length === 0) {
+            return [];
+        }
+
+        const binanceSymbols = symbols.map(s => this.convertSymbol(s));
+        const symbolsParam = JSON.stringify(binanceSymbols);
+        const url = `${this.baseUrl}/ticker/price?symbols=${encodeURIComponent(symbolsParam)}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            // If batch request fails (e.g., invalid symbol), fall back to individual requests
+            const results: Array<SymbolPrice> = [];
+            for (const symbol of binanceSymbols) {
+                try {
+                    const singleUrl = `${this.baseUrl}/ticker/price?symbol=${symbol}`;
+                    const singleResponse = await fetch(singleUrl, { method: 'GET' });
+                    if (singleResponse.ok) {
+                        const data: BinancePriceResponse = await singleResponse.json();
+                        results.push({
+                            symbol: data.symbol,
+                            price: Number.parseFloat(data.price),
+                        });
+                    }
+                    // Skip invalid symbols silently
+                } catch {
+                    // Skip symbols that fail
+                }
+            }
+            return results;
+        }
+
+        const data: Array<BinancePriceResponse> = await response.json();
+
+        return data.map(d => ({
+            symbol: d.symbol,
+            price: Number.parseFloat(d.price),
+        }));
+    }
+
+    /**
      * Get historical candlestick/kline data (public endpoint)
      * @param symbol - Trading pair (e.g., 'BTCUSDT')
      * @param interval - Time interval ('1m', '5m', '1h', '1d', etc.)
      * @param limit - Number of candles to fetch (default 100, max 1000)
      * @returns Array of candlestick data
      */
-    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Candlestick[]> {
+    async getKlines(symbol: string, interval: string, limit: number = 100): Promise<Array<Candlestick>> {
         // Validate interval
         if (!VALID_INTERVALS.includes(interval)) {
             throw new Error(`Invalid interval: ${interval}. Must be one of: ${VALID_INTERVALS.join(', ')}`);
@@ -164,7 +263,7 @@ export class BinanceTestnetClient implements IExchangeClient {
             throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
         }
 
-        const data: BinanceKlineResponse[] = await response.json();
+        const data: Array<BinanceKlineResponse> = await response.json();
 
         return data.map((kline) => this.mapToCandlestick(kline));
     }
@@ -173,7 +272,7 @@ export class BinanceTestnetClient implements IExchangeClient {
      * Get all account balances (requires authentication)
      * @returns Array of account balances for all assets
      */
-    async getBalances(): Promise<AccountBalance[]> {
+    async getBalances(): Promise<Array<AccountBalance>> {
         if (!this.isAuthenticated()) {
             throw new Error('Authentication required: API key and secret must be provided');
         }
@@ -212,6 +311,15 @@ export class BinanceTestnetClient implements IExchangeClient {
     }
 
     /**
+     * Get all margin account balances (requires authentication)
+     * Note: Binance Testnet does not support margin trading
+     * @returns Array of margin balances
+     */
+    async getMarginBalances(): Promise<Array<MarginBalance>> {
+        throw new Error('Margin trading is not supported on Binance Testnet');
+    }
+
+    /**
      * Create a new order (requires authentication)
      * @param data - Order details
      * @returns Created order with ID and status
@@ -221,8 +329,86 @@ export class BinanceTestnetClient implements IExchangeClient {
             throw new Error('Authentication required: API key and secret must be provided');
         }
 
-        // TODO: Implement in next phase
-        throw new Error('createOrder not yet implemented');
+        const timestamp = Date.now();
+        const binanceSymbol = this.convertSymbol(data.symbol);
+
+        // Build order parameters
+        const params = new URLSearchParams({
+            symbol: binanceSymbol,
+            side: data.side.toUpperCase(),
+            type: data.type.toUpperCase(),
+            quantity: data.quantity.toString(),
+            timestamp: timestamp.toString(),
+        });
+
+        // Add price for limit orders
+        if (data.type === 'limit' && data.price !== undefined) {
+            params.append('price', data.price.toString());
+            params.append('timeInForce', data.timeInForce || 'GTC');
+        }
+
+        // Add stop price for stop orders
+        if ((data.type === 'stop' || data.type === 'stop_limit') && data.stopPrice !== undefined) {
+            params.append('stopPrice', data.stopPrice.toString());
+        }
+
+        const queryString = params.toString();
+        const signature = await this.sign(queryString);
+        const url = `${this.baseUrl}/order?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const orderResponse: BinanceOrderResponse = await response.json();
+        return this.mapBinanceOrderToOrder(orderResponse);
+    }
+
+    /**
+     * Map Binance order response to Order domain model
+     */
+    private mapBinanceOrderToOrder(data: BinanceOrderResponse): Order {
+        const statusMap: Record<BinanceOrderResponse['status'], Order['status']> = {
+            'NEW': 'pending',
+            'PARTIALLY_FILLED': 'partially_filled',
+            'FILLED': 'filled',
+            'CANCELED': 'cancelled',
+            'REJECTED': 'rejected',
+            'EXPIRED': 'cancelled',
+        };
+
+        const typeMap: Record<string, Order['type']> = {
+            'MARKET': 'market',
+            'LIMIT': 'limit',
+            'STOP_LOSS': 'stop',
+            'STOP_LOSS_LIMIT': 'stop_limit',
+            'TAKE_PROFIT': 'stop',
+            'TAKE_PROFIT_LIMIT': 'stop_limit',
+        };
+
+        const now = new Date(data.transactTime);
+        const price = Number.parseFloat(data.price);
+
+        return {
+            id: data.orderId.toString(),
+            symbol: data.symbol,
+            side: data.side.toLowerCase() as 'buy' | 'sell',
+            type: typeMap[data.type] ?? 'limit',
+            quantity: Number.parseFloat(data.origQty),
+            price: price > 0 ? price : undefined,
+            status: statusMap[data.status],
+            filledQuantity: Number.parseFloat(data.executedQty),
+            createdAt: now,
+            updatedAt: now,
+        };
     }
 
     /**
@@ -230,7 +416,7 @@ export class BinanceTestnetClient implements IExchangeClient {
      * @param symbol - Trading pair (optional)
      * @returns Array of orders
      */
-    async getOrders(symbol?: string): Promise<Order[]> {
+    async getOrders(symbol?: string): Promise<Array<Order>> {
         if (!this.isAuthenticated()) {
             throw new Error('Authentication required: API key and secret must be provided');
         }
@@ -252,6 +438,104 @@ export class BinanceTestnetClient implements IExchangeClient {
 
         // TODO: Implement in next phase
         throw new Error('cancelOrder not yet implemented');
+    }
+
+    /**
+     * Get order history (filled orders) for a symbol
+     * @param symbol - Trading pair symbol (required)
+     * @param limit - Maximum number of orders to return (default: 50)
+     * @returns Array of filled orders sorted by time descending
+     */
+    async getOrderHistory(symbol: string, limit: number = 50): Promise<Array<Order>> {
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        const timestamp = Date.now();
+        const binanceSymbol = this.convertSymbol(symbol);
+        const params = new URLSearchParams({
+            symbol: binanceSymbol,
+            limit: limit.toString(),
+            timestamp: timestamp.toString(),
+        });
+
+        const queryString = params.toString();
+        const signature = await this.sign(queryString);
+        const url = `${this.baseUrl}/allOrders?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance Testnet API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: Array<BinanceOpenOrderResponse> = await response.json();
+
+        // Filter to only filled orders and sort by time descending
+        return data
+            .filter((order) => order.status === 'FILLED')
+            .map((order) => this.mapBinanceOpenOrderToOrder(order))
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
+
+    /**
+     * Map Binance open order response to Order domain model
+     */
+    private mapBinanceOpenOrderToOrder(data: BinanceOpenOrderResponse): Order {
+        const statusMap: Record<BinanceOpenOrderResponse['status'], Order['status']> = {
+            'NEW': 'pending',
+            'PARTIALLY_FILLED': 'partially_filled',
+            'FILLED': 'filled',
+            'CANCELED': 'cancelled',
+            'REJECTED': 'rejected',
+            'EXPIRED': 'cancelled',
+        };
+
+        const typeMap: Record<string, Order['type']> = {
+            'MARKET': 'market',
+            'LIMIT': 'limit',
+            'STOP_LOSS': 'stop_loss',
+            'STOP_LOSS_LIMIT': 'stop_loss_limit',
+            'TAKE_PROFIT': 'take_profit',
+            'TAKE_PROFIT_LIMIT': 'take_profit_limit',
+        };
+
+        const price = Number.parseFloat(data.price);
+
+        return {
+            id: data.orderId.toString(),
+            symbol: data.symbol,
+            side: data.side.toLowerCase() as 'buy' | 'sell',
+            type: typeMap[data.type] ?? 'limit',
+            quantity: Number.parseFloat(data.origQty),
+            price: price > 0 ? price : undefined,
+            status: statusMap[data.status],
+            filledQuantity: Number.parseFloat(data.executedQty),
+            createdAt: new Date(data.time),
+            updatedAt: new Date(data.updateTime),
+        };
+    }
+
+    /**
+     * Check if user data stream is supported
+     * Note: Not implemented for testnet
+     */
+    supportsUserDataStream(): boolean {
+        return false;
+    }
+
+    /**
+     * Subscribe to user data stream events
+     * Note: Not implemented for testnet
+     */
+    async subscribeToUserData(_callback: UserDataEventCallback): Promise<() => void> {
+        throw new Error('User data stream is not supported on Binance Testnet client');
     }
 
     /**

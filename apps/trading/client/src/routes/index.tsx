@@ -1,295 +1,282 @@
+import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, RefreshCw, TrendingUp, Wallet } from 'lucide-react'
-import { tradingClient } from '../lib/trading-client'
+import { useCallback, useMemo, useRef, useState } from 'react'
+
+import { detectStopOrderCategory } from '@platform/trading-domain'
+import { DragOrderPanel } from '../components/DragOrderPanel'
+import { DragOverlayBadge } from '../components/DragOverlayBadge'
+import { MarginAccountCard } from '../components/MarginAccountCard'
+import { OrdersTable } from '../components/OrdersTable'
+import { PortfolioSummaryCard } from '../components/PortfolioSummaryCard'
+import { SpotBalancesCard } from '../components/SpotBalancesCard'
+import { StopPriceModal } from '../components/StopPriceModal'
 import { TradingChart } from '../components/TradingChart'
+import { WatchlistCard } from '../components/WatchlistCard'
+import { useCurrentPrice } from '../hooks/useCurrentPrice'
+import { useDragOrder } from '../hooks/useDragOrder'
+import { useFetchOrderHistory } from '../hooks/useFetchOrderHistory'
+import { useOrderAmounts } from '../hooks/useOrderAmounts'
+import { useOrderManagement } from '../hooks/useOrderManagement'
+import { useOrderMode } from '../hooks/useOrderMode'
+import { useSelectedAsset } from '../hooks/useSelectedAsset'
+import { useTradingBalances } from '../hooks/useTradingBalances'
+import { useTradingData } from '../hooks/useTradingData'
+import { useWatchlistActions } from '../hooks/useWatchlistActions'
+
+import type { TradingChartHandle } from '../components/TradingChart'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
-// Balance response type based on the API
-interface BalanceResponse {
-  exchange: string
-  balances: Array<{
-    asset: string
-    free: number
-    locked: number
-    total: number
-  }>
-  count: number
-}
-
 function HomePage() {
-  // Fetch BTC/USD ticker data
-  const {
-    data: ticker,
-    isLoading: tickerLoading,
-    error: tickerError,
-    refetch: refetchTicker,
-  } = useQuery({
-    queryKey: ['ticker'],
-    queryFn: () => tradingClient.getTicker(),
-    refetchInterval: 5000, // Refresh every 5 seconds
-  })
+  const tradingData = useTradingData()
+  const chartRef = useRef<TradingChartHandle>(null)
 
-  // Fetch account balances
+  // Asset selection and trading pair configuration
+  const { selectedAsset, baseAsset, quoteAsset, tradingSymbol, handleAssetSelect } =
+    useSelectedAsset()
+
+  // Balances for the trading pair
+  const { baseBalance, baseLockedBalance, quoteBalance, quoteLockedBalance } = useTradingBalances(
+    baseAsset,
+    quoteAsset,
+    tradingData
+  )
+
+  // Current price synced from prices map
+  const currentPrice = useCurrentPrice(baseAsset, tradingData.prices)
+
+  // Order amounts with auto-calculated defaults
+  const { buyAmount, sellAmount, setBuyAmount, setSellAmount } = useOrderAmounts(
+    currentPrice,
+    baseBalance,
+    quoteBalance,
+    tradingSymbol
+  )
+
+  // Order mode state (stop_limit or limit)
+  const { orderMode, setOrderMode } = useOrderMode()
+
+  // Stop price modal state
+  const [stopMarketModal, setStopMarketModal] = useState<{
+    isOpen: boolean
+    side: 'buy' | 'sell'
+  }>({ isOpen: false, side: 'buy' })
+
+  // Order CRUD operations and real-time updates
+  const { placedOrders, createOrder, cancelOrder, isAuthenticated } = useOrderManagement(
+    chartRef,
+    tradingData.refetch
+  )
+
+  // Fetch order history for the current symbol
+  const { data: orderHistoryData } = useFetchOrderHistory(tradingSymbol, isAuthenticated)
+
+  // Watchlist data and actions (consolidated hook)
   const {
-    data: balances,
-    isLoading: balancesLoading,
-    error: balancesError,
-    refetch: refetchBalances,
-  } = useQuery<BalanceResponse>({
-    queryKey: ['balances'],
-    queryFn: async () => {
-      const response = await fetch('/api/trading/balance')
-      if (!response.ok) {
-        throw new Error('Failed to fetch balances')
-      }
-      return response.json()
+    watchlistData,
+    isWatchlistLoading,
+    watchlistError,
+    refetchWatchlist,
+    isInWatchlist,
+    handleAddToWatchlist,
+    handleWatchlistSelect,
+    handleWatchlistRemove,
+  } = useWatchlistActions(tradingSymbol, isAuthenticated, handleAssetSelect)
+
+  // Transform order history data for the chart
+  const orderHistory = useMemo(() => {
+    if (!orderHistoryData) return []
+    return orderHistoryData
+      .filter((o) => o.price !== undefined)
+      .map((o) => ({
+        id: o.id,
+        side: o.side,
+        price: o.price!,
+        time: Math.floor(new Date(o.updatedAt).getTime() / 1000), // Use updatedAt (fill time) not createdAt
+      }))
+  }, [orderHistoryData])
+
+  // Handle stop-market order confirmation from modal
+  const handleStopMarketConfirm = useCallback(
+    (stopPrice: number) => {
+      const side = stopMarketModal.side
+      const quantity = side === 'buy' ? buyAmount : sellAmount
+
+      // Detect stop order category (stop_loss or take_profit)
+      const category = detectStopOrderCategory(side, stopPrice, currentPrice)
+      const orderType = category === 'stop_loss' ? 'stop_loss' : 'take_profit'
+
+      createOrder(
+        {
+          symbol: tradingSymbol,
+          side,
+          type: orderType,
+          quantity,
+          stopPrice,
+        },
+        {
+          onError: (error) => {
+            alert(`Failed to create order: ${error.message}`)
+          },
+        }
+      )
+
+      setStopMarketModal({ isOpen: false, side: 'buy' })
     },
-    // refetchInterval: 10000, // Refresh every 10 seconds
+    [stopMarketModal.side, buyAmount, sellAmount, currentPrice, tradingSymbol, createOrder]
+  )
+
+  // Handle buy button click (opens stop-market modal in stop mode)
+  const handleBuyClick = useCallback(() => {
+    if (orderMode === 'stop_limit') {
+      setStopMarketModal({ isOpen: true, side: 'buy' })
+    }
+  }, [orderMode])
+
+  // Handle sell button click (opens stop-market modal in stop mode)
+  const handleSellClick = useCallback(() => {
+    if (orderMode === 'stop_limit') {
+      setStopMarketModal({ isOpen: true, side: 'sell' })
+    }
+  }, [orderMode])
+
+  // Drag-and-drop order placement
+  const { sensors, activeDragId, handleDragStart, handleDragMove, handleDragEnd } = useDragOrder({
+    chartRef,
+    tradingSymbol,
+    baseAsset,
+    quoteAsset,
+    buyAmount,
+    sellAmount,
+    baseBalance,
+    baseLockedBalance,
+    quoteBalance,
+    quoteLockedBalance,
+    orderMode,
+    currentPrice,
+    createOrder,
   })
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price)
-  }
-
-  const formatBalance = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 8,
-    }).format(amount)
-  }
 
   return (
-    <div className="min-h-screen bg-base-200">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-base-content mb-2">
-            Trading Dashboard
-          </h1>
-          <p className="text-base-content/70">
-            Monitor your BTC/USD positions and account balance
-          </p>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
+    >
+      <section className="flex gap-4 h-full">
+        {/* Left Column - Portfolio Summary */}
+        <div className="w-80 flex flex-col gap-3">
+          <PortfolioSummaryCard
+            spotValue={tradingData.spotTotalValue}
+            marginValue={tradingData.marginTotalValue}
+            spotCount={tradingData.spotCount}
+            marginCount={tradingData.marginCount}
+            isLoading={tradingData.isPricesLoading}
+          />
+
+          <SpotBalancesCard
+            balances={tradingData.spotBalances}
+            prices={tradingData.prices}
+            priceChanges={tradingData.priceChanges}
+            exchange={tradingData.spotExchange}
+            isLoading={tradingData.isBalancesLoading}
+            isPricesLoading={tradingData.isPricesLoading}
+            error={tradingData.spotError}
+            refetch={tradingData.refetch}
+            selectedAsset={selectedAsset}
+            onAssetSelect={handleAssetSelect}
+          />
+
+          <MarginAccountCard
+            balances={tradingData.marginBalances}
+            prices={tradingData.prices}
+            priceChanges={tradingData.priceChanges}
+            exchange={tradingData.marginExchange}
+            count={tradingData.marginCount}
+            isLoading={tradingData.isBalancesLoading}
+            isPricesLoading={tradingData.isPricesLoading}
+            error={tradingData.marginError}
+            refetch={tradingData.refetch}
+            selectedAsset={selectedAsset}
+            onAssetSelect={handleAssetSelect}
+          />
         </div>
 
-        {/* Trading Chart - Full Width */}
-        <div className="mb-6">
-          <TradingChart symbol="BTCUSDT" interval="1h" limit={100} />
+        {/* Center Column - Chart, Drag Panel, Orders Table */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+          <TradingChart
+            ref={chartRef}
+            symbol={tradingSymbol}
+            interval="1h"
+            limit={100}
+            currentPrice={currentPrice}
+            orders={placedOrders
+              .filter(
+                (o) =>
+                  o.symbol === tradingSymbol &&
+                  (o.status === 'pending' || o.status === 'partially_filled')
+              )
+              .map((o) => ({ id: o.id, side: o.side, price: o.price, quantity: o.quantity }))}
+            orderHistory={orderHistory}
+            isInWatchlist={isInWatchlist}
+            onAddToWatchlist={isAuthenticated ? handleAddToWatchlist : undefined}
+          />
+
+          <DragOrderPanel
+            symbol={tradingSymbol}
+            baseAsset={baseAsset}
+            quoteAsset={quoteAsset}
+            availableBase={baseBalance}
+            availableQuote={quoteBalance}
+            currentPrice={currentPrice}
+            buyAmount={buyAmount}
+            sellAmount={sellAmount}
+            onBuyAmountChange={setBuyAmount}
+            onSellAmountChange={setSellAmount}
+            orderMode={orderMode}
+            onOrderModeChange={setOrderMode}
+            onBuyClick={handleBuyClick}
+            onSellClick={handleSellClick}
+            isAuthenticated={isAuthenticated}
+          />
+
+          <OrdersTable orders={placedOrders} onCancelOrder={cancelOrder} />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* BTC/USD Ticker Card */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="card-title flex items-center gap-2">
-                  <TrendingUp className="w-6 h-6 text-primary" />
-                  BTC/USD Ticker
-                </h2>
-                <button
-                  onClick={() => refetchTicker()}
-                  className="btn btn-ghost btn-sm btn-circle"
-                  disabled={tickerLoading}
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 ${tickerLoading ? 'animate-spin' : ''}`}
-                  />
-                </button>
-              </div>
-
-              {tickerLoading && !ticker && (
-                <div className="flex items-center justify-center py-12">
-                  <span className="loading loading-spinner loading-lg text-primary"></span>
-                </div>
-              )}
-
-              {tickerError && (
-                <div className="alert alert-error">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>
-                    Failed to load ticker: {(tickerError as Error).message}
-                  </span>
-                </div>
-              )}
-
-              {ticker && (
-                <div className="space-y-4">
-                  {/* Current Price */}
-                  <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-primary">
-                      {formatPrice(ticker.lastPrice)}
-                    </div>
-                    <div className="text-sm text-base-content/60 mt-2">
-                      {ticker.symbol}
-                    </div>
-                  </div>
-
-                  {/* Price Stats */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="stat bg-base-200 rounded-lg p-4">
-                      <div className="stat-title text-xs">24h High</div>
-                      <div className="stat-value text-lg text-success">
-                        {formatPrice(ticker.highPrice)}
-                      </div>
-                    </div>
-                    <div className="stat bg-base-200 rounded-lg p-4">
-                      <div className="stat-title text-xs">24h Low</div>
-                      <div className="stat-value text-lg text-error">
-                        {formatPrice(ticker.lowPrice)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Volume & Change */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="stat bg-base-200 rounded-lg p-4">
-                      <div className="stat-title text-xs">24h Volume</div>
-                      <div className="stat-value text-sm">
-                        {formatBalance(ticker.volume ?? 0)} BTC
-                      </div>
-                    </div>
-                    <div className="stat bg-base-200 rounded-lg p-4">
-                      <div className="stat-title text-xs">24h Change</div>
-                      <div
-                        className={`stat-value text-sm ${(ticker.priceChangePercent ?? 0) >= 0
-                          ? 'text-success'
-                          : 'text-error'
-                          }`}
-                      >
-                        {(ticker.priceChangePercent ?? 0) >= 0 ? '+' : ''}
-                        {(ticker.priceChangePercent ?? 0).toFixed(2)}%
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Last Update */}
-                  <div className="text-xs text-base-content/50 text-center">
-                    Last updated: {ticker.timestamp.toLocaleTimeString()}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Account Balance Card */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="card-title flex items-center gap-2">
-                  <Wallet className="w-6 h-6 text-secondary" />
-                  Account Balance
-                </h2>
-                <button
-                  onClick={() => refetchBalances()}
-                  className="btn btn-ghost btn-sm btn-circle"
-                  disabled={balancesLoading}
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 ${balancesLoading ? 'animate-spin' : ''}`}
-                  />
-                </button>
-              </div>
-
-              {balancesLoading && !balances && (
-                <div className="flex items-center justify-center py-12">
-                  <span className="loading loading-spinner loading-lg text-secondary"></span>
-                </div>
-              )}
-
-              {balancesError && (
-                <div className="alert alert-error">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>
-                    Failed to load balances:{' '}
-                    {(balancesError as Error).message}
-                  </span>
-                </div>
-              )}
-
-              {balances && (
-                <div className="space-y-4">
-                  {/* Exchange Info */}
-                  <div className="badge badge-outline badge-lg">
-                    {balances.exchange}
-                  </div>
-
-                  {/* Balance List */}
-                  {balances.count === 0 ? (
-                    <div className="text-center py-8 text-base-content/60">
-                      No balances available
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {balances.balances.map((balance) => (
-                        <div
-                          key={balance.asset}
-                          className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
-                        >
-                          <div>
-                            <div className="font-bold text-lg">
-                              {balance.asset}
-                            </div>
-                            <div className="text-xs text-base-content/60">
-                              Free: {formatBalance(balance.free)} •
-                              Locked: {formatBalance(balance.locked)}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-xl">
-                              {formatBalance(balance.total)}
-                            </div>
-                            <div className="text-xs text-base-content/60">
-                              Total
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Summary */}
-                  <div className="divider"></div>
-                  <div className="text-sm text-base-content/70 text-center">
-                    Showing {balances.count} asset{balances.count !== 1 ? 's' : ''}{' '}
-                    with balance
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Right Column - Watchlist */}
+        <div className="w-64 flex flex-col gap-3">
+          <WatchlistCard
+            watchlist={watchlistData}
+            isLoading={isWatchlistLoading}
+            error={watchlistError}
+            refetch={refetchWatchlist}
+            selectedSymbol={tradingSymbol}
+            onSymbolSelect={handleWatchlistSelect}
+            onRemoveSymbol={handleWatchlistRemove}
+          />
         </div>
+      </section>
 
-        {/* Info Banner */}
-        <div className="alert alert-info shadow-lg mt-8">
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="stroke-current flex-shrink-0 w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            <span>
-              Data refreshes automatically. Ticker updates every 5 seconds, balances
-              every 10 seconds.
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* Drag overlay for visual feedback */}
+      <DragOverlay>
+        {activeDragId && (
+          <DragOverlayBadge side={activeDragId === 'drag-buy' ? 'buy' : 'sell'} />
+        )}
+      </DragOverlay>
+
+      {/* Stop Price Modal for stop-market orders */}
+      <StopPriceModal
+        isOpen={stopMarketModal.isOpen}
+        side={stopMarketModal.side}
+        currentPrice={currentPrice}
+        quantity={stopMarketModal.side === 'buy' ? buyAmount : sellAmount}
+        baseAsset={baseAsset}
+        onConfirm={handleStopMarketConfirm}
+        onCancel={() => setStopMarketModal({ isOpen: false, side: 'buy' })}
+      />
+    </DndContext>
   )
 }
