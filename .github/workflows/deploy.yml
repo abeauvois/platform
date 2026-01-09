@@ -9,25 +9,25 @@ on:
   workflow_dispatch:
     inputs:
       app:
-        description: 'App to deploy'
+        description: "App to deploy"
         required: true
-        default: 'trading'
+        default: "trading"
         type: choice
         options:
           - trading
           - api
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
-        default: 'staging'
+        default: "staging"
         type: choice
         options:
           - staging
           - production
 
 env:
-  BUN_VERSION: '1.2.23'
-  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  BUN_VERSION: "1.2.23"
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}?
 
 jobs:
   # Determine deployment parameters

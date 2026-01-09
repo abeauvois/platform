@@ -1,10 +1,11 @@
-# Fixing Outdated Dependabot PRs
+whow would you recommand# Fixing Outdated Dependabot PRs
 
 This document describes the process for fixing Dependabot PRs that fail CI due to being out of sync with the main branch.
 
 ## Problem
 
 Dependabot PRs can fail when:
+
 1. The PR branch is outdated and missing recent changes from main
 2. Lockfile format has changed (e.g., `bun.lockb` → `bun.lock`)
 3. Dockerfile references have been updated in main but not in the PR branch
@@ -25,7 +26,7 @@ COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 "/app/apps/api/node_modules": not found
 ```
 
-## Solution Steps
+## Solution Steps (Manual version - we updated Dependabot.yml to rebase automaticaly so most of issues should be solved in this case)
 
 ### 1. Checkout the Dependabot PR branch
 

@@ -20,6 +20,7 @@
     "build:api": "cd apps/api && bun run build",
     "cli": "bun run apps/cli/index.ts",
     "cli:prod": "bun --env-file=apps/cli/.env.production run apps/cli/index.ts",
+    "worktree": "bun run cli worktree",
     "api": "cd apps/api && bun run dev",
     "api:renew-session": "bash apps/api/server/scripts/renew-session.sh",
     "dashboard": "cd apps/dashboard && bun run dev",

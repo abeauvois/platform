@@ -3,6 +3,7 @@
 import { cli } from 'cleye';
 import { listCommand } from './commands/list/index.js';
 import { ingestCommand } from './commands/ingest/index.js';
+import { worktreeCommand } from './commands/worktree/index.js';
 
 /**
  * CLI Entry Point: Platform CLI
@@ -22,7 +23,7 @@ cli({
         },
     },
 
-    commands: [listCommand, ingestCommand],
+    commands: [listCommand, ingestCommand, worktreeCommand],
 
     help: {
         description: 'Platform CLI for managing personal data',
