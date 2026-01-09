@@ -26,6 +26,7 @@ COPY packages/platform-utils/package.json ./packages/platform-utils/
 COPY packages/sdk-cli/package.json ./packages/sdk-cli/
 COPY packages/trading-domain/package.json ./packages/trading-domain/
 COPY packages/trading-sdk/package.json ./packages/trading-sdk/
+COPY packages/platform-env/package.json ./packages/platform-env/
 
 RUN bun install --frozen-lockfile
 
