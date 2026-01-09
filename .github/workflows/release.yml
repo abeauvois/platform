@@ -171,6 +171,23 @@ jobs:
               return;
             }
 
+            // Check if release already exists
+            try {
+              const existingRelease = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: `v${newVersion}`
+              });
+              console.log(`Release v${newVersion} already exists: ${existingRelease.data.html_url}`);
+              console.log('Skipping release creation.');
+              return;
+            } catch (error) {
+              // 404 means release doesn't exist, which is what we want
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
             // Create the release
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
