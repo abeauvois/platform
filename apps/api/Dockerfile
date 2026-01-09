@@ -33,7 +33,6 @@ RUN bun install --frozen-lockfile
 # Build
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY . .
 
 # Build packages first
