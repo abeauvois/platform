@@ -89,6 +89,17 @@ const GetOrdersQuerySchema = z.object({
     }),
 }).openapi('GetOrdersQuery');
 
+const GetOrderHistoryQuerySchema = z.object({
+    symbol: z.string().openapi({
+        example: 'BTCUSDT',
+        description: 'Trading pair symbol (required)',
+    }),
+    limit: z.coerce.number().int().min(1).max(100).optional().default(50).openapi({
+        example: 50,
+        description: 'Maximum number of orders to return (default: 50, max: 100)',
+    }),
+}).openapi('GetOrderHistoryQuery');
+
 const OrdersListResponseSchema = z.array(OrderResponseSchema).openapi('OrdersListResponse');
 
 // Route definitions
@@ -105,6 +116,44 @@ const getOrdersRoute = createRoute({
     responses: {
         200: {
             description: 'List of open orders',
+            content: {
+                'application/json': {
+                    schema: OrdersListResponseSchema,
+                },
+            },
+        },
+        401: {
+            description: 'Unauthorized - authentication required',
+            content: {
+                'application/json': {
+                    schema: UnauthorizedSchema,
+                },
+            },
+        },
+        500: {
+            description: 'Server error',
+            content: {
+                'application/json': {
+                    schema: ErrorSchema,
+                },
+            },
+        },
+    },
+});
+
+const getOrderHistoryRoute = createRoute({
+    method: 'get',
+    path: '/history',
+    tags: ['Orders'],
+    summary: 'Get order history',
+    description: 'Get filled orders for a symbol. Returns up to the specified limit of most recent filled orders. Requires authentication.',
+    security: [{ session: [] }],
+    request: {
+        query: GetOrderHistoryQuerySchema,
+    },
+    responses: {
+        200: {
+            description: 'List of filled orders',
             content: {
                 'application/json': {
                     schema: OrdersListResponseSchema,
@@ -259,6 +308,32 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
             } catch (error) {
                 console.error('Failed to create order:', error);
                 const message = error instanceof Error ? error.message : 'Order creation failed';
+                return c.json({ error: message }, 500);
+            }
+        })
+        .openapi(getOrderHistoryRoute, async (c) => {
+            try {
+                const { symbol, limit } = c.req.valid('query');
+
+                // Fetch order history from exchange
+                const orders = await exchangeClient.getOrderHistory(symbol, limit);
+
+                return c.json(orders.map((order) => ({
+                    id: order.id,
+                    symbol: order.symbol,
+                    side: order.side,
+                    type: order.type,
+                    quantity: order.quantity,
+                    price: order.price,
+                    stopPrice: order.stopPrice,
+                    status: order.status,
+                    filledQuantity: order.filledQuantity,
+                    createdAt: order.createdAt.toISOString(),
+                    updatedAt: order.updatedAt.toISOString(),
+                })), 200);
+            } catch (error) {
+                console.error('Failed to fetch order history:', error);
+                const message = error instanceof Error ? error.message : 'Failed to fetch order history';
                 return c.json({ error: message }, 500);
             }
         });

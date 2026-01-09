@@ -28,4 +28,7 @@ export const tradingKeys = {
   // Order queries
   orders: () => [...tradingKeys.all, 'orders'] as const,
   orderById: (id: string) => [...tradingKeys.orders(), id] as const,
+
+  // Order history queries
+  orderHistory: (symbol: string) => [...tradingKeys.all, 'order-history', symbol] as const,
 }

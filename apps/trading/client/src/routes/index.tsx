@@ -1,6 +1,6 @@
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { createFileRoute } from '@tanstack/react-router'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { detectStopOrderCategory } from '@platform/trading-domain'
 import { DragOrderPanel } from '../components/DragOrderPanel'
@@ -13,6 +13,7 @@ import { StopPriceModal } from '../components/StopPriceModal'
 import { TradingChart } from '../components/TradingChart'
 import { useCurrentPrice } from '../hooks/useCurrentPrice'
 import { useDragOrder } from '../hooks/useDragOrder'
+import { useFetchOrderHistory } from '../hooks/useFetchOrderHistory'
 import { useOrderAmounts } from '../hooks/useOrderAmounts'
 import { useOrderManagement } from '../hooks/useOrderManagement'
 import { useOrderMode } from '../hooks/useOrderMode'
@@ -66,6 +67,22 @@ function HomePage() {
     chartRef,
     tradingData.refetch
   )
+
+  // Fetch order history for the current symbol
+  const { data: orderHistoryData } = useFetchOrderHistory(tradingSymbol, isAuthenticated)
+
+  // Transform order history data for the chart
+  const orderHistory = useMemo(() => {
+    if (!orderHistoryData) return []
+    return orderHistoryData
+      .filter((o) => o.price !== undefined)
+      .map((o) => ({
+        id: o.id,
+        side: o.side,
+        price: o.price!,
+        time: Math.floor(new Date(o.updatedAt).getTime() / 1000), // Use updatedAt (fill time) not createdAt
+      }))
+  }, [orderHistoryData])
 
   // Handle stop-market order confirmation from modal
   const handleStopMarketConfirm = useCallback(
@@ -189,6 +206,7 @@ function HomePage() {
                   (o.status === 'pending' || o.status === 'partially_filled')
               )
               .map((o) => ({ id: o.id, side: o.side, price: o.price, quantity: o.quantity }))}
+            orderHistory={orderHistory}
           />
 
           <DragOrderPanel

@@ -6,8 +6,8 @@
  * Supports both public (unauthenticated) and private (authenticated) endpoints
  */
 
-import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
 import WebSocket from 'ws';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
 
 /**
  * Binance API response type for 24hr ticker
@@ -493,7 +493,7 @@ export class BinanceClient implements IExchangeClient {
 
         const data: BinanceExchangeInfoResponse = await response.json();
 
-        if (!data.symbols || data.symbols.length === 0) {
+        if (data.symbols.length === 0) {
             throw new Error(`Symbol ${binanceSymbol} not found on Binance`);
         }
 
@@ -641,7 +641,7 @@ export class BinanceClient implements IExchangeClient {
         }
 
         // Validate required fields exist
-        if (!orderResponse.orderId || !orderResponse.side || !orderResponse.symbol) {
+        if (!orderResponse.orderId || !orderResponse.symbol) {
             throw new Error(`Binance API error: Invalid order response - ${responseText}`);
         }
 
@@ -807,6 +807,50 @@ export class BinanceClient implements IExchangeClient {
     async cancelOrder(orderId: string, symbol: string): Promise<void> {
         // TODO: Implement order cancellation for production Binance
         throw new Error('cancelOrder not yet implemented for production Binance');
+    }
+
+    /**
+     * Get order history (filled orders) for a symbol
+     * @param symbol - Trading pair symbol (required)
+     * @param limit - Maximum number of orders to return (default: 50)
+     * @returns Array of filled orders sorted by time descending
+     */
+    async getOrderHistory(symbol: string, limit: number = 50): Promise<Array<Order>> {
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        const timestamp = Date.now();
+        const binanceSymbol = this.convertSymbol(symbol);
+        const params = new URLSearchParams({
+            symbol: binanceSymbol,
+            limit: limit.toString(),
+            timestamp: timestamp.toString(),
+        });
+
+        const queryString = params.toString();
+        const signature = await this.sign(queryString);
+        const url = `${this.baseUrl}/allOrders?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: Array<BinanceOpenOrderResponse> = await response.json();
+
+        // Filter to only filled orders and sort by time descending
+        return data
+            .filter((order) => order.status === 'FILLED')
+            .map((order) => this.mapBinanceOpenOrderToOrder(order))
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     }
 
     /**

@@ -17,6 +17,40 @@ export interface OrderLine {
     quantity: number
 }
 
+export interface OrderHistoryItem {
+    id: string
+    side: 'buy' | 'sell'
+    price: number
+    time: number // Unix timestamp in seconds
+}
+
+/**
+ * Parse interval string to seconds
+ * @param interval - Interval string (e.g., '1m', '1h', '1d')
+ * @returns Interval in seconds
+ */
+function parseIntervalToSeconds(interval: string): number {
+    const unit = interval.slice(-1)
+    const value = parseInt(interval.slice(0, -1), 10)
+
+    switch (unit) {
+        case 's':
+            return value
+        case 'm':
+            return value * 60
+        case 'h':
+            return value * 60 * 60
+        case 'd':
+            return value * 60 * 60 * 24
+        case 'w':
+            return value * 60 * 60 * 24 * 7
+        case 'M':
+            return value * 60 * 60 * 24 * 30
+        default:
+            return 60 * 60 // Default to 1 hour
+    }
+}
+
 export interface TradingChartHandle {
     getPriceAtY: (y: number) => number | null
     getChartRect: () => DOMRect | null
@@ -31,18 +65,20 @@ interface TradingChartProps {
     interval?: string
     limit?: number
     orders?: Array<OrderLine>
+    orderHistory?: Array<OrderHistoryItem>
     currentPrice?: number
 }
 
 export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
     function TradingChart(
-        { symbol = 'BTCUSDT', interval = '1h', limit = 100, orders = [], currentPrice = 0 },
+        { symbol = 'BTCUSDT', interval = '1h', limit = 100, orders = [], orderHistory = [], currentPrice = 0 },
         ref
     ) {
         const chartContainerRef = useRef<HTMLDivElement>(null)
         const chartRef = useRef<IChartApi | null>(null)
         const candlestickSeriesRef = useRef<ReturnType<IChartApi['addSeries']> | null>(null)
         const ema20SeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+        const orderHistorySeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
         const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map())
         const previewLineRef = useRef<IPriceLine | null>(null)
         // Track if chart data has been initially loaded (to preserve zoom/pan on data refreshes)
@@ -91,8 +127,8 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                     color: order.side === 'buy' ? '#22c55e' : '#ef4444',
                     lineWidth: 2,
                     lineStyle: 2, // Dashed
-                    axisLabelVisible: true,
-                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${formatPrice(order.price)}`,
+                    axisLabelVisible: false, // Hide axis label to avoid cluttering price axis
+                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)}`,
                 })
                 priceLinesRef.current.set(order.id, priceLine)
             },
@@ -179,9 +215,8 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             const ema20Series = chart.addSeries(LineSeries, {
                 color: '#f59e0b', // Amber color for EMA
                 lineWidth: 2,
-                title: 'EMA 20',
                 priceLineVisible: false,
-                lastValueVisible: true,
+                lastValueVisible: false, // Hide to avoid cluttering price axis
             })
 
             chartRef.current = chart
@@ -203,6 +238,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             return () => {
                 window.removeEventListener('resize', handleResize)
                 priceLinesRef.current.clear()
+                orderHistorySeriesRef.current.clear()
                 chart.remove()
                 // Reset initialized flag so next symbol load will fitContent
                 chartInitializedRef.current = false
@@ -290,12 +326,70 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                     color: order.side === 'buy' ? '#22c55e' : '#ef4444',
                     lineWidth: 2,
                     lineStyle: 2, // Dashed
-                    axisLabelVisible: true,
-                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)} @ ${formatPrice(order.price)}`,
+                    axisLabelVisible: false, // Hide axis label to avoid cluttering price axis
+                    title: `${order.side.toUpperCase()} $${orderValue.toFixed(2)}`,
                 })
                 priceLinesRef.current.set(order.id, priceLine)
             }
         }, [orders, symbol])
+
+        // Update order history lines when orderHistory changes
+        useEffect(() => {
+            if (!chartRef.current || !klinesData?.klines.length) return
+
+            const chart = chartRef.current
+
+            // Calculate half the line width in seconds (1.5 candles on each side = 3 candles total)
+            const intervalSeconds = parseIntervalToSeconds(interval)
+            const halfLineWidth = intervalSeconds * 1.5
+
+            // Get the visible time range from klines data
+            const firstKline = klinesData.klines[0]
+            const lastKline = klinesData.klines.at(-1)
+            const chartStartTime = Math.floor(firstKline.openTime / 1000) // Convert to seconds
+            const chartEndTime = Math.floor(lastKline.closeTime / 1000) // Convert to seconds
+
+            // Filter orders to only those within the visible time range
+            const visibleOrders = orderHistory.filter((order) => {
+                return order.time >= chartStartTime && order.time <= chartEndTime
+            })
+
+            // Get current order IDs in the visible history
+            const currentOrderIds = new Set(visibleOrders.map((o) => o.id))
+
+            // Remove series for orders no longer visible
+            for (const [orderId, series] of orderHistorySeriesRef.current) {
+                if (!currentOrderIds.has(orderId)) {
+                    chart.removeSeries(series)
+                    orderHistorySeriesRef.current.delete(orderId)
+                }
+            }
+
+            // Add or update series for each visible order
+            for (const order of visibleOrders) {
+                if (!order.price) continue
+
+                let series = orderHistorySeriesRef.current.get(order.id)
+
+                // Create new series if it doesn't exist
+                if (!series) {
+                    series = chart.addSeries(LineSeries, {
+                        color: order.side === 'buy' ? '#22c55e' : '#ef4444',
+                        lineWidth: 3,
+                        priceLineVisible: false,
+                        lastValueVisible: false,
+                        crosshairMarkerVisible: false,
+                    })
+                    orderHistorySeriesRef.current.set(order.id, series)
+                }
+
+                // Set data for this order's series (2 points at same price, different times)
+                series.setData([
+                    { time: (order.time - halfLineWidth) as Time, value: order.price },
+                    { time: (order.time + halfLineWidth) as Time, value: order.price },
+                ])
+            }
+        }, [orderHistory, interval, klinesData])
 
         const handleRefresh = () => {
             refetchKlines()

@@ -85,6 +85,14 @@ export interface IExchangeClient {
     cancelOrder(orderId: string, symbol: string): Promise<void>;
 
     /**
+     * Get order history (filled orders) for a symbol
+     * @param symbol - Trading pair symbol (required)
+     * @param limit - Maximum number of orders to return (default: 50)
+     * @returns Array of filled orders sorted by time descending
+     */
+    getOrderHistory(symbol: string, limit?: number): Promise<Order[]>;
+
+    /**
      * Subscribe to user data stream events (order updates, balance changes)
      * @param callback - Function called when events are received
      * @returns Unsubscribe function to stop receiving events
