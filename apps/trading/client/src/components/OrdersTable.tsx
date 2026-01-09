@@ -1,10 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
 import { ListOrdered } from 'lucide-react'
 
+export type OrderType = 'limit' | 'market' | 'stop_loss' | 'stop_loss_limit' | 'take_profit' | 'take_profit_limit' | 'stop' | 'stop_limit'
+
 export interface PlacedOrder {
     id: string
     symbol: string
     side: 'buy' | 'sell'
+    type: OrderType
     price: number
     quantity: number
     status: 'pending' | 'filled' | 'partially_filled' | 'cancelled' | 'rejected'
@@ -42,7 +45,9 @@ export function OrdersTable({ orders, onCancelOrder }: Readonly<OrdersTableProps
                     <table className="w-full text-sm">
                         <thead className="bg-muted/30 text-muted-foreground">
                             <tr>
+                                <th className="text-left px-4 py-2 font-medium">Time</th>
                                 <th className="text-left px-4 py-2 font-medium">Side</th>
+                                <th className="text-left px-4 py-2 font-medium">Type</th>
                                 <th className="text-left px-4 py-2 font-medium">Symbol</th>
                                 <th className="text-right px-4 py-2 font-medium">Price</th>
                                 <th className="text-right px-4 py-2 font-medium">Amount</th>
@@ -53,14 +58,17 @@ export function OrdersTable({ orders, onCancelOrder }: Readonly<OrdersTableProps
                         <tbody>
                             {orders.map((order) => (
                                 <tr key={order.id} className="border-t border-muted/20 hover:bg-muted/10">
+                                    <td className="px-4 py-2">{order.createdAt.toLocaleTimeString()}</td>
                                     <td className="px-4 py-2">
                                         <span
-                                            className={`font-medium ${
-                                                order.side === 'buy' ? 'text-green-500' : 'text-red-500'
-                                            }`}
+                                            className={`font-medium ${order.side === 'buy' ? 'text-green-500' : 'text-red-500'
+                                                }`}
                                         >
                                             {order.side.toUpperCase()}
                                         </span>
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <OrderTypeBadge type={order.type} />
                                     </td>
                                     <td className="px-4 py-2">{order.symbol}</td>
                                     <td className="px-4 py-2 text-right font-mono">
@@ -124,6 +132,51 @@ function StatusBadge({ status }: { status: PlacedOrder['status'] }) {
     }
 
     const config = statusConfig[status]
+
+    return (
+        <span className={`px-2 py-0.5 rounded text-xs font-medium ${config.className}`}>
+            {config.label}
+        </span>
+    )
+}
+
+function OrderTypeBadge({ type }: { type: OrderType }) {
+    const typeConfig: Record<OrderType, { label: string; className: string }> = {
+        limit: {
+            label: 'LIMIT',
+            className: 'bg-blue-500/20 text-blue-400',
+        },
+        market: {
+            label: 'MARKET',
+            className: 'bg-purple-500/20 text-purple-400',
+        },
+        stop_loss: {
+            label: 'STOP LOSS',
+            className: 'bg-red-500/20 text-red-400',
+        },
+        stop_loss_limit: {
+            label: 'STOP LOSS LMT',
+            className: 'bg-red-500/20 text-red-400',
+        },
+        take_profit: {
+            label: 'TAKE PROFIT',
+            className: 'bg-green-500/20 text-green-400',
+        },
+        take_profit_limit: {
+            label: 'TAKE PROFIT LMT',
+            className: 'bg-green-500/20 text-green-400',
+        },
+        stop: {
+            label: 'STOP',
+            className: 'bg-orange-500/20 text-orange-400',
+        },
+        stop_limit: {
+            label: 'STOP LIMIT',
+            className: 'bg-orange-500/20 text-orange-400',
+        },
+    }
+
+    const config = typeConfig[type] ?? { label: type.toUpperCase(), className: 'bg-gray-500/20 text-gray-400' }
 
     return (
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${config.className}`}>

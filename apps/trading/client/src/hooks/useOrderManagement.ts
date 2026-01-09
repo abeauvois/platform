@@ -1,14 +1,14 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
+import { useCreateOrder } from './useCreateOrder'
+import { useOrderUpdates } from './useOrderUpdates'
+import { useFetchOrders } from './useFetchOrders'
 import type { RefObject } from 'react'
 
 import type { TradingChartHandle } from '../components/TradingChart'
 import type { PlacedOrder } from '../components/OrdersTable'
 import type { OrderUpdateEvent } from './useOrderUpdates'
 
-import { useCreateOrder } from './useCreateOrder'
-import { useOrderUpdates } from './useOrderUpdates'
-import { useFetchOrders } from './useFetchOrders'
 
 export interface CreateOrderParams {
   symbol: string
@@ -21,7 +21,7 @@ export interface CreateOrderParams {
 
 export interface UseOrderManagementReturn {
   /** List of placed orders */
-  placedOrders: PlacedOrder[]
+  placedOrders: Array<PlacedOrder>
   /** Create a new order */
   createOrder: (
     params: CreateOrderParams,
@@ -49,7 +49,7 @@ export function useOrderManagement(
   chartRef: RefObject<TradingChartHandle | null>,
   refetchBalances: () => void
 ): UseOrderManagementReturn {
-  const [placedOrders, setPlacedOrders] = useState<PlacedOrder[]>([])
+  const [placedOrders, setPlacedOrders] = useState<Array<PlacedOrder>>([])
   const [hasInitialized, setHasInitialized] = useState(false)
   const createOrderMutation = useCreateOrder()
 
@@ -59,10 +59,11 @@ export function useOrderManagement(
   // Initialize placedOrders and chart order lines when orders are fetched
   useEffect(() => {
     if (fetchedOrders && !hasInitialized) {
-      const orders: PlacedOrder[] = fetchedOrders.map((order) => ({
+      const orders: Array<PlacedOrder> = fetchedOrders.map((order) => ({
         id: order.id,
         symbol: order.symbol,
         side: order.side,
+        type: order.type,
         price: order.price ?? 0,
         quantity: order.quantity,
         status: order.status,
@@ -105,6 +106,7 @@ export function useOrderManagement(
               id: order.id,
               symbol: order.symbol,
               side: order.side,
+              type: order.type,
               price: order.price ?? 0,
               quantity: order.quantity,
               status: order.status,
@@ -158,7 +160,8 @@ export function useOrderManagement(
             id: order.id,
             symbol: order.symbol,
             side: order.side,
-            price: order.price,
+            type: order.type,
+            price: order.price ?? 0,
             quantity: order.quantity,
             status: order.status,
             createdAt: new Date(order.createdAt),
@@ -170,7 +173,7 @@ export function useOrderManagement(
           chartRef.current?.addOrderLine({
             id: order.id,
             side: order.side,
-            price: order.price,
+            price: order.price ?? 0,
             quantity: order.quantity,
           })
 

@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { tradingKeys } from '../../lib/query-keys'
 import { fetchPrices } from '../../lib/api'
+import { REFETCH_INTERVAL } from '../../lib/constants'
 import { getTradableSymbol, STABLECOINS } from '../../utils/balance'
 import type { SymbolPrice } from '../../utils/balance'
-
-const REFRESH_INTERVAL = 5000
 
 /**
  * Fetch prices for a list of assets
@@ -20,6 +19,6 @@ export function usePrices(assets: string[]) {
     queryKey: tradingKeys.pricesBySymbols(symbols),
     queryFn: () => fetchPrices(symbols),
     enabled: symbols.length > 0,
-    refetchInterval: REFRESH_INTERVAL,
+    refetchInterval: REFETCH_INTERVAL,
   })
 }

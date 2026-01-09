@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
+import { REFETCH_INTERVAL } from '../lib/constants'
 import { tradingKeys } from '../lib/query-keys'
 
 export interface FetchedOrder {
@@ -15,7 +16,7 @@ export interface FetchedOrder {
   updatedAt: string
 }
 
-async function fetchOrders(symbol?: string): Promise<FetchedOrder[]> {
+async function fetchOrders(symbol?: string): Promise<Array<FetchedOrder>> {
   const url = symbol ? `/api/trading/order?symbol=${encodeURIComponent(symbol)}` : '/api/trading/order'
 
   const response = await fetch(url, {
@@ -42,7 +43,7 @@ export function useFetchOrders(symbol?: string, enabled = true) {
     queryKey: tradingKeys.orders(),
     queryFn: () => fetchOrders(symbol),
     staleTime: 30_000, // Consider data stale after 30 seconds
-    refetchInterval: 60_000, // Refetch every minute as backup
+    refetchInterval: REFETCH_INTERVAL,
     enabled, // Only fetch when authenticated
   })
 }

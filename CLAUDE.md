@@ -156,6 +156,24 @@ async function analyzeLink(url) {
 }
 ```
 
+### Array Types
+
+```typescript
+// ✅ GOOD: Use Array<T> syntax
+function getOrders(): Promise<Array<FetchedOrder>> {
+  return this.orderService.fetchAll();
+}
+
+const items: Array<string> = [];
+
+// ❌ AVOID: T[] syntax
+function getOrders(): Promise<FetchedOrder[]> {
+  return this.orderService.fetchAll();
+}
+
+const items: string[] = [];
+```
+
 ### Dependency Injection
 
 ```typescript

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { tradingKeys } from '../../lib/query-keys'
 import { fetchKlines } from '../../lib/api'
+import { REFETCH_INTERVAL } from '../../lib/constants'
 import type { KlinesResponse } from '../../lib/api'
 
-const STALE_TIME = 30000 // 30 seconds
-const REFRESH_INTERVAL = 60000 // 1 minute
+const STALE_TIME = 30_000 // 30 seconds
 
 interface UseKlinesParams {
   symbol: string
@@ -23,6 +23,6 @@ export function useKlines({ symbol, interval, limit, enabled = true }: UseKlines
     queryFn: () => fetchKlines({ symbol, interval, limit }),
     enabled,
     staleTime: STALE_TIME,
-    refetchInterval: REFRESH_INTERVAL,
+    refetchInterval: REFETCH_INTERVAL,
   })
 }

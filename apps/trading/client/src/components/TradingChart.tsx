@@ -1,7 +1,7 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
 import { calculateEMA, calculatePricePrecision, formatPrice, getMinMove } from '@platform/trading-domain'
 import { useDroppable } from '@dnd-kit/core'
-import { CandlestickSeries, ColorType, createChart, LineSeries } from 'lightweight-charts'
+import { CandlestickSeries, ColorType, LineSeries, createChart } from 'lightweight-charts'
 import { RefreshCw, TrendingUp } from 'lucide-react'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 
@@ -233,8 +233,9 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             }))
 
             // Calculate price precision based on data
-            const lastCandle = klinesData.klines[klinesData.klines.length - 1]
-            const pricePrecision = lastCandle ? calculatePricePrecision(lastCandle.close) : 2
+            const lastCandle = klinesData.klines.at(-1)
+            if (!lastCandle) return
+            const pricePrecision = calculatePricePrecision(lastCandle.close)
             const minMove = getMinMove(pricePrecision)
 
             // Update series price format for low-value tokens
