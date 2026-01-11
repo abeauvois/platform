@@ -82,7 +82,7 @@ export class WarpLauncher {
     worktreePath: string,
     name: string,
     ports: PortConfig
-  ): Promise<{ configPath: string }> {
+  ): Promise<{ configPath: string; configName: string }> {
     const configName = `platform-worktree-${name}.yaml`;
     const configPath = join(this.configDir, configName);
 
