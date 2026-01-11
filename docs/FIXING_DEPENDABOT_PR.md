@@ -1,4 +1,4 @@
-whow would you recommand# Fixing Outdated Dependabot PRs
+# Fixing Outdated Dependabot PRs
 
 This document describes the process for fixing Dependabot PRs that fail CI due to being out of sync with the main branch.
 
@@ -9,8 +9,15 @@ Dependabot PRs can fail when:
 1. The PR branch is outdated and missing recent changes from main
 2. Lockfile format has changed (e.g., `bun.lockb` → `bun.lock`)
 3. Dockerfile references have been updated in main but not in the PR branch
+4. CI Bun version doesn't match the lockfile format version (e.g., CI uses Bun 1.1.x but lockfile is format v1 from Bun 1.2+)
 
 ## Common Error Messages
+
+```
+error: Unknown lockfile version
+InvalidLockfileVersion: failed to parse lockfile: 'bun.lock'
+error: lockfile had changes, but lockfile is frozen
+```
 
 ```
 error: lockfile had changes, but lockfile is frozen
@@ -36,8 +43,15 @@ gh pr checkout <PR_NUMBER>
 gh pr checkout 20
 ```
 
-### 2. Merge main into the PR branch
+### 2. Update the PR branch with main
 
+**Option A: Rebase (cleaner history, recommended)**
+```bash
+git fetch origin main
+git rebase origin/main
+```
+
+**Option B: Merge**
 ```bash
 git merge main -m "chore: merge main to update Dockerfiles and lockfile format"
 ```
@@ -99,13 +113,22 @@ gh pr checks <PR_NUMBER>
 # View failed CI logs
 gh run view <RUN_ID> --log-failed
 
-# Checkout, update, and push in one flow
+# Checkout, update (merge), and push in one flow
 gh pr checkout 20 && \
 git merge main -m "chore: merge main" && \
 bun install && \
 git add bun.lock && \
 git commit -m "chore: update lockfile" && \
 git push
+
+# Checkout, update (rebase), and push in one flow
+gh pr checkout 20 && \
+git fetch origin main && \
+git rebase origin/main && \
+bun install && \
+git add bun.lock && \
+git commit -m "chore: update lockfile after rebase" && \
+git push --force-with-lease
 ```
 
 ## Prevention
