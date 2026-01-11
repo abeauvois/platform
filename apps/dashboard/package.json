@@ -17,7 +17,7 @@
     "@platform/sdk": "workspace:*",
     "@platform/ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
-    "@tanstack/react-form": "^0.36.0",
+    "@tanstack/react-form": "^1.27.7",
     "@tanstack/react-query": "^5.66.5",
     "@tanstack/react-query-devtools": "^5.66.5",
     "@tanstack/react-router": "^1.130.2",
