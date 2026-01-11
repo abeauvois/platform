@@ -72,3 +72,6 @@ export interface WarpLayout {
   cwd: string;
   commands?: Array<{ exec: string }>;
 }
+
+// Re-export PR types from github-pr.ts for convenience
+export type { PrInfo, PrCheck, PrReview } from './github-pr.js';
