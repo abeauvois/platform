@@ -69,12 +69,19 @@ TRADING_CLIENT_URL=http://localhost:${ports.tradingClientPort}
       PORT: String(ports.apiPort),
       BETTER_AUTH_URL: `http://localhost:${ports.apiPort}`,
       CLIENT_URL: `http://localhost:${ports.dashboardPort}`,
+      PLATFORM_API_URL: `http://localhost:${ports.apiPort}`,
+      TRADING_CLIENT_URL: `http://localhost:${ports.tradingClientPort}`,
     });
 
     // Update apps/trading/.env
     await this.updateEnvFile(join(this.targetRoot, 'apps/trading/.env'), {
       PORT: String(ports.tradingServerPort),
-      CLIENT_URL: `http://localhost:${ports.tradingClientPort}`,
+      BETTER_AUTH_URL: `http://localhost:${ports.apiPort}`,
+      API_URL: `http://localhost:${ports.apiPort}`,
+      CLIENT_URL: `http://localhost:${ports.dashboardPort}`,
+      PLATFORM_API_URL: `http://localhost:${ports.apiPort}`,
+      TRADING_CLIENT_URL: `http://localhost:${ports.tradingClientPort}`,
+      TRADING_SERVER_URL: `http://localhost:${ports.tradingServerPort}`,
     });
   }
 
