@@ -1,7 +1,7 @@
 import { join, dirname } from 'path';
-import { mkdir } from 'fs/promises';
+import { mkdir, readdir, stat } from 'fs/promises';
 import type { PortConfig } from './types.js';
-import { ENV_FILES } from './types.js';
+import { ENV_FILES, CLAUDE_SETTINGS_FILES, CLAUDE_SETTINGS_DIRS } from './types.js';
 
 /**
  * Manages .env file operations for worktrees
@@ -98,6 +98,72 @@ TRADING_CLIENT_URL=http://localhost:${ports.tradingClientPort}
       await Bun.write(filePath, content);
     } catch {
       // File doesn't exist, skip
+    }
+  }
+
+  /**
+   * Copy Claude Code settings (permissions, agents) to worktree
+   * This avoids having to re-answer permission questions
+   */
+  async copyClaudeSettings(): Promise<Array<string>> {
+    const copied: Array<string> = [];
+
+    // Copy individual settings files
+    for (const settingsFile of CLAUDE_SETTINGS_FILES) {
+      const sourcePath = join(this.sourceRoot, settingsFile);
+      const targetPath = join(this.targetRoot, settingsFile);
+
+      try {
+        const content = await Bun.file(sourcePath).text();
+        await mkdir(dirname(targetPath), { recursive: true });
+        await Bun.write(targetPath, content);
+        copied.push(settingsFile);
+      } catch {
+        // File doesn't exist, skip
+      }
+    }
+
+    // Copy directories recursively
+    for (const dir of CLAUDE_SETTINGS_DIRS) {
+      const sourceDir = join(this.sourceRoot, dir);
+      const targetDir = join(this.targetRoot, dir);
+
+      try {
+        await this.copyDirRecursive(sourceDir, targetDir);
+        copied.push(`${dir}/`);
+      } catch {
+        // Directory doesn't exist, skip
+      }
+    }
+
+    return copied;
+  }
+
+  /**
+   * Recursively copy a directory
+   */
+  private async copyDirRecursive(
+    sourceDir: string,
+    targetDir: string
+  ): Promise<void> {
+    const sourceStat = await stat(sourceDir);
+    if (!sourceStat.isDirectory()) {
+      throw new Error(`${sourceDir} is not a directory`);
+    }
+
+    await mkdir(targetDir, { recursive: true });
+    const entries = await readdir(sourceDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const sourcePath = join(sourceDir, entry.name);
+      const targetPath = join(targetDir, entry.name);
+
+      if (entry.isDirectory()) {
+        await this.copyDirRecursive(sourcePath, targetPath);
+      } else {
+        const content = await Bun.file(sourcePath).text();
+        await Bun.write(targetPath, content);
+      }
     }
   }
 }

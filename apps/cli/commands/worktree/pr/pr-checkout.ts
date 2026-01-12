@@ -170,6 +170,15 @@ export const prCheckoutCommand = command(
       const copiedFiles = await envManager.copyEnvFiles();
       spinner.stop(`Copied ${copiedFiles.length} .env files`);
 
+      // Step 2b: Copy Claude Code settings (permissions)
+      spinner.start('Copying Claude Code settings...');
+      const copiedClaudeSettings = await envManager.copyClaudeSettings();
+      if (copiedClaudeSettings.length > 0) {
+        spinner.stop(`Copied Claude settings: ${copiedClaudeSettings.join(', ')}`);
+      } else {
+        spinner.stop('No Claude settings to copy');
+      }
+
       // Step 3: Configure ports
       spinner.start('Configuring ports...');
       await envManager.appendPortConfig(ports, offset);

@@ -30,6 +30,21 @@ export const ENV_FILES = [
 ] as const;
 
 /**
+ * Claude Code settings files that should be copied to worktrees
+ * This avoids having to re-answer permission questions for each worktree
+ */
+export const CLAUDE_SETTINGS_FILES = [
+  '.claude/settings.local.json', // Contains tool permissions
+] as const;
+
+/**
+ * Claude Code directories that should be copied recursively
+ */
+export const CLAUDE_SETTINGS_DIRS = [
+  '.claude/agents', // Custom agent configurations
+] as const;
+
+/**
  * Result of a worktree creation operation
  */
 export interface WorktreeCreateResult {
