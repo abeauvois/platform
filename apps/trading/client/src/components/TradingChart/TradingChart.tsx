@@ -8,11 +8,8 @@ import { useChartInstance } from '../../hooks/chart/useChartInstance'
 import { useOrderHistorySeries } from '../../hooks/chart/useOrderHistorySeries'
 import { useOrderLines } from '../../hooks/chart/useOrderLines'
 import { usePreviewLine } from '../../hooks/chart/usePreviewLine'
-<<<<<<< HEAD
-import { AssetSearch } from '../AssetSearch'
-=======
 import { useTrendLines } from '../../hooks/chart/useTrendLines'
->>>>>>> b931947 (feat(trading): add support and resistance lines)
+import { AssetSearch } from '../AssetSearch'
 
 import type { OrderLine, TradingChartHandle, TradingChartProps } from './types'
 

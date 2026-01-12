@@ -270,7 +270,6 @@ export interface MarginBalanceResponse {
 }
 
 /**
-<<<<<<< HEAD
  * Tradable symbol information for search/listing
  */
 export interface TradableSymbol {
@@ -288,7 +287,9 @@ export interface SymbolSearchResult {
     baseAsset: string;
     price: number;
     priceChangePercent24h: number;
-=======
+}
+
+/**
  * Swing point detected in price data (local high or low)
  */
 export interface SwingPoint {
@@ -333,5 +334,4 @@ export interface TrendLineResult {
     supportLines: Array<TrendLine>;
     resistanceLines: Array<TrendLine>;
     swingPoints: Array<SwingPoint>;
->>>>>>> b931947 (feat(trading): add support and resistance lines)
 }
