@@ -21,6 +21,7 @@ export interface UseChartInstanceReturn {
     candlestickSeriesRef: React.MutableRefObject<ISeriesApi<'Candlestick'> | null>
     ema20SeriesRef: React.MutableRefObject<ISeriesApi<'Line'> | null>
     orderHistorySeriesRef: React.MutableRefObject<Map<string, ISeriesApi<'Line'>>>
+    trendLineSeriesRef: React.MutableRefObject<Map<string, ISeriesApi<'Line'>>>
     priceLinesRef: React.MutableRefObject<Map<string, IPriceLine>>
     previewLineRef: React.MutableRefObject<IPriceLine | null>
     chartInitializedRef: React.MutableRefObject<boolean>
@@ -45,6 +46,7 @@ export function useChartInstance({
     const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
     const ema20SeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
     const orderHistorySeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
+    const trendLineSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
     const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map())
     const previewLineRef = useRef<IPriceLine | null>(null)
     const chartInitializedRef = useRef(false)
@@ -87,6 +89,7 @@ export function useChartInstance({
             window.removeEventListener('resize', handleResize)
             priceLinesRef.current.clear()
             orderHistorySeriesRef.current.clear()
+            trendLineSeriesRef.current.clear()
             chart.remove()
             chartInitializedRef.current = false
         }
@@ -98,6 +101,7 @@ export function useChartInstance({
         candlestickSeriesRef,
         ema20SeriesRef,
         orderHistorySeriesRef,
+        trendLineSeriesRef,
         priceLinesRef,
         previewLineRef,
         chartInitializedRef,
