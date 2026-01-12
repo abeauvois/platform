@@ -1,5 +1,4 @@
-import { loadEnv } from 'vite'
-import { defineConfig } from 'vitest/config'
+import { loadEnv, defineConfig, type PluginOption } from 'vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -31,17 +30,13 @@ const API_URL = rootEnv.API_URL || process.env.API_URL || `http://localhost:${ro
  *    - Trading APIs (/api/trading/*) -> Trading server (configured via TRADING_SERVER_URL)
  *    - Auth & shared APIs (/api/auth/*, /api/bookmarks/*) -> Platform API (configured via API_URL)
  *
- * 4. Testing:
- *    - Uses jsdom environment for browser-like testing
- *    - Loads setup file for test configuration
- *
  * @see https://vitejs.dev/config/
  */
 export default defineConfig({
   plugins: [
-    tanstackRouter({ autoCodeSplitting: true }),
-    viteReact(),
-    tailwindcss(),
+    tanstackRouter({ autoCodeSplitting: true }) as PluginOption,
+    viteReact() as PluginOption,
+    tailwindcss() as PluginOption,
   ],
   resolve: {
     alias: {
@@ -86,9 +81,5 @@ export default defineConfig({
         secure: false,
       },
     },
-  },
-  test: {
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
   },
 })
