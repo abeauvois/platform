@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { cli } from 'cleye';
+import { branchCommand } from './commands/branch/index.js';
 import { listCommand } from './commands/list/index.js';
 import { ingestCommand } from './commands/ingest/index.js';
 import { worktreeCommand } from './commands/worktree/index.js';
@@ -23,7 +24,7 @@ cli({
         },
     },
 
-    commands: [listCommand, ingestCommand, worktreeCommand],
+    commands: [branchCommand, listCommand, ingestCommand, worktreeCommand],
 
     help: {
         description: 'Platform CLI for managing personal data',
