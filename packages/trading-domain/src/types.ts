@@ -268,3 +268,23 @@ export interface MarginBalanceResponse {
     balances: MarginBalance[];
     count: number;
 }
+
+/**
+ * Tradable symbol information for search/listing
+ */
+export interface TradableSymbol {
+    symbol: string;       // Full trading pair (e.g., 'BTCUSDC')
+    baseAsset: string;    // Base asset (e.g., 'BTC')
+    quoteAsset: string;   // Quote asset (e.g., 'USDC')
+    status: 'TRADING' | 'HALT' | 'BREAK';
+}
+
+/**
+ * Symbol with market data for search results display
+ */
+export interface SymbolSearchResult {
+    symbol: string;
+    baseAsset: string;
+    price: number;
+    priceChangePercent24h: number;
+}

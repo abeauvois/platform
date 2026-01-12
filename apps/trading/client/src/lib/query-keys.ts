@@ -34,4 +34,8 @@ export const tradingKeys = {
 
   // Watchlist queries
   watchlist: () => [...tradingKeys.all, 'watchlist'] as const,
+
+  // Symbols queries (for asset search)
+  symbols: () => [...tradingKeys.all, 'symbols'] as const,
+  symbolsByQuoteAsset: (quoteAsset: string) => [...tradingKeys.symbols(), quoteAsset] as const,
 }

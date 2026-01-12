@@ -223,6 +223,7 @@ function HomePage() {
             orderHistory={orderHistory}
             isInWatchlist={isInWatchlist}
             onAddToWatchlist={isAuthenticated ? handleAddToWatchlist : undefined}
+            onAssetSelect={handleAssetSelect}
           />
 
           <DragOrderPanel

@@ -140,3 +140,32 @@ export async function removeFromWatchlist(symbol: string): Promise<void> {
     throw new Error('Failed to remove symbol from watchlist')
   }
 }
+
+/**
+ * Symbol search result from API
+ */
+export interface SymbolSearchResult {
+  symbol: string
+  baseAsset: string
+  price: number
+  priceChangePercent24h: number
+}
+
+/**
+ * Fetch tradable symbols with prices for search
+ */
+export async function fetchSymbols(params?: {
+  quoteAsset?: string
+  withPrices?: boolean
+}): Promise<Array<SymbolSearchResult>> {
+  const searchParams = new URLSearchParams()
+  if (params?.quoteAsset) searchParams.set('quoteAsset', params.quoteAsset)
+  if (params?.withPrices) searchParams.set('withPrices', 'true')
+
+  const url = `/api/trading/symbols${searchParams.toString() ? `?${searchParams}` : ''}`
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error('Failed to fetch symbols')
+  }
+  return response.json()
+}

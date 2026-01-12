@@ -7,7 +7,7 @@
 
 import { describe, test, expect, beforeEach, mock, afterEach } from 'bun:test';
 import { BinanceClient } from '../BinanceClient.js';
-import type { IExchangeClient, MarketTicker, AccountBalance, MarginBalance, SymbolPrice } from '@platform/trading-domain';
+import type { IExchangeClient, MarketTicker, AccountBalance, MarginBalance, SymbolPrice, TradableSymbol } from '@platform/trading-domain';
 
 describe('BinanceClient', () => {
     let client: BinanceClient;
@@ -972,6 +972,158 @@ describe('BinanceClient', () => {
                 expect.stringContaining('symbol=BTCUSDT'),
                 expect.anything()
             );
+        });
+    });
+
+    describe('getSymbols', () => {
+        test('should fetch all tradable symbols from exchange info', async () => {
+            // Arrange: Mock Binance exchangeInfo response
+            const mockBinanceResponse = {
+                symbols: [
+                    { symbol: 'BTCUSDC', status: 'TRADING', baseAsset: 'BTC', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'ETHUSDC', status: 'TRADING', baseAsset: 'ETH', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'BTCUSDT', status: 'TRADING', baseAsset: 'BTC', quoteAsset: 'USDT', filters: [] },
+                ],
+            };
+
+            // @ts-ignore
+            global.fetch = mock(() =>
+                Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockBinanceResponse),
+                } as Response)
+            );
+
+            // Act
+            const result: Array<TradableSymbol> = await client.getSymbols();
+
+            // Assert
+            expect(result).toHaveLength(3);
+            expect(result[0]).toEqual({
+                symbol: 'BTCUSDC',
+                baseAsset: 'BTC',
+                quoteAsset: 'USDC',
+                status: 'TRADING',
+            });
+        });
+
+        test('should filter by quoteAsset when provided', async () => {
+            // Arrange: Mock Binance exchangeInfo response with multiple quote assets
+            const mockBinanceResponse = {
+                symbols: [
+                    { symbol: 'BTCUSDC', status: 'TRADING', baseAsset: 'BTC', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'ETHUSDC', status: 'TRADING', baseAsset: 'ETH', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'BTCUSDT', status: 'TRADING', baseAsset: 'BTC', quoteAsset: 'USDT', filters: [] },
+                    { symbol: 'ETHUSDT', status: 'TRADING', baseAsset: 'ETH', quoteAsset: 'USDT', filters: [] },
+                ],
+            };
+
+            // @ts-ignore
+            global.fetch = mock(() =>
+                Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockBinanceResponse),
+                } as Response)
+            );
+
+            // Act
+            const result = await client.getSymbols('USDC');
+
+            // Assert: Should only return USDC pairs
+            expect(result).toHaveLength(2);
+            expect(result.every(s => s.quoteAsset === 'USDC')).toBe(true);
+            expect(result.map(s => s.symbol)).toEqual(['BTCUSDC', 'ETHUSDC']);
+        });
+
+        test('should only return TRADING status symbols', async () => {
+            // Arrange: Mock response with various statuses
+            const mockBinanceResponse = {
+                symbols: [
+                    { symbol: 'BTCUSDC', status: 'TRADING', baseAsset: 'BTC', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'ETHUSDC', status: 'HALT', baseAsset: 'ETH', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'BNBUSDC', status: 'BREAK', baseAsset: 'BNB', quoteAsset: 'USDC', filters: [] },
+                    { symbol: 'SOLUSDC', status: 'TRADING', baseAsset: 'SOL', quoteAsset: 'USDC', filters: [] },
+                ],
+            };
+
+            // @ts-ignore
+            global.fetch = mock(() =>
+                Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockBinanceResponse),
+                } as Response)
+            );
+
+            // Act
+            const result = await client.getSymbols();
+
+            // Assert: Should only return TRADING symbols
+            expect(result).toHaveLength(2);
+            expect(result.every(s => s.status === 'TRADING')).toBe(true);
+            expect(result.map(s => s.symbol)).toEqual(['BTCUSDC', 'SOLUSDC']);
+        });
+
+        test('should call correct Binance API endpoint', async () => {
+            // Arrange
+            const mockBinanceResponse = { symbols: [] };
+
+            // @ts-ignore
+            global.fetch = mock(() =>
+                Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockBinanceResponse),
+                } as Response)
+            );
+
+            // Act
+            await client.getSymbols();
+
+            // Assert: Verify correct endpoint called
+            expect(global.fetch).toHaveBeenCalledWith(
+                'https://api.binance.com/api/v3/exchangeInfo',
+                expect.objectContaining({
+                    method: 'GET',
+                })
+            );
+        });
+
+        test('should handle API errors gracefully', async () => {
+            // Arrange: Mock API error
+            // @ts-ignore
+            global.fetch = mock(() =>
+                Promise.resolve({
+                    ok: false,
+                    status: 500,
+                    statusText: 'Internal Server Error',
+                    json: () => Promise.resolve({ msg: 'Server error' }),
+                } as Response)
+            );
+
+            // Act & Assert
+            await expect(client.getSymbols()).rejects.toThrow('Binance API error');
+        });
+
+        test('should return empty array when no symbols match filter', async () => {
+            // Arrange
+            const mockBinanceResponse = {
+                symbols: [
+                    { symbol: 'BTCUSDT', status: 'TRADING', baseAsset: 'BTC', quoteAsset: 'USDT', filters: [] },
+                ],
+            };
+
+            // @ts-ignore
+            global.fetch = mock(() =>
+                Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockBinanceResponse),
+                } as Response)
+            );
+
+            // Act
+            const result = await client.getSymbols('USDC');
+
+            // Assert
+            expect(result).toEqual([]);
         });
     });
 });

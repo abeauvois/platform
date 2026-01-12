@@ -3,7 +3,7 @@
  * Interface for fetching market data from cryptocurrency exchanges
  */
 
-import type { MarketTicker, AccountBalance, MarginBalance, Candlestick, Order, CreateOrderData, SymbolPrice, UserDataEventCallback } from '../types.js';
+import type { MarketTicker, AccountBalance, MarginBalance, Candlestick, Order, CreateOrderData, SymbolPrice, UserDataEventCallback, TradableSymbol } from '../types.js';
 
 /**
  * Exchange client interface for fetching market data
@@ -23,6 +23,13 @@ export interface IExchangeClient {
      * @returns Array of symbol prices
      */
     getTickers(symbols: string[]): Promise<SymbolPrice[]>;
+
+    /**
+     * Get all tradable symbols from the exchange
+     * @param quoteAsset - Optional filter by quote asset (e.g., 'USDC')
+     * @returns Array of tradable symbols
+     */
+    getSymbols(quoteAsset?: string): Promise<Array<TradableSymbol>>;
 
     /**
      * Get the exchange name

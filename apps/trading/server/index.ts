@@ -11,6 +11,7 @@ import { createKlinesOpenApiRoutes } from './routes/klines.openapi.routes';
 import { createMarginBalanceOpenApiRoutes } from './routes/margin-balance.openapi.routes';
 import { createOrderOpenApiRoutes } from './routes/order.openapi.routes';
 import { createOrderStreamRoutes } from './routes/order-stream.routes';
+import { createSymbolsOpenApiRoutes } from './routes/symbols.openapi.routes';
 import { createTickerOpenApiRoutes } from './routes/ticker.openapi.routes';
 import { createTickersOpenApiRoutes } from './routes/tickers.openapi.routes';
 import { createWatchlistOpenApiRoutes } from './routes/watchlist.openapi.routes';
@@ -74,6 +75,7 @@ app.use(
 app.route('/api/trading/ticker', createTickerOpenApiRoutes(publicExchangeClient));
 app.route('/api/trading/tickers', createTickersOpenApiRoutes(publicExchangeClient));
 app.route('/api/trading/klines', createKlinesOpenApiRoutes(publicExchangeClient));
+app.route('/api/trading/symbols', createSymbolsOpenApiRoutes(publicExchangeClient));
 
 // Watchlist route (requires user auth, uses public client for price data)
 app.route('/api/trading/watchlist', createWatchlistOpenApiRoutes(
@@ -112,6 +114,10 @@ app.doc('/api/docs/openapi.json', {
     {
       name: 'Ticker',
       description: 'Public market data endpoints - no authentication required',
+    },
+    {
+      name: 'Symbols',
+      description: 'Tradable symbols listing - no authentication required',
     },
     {
       name: 'Market Data',

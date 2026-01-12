@@ -45,6 +45,7 @@ export interface TradingChartProps {
     currentPrice?: number
     isInWatchlist?: boolean
     onAddToWatchlist?: () => void
+    onAssetSelect?: (baseAsset: string) => void
 }
 
 /**

@@ -7,7 +7,7 @@
  */
 
 import WebSocket from 'ws';
-import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice, TradableSymbol, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
 
 /**
  * Binance API response type for 24hr ticker
@@ -335,6 +335,36 @@ export class BinanceClient implements IExchangeClient {
             price: Number.parseFloat(d.lastPrice),
             priceChangePercent24h: Number.parseFloat(d.priceChangePercent),
         }));
+    }
+
+    /**
+     * Get all tradable symbols from the exchange (public endpoint)
+     * @param quoteAsset - Optional filter by quote asset (e.g., 'USDC')
+     * @returns Array of tradable symbols
+     */
+    async getSymbols(quoteAsset?: string): Promise<Array<TradableSymbol>> {
+        const url = `${this.baseUrl}/exchangeInfo`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: BinanceExchangeInfoResponse = await response.json();
+
+        return data.symbols
+            .filter(s => s.status === 'TRADING')
+            .filter(s => !quoteAsset || s.quoteAsset === quoteAsset)
+            .map(s => ({
+                symbol: s.symbol,
+                baseAsset: s.baseAsset,
+                quoteAsset: s.quoteAsset,
+                status: s.status as TradableSymbol['status'],
+            }));
     }
 
     /**

@@ -8,6 +8,7 @@ import { useChartInstance } from '../../hooks/chart/useChartInstance'
 import { useOrderHistorySeries } from '../../hooks/chart/useOrderHistorySeries'
 import { useOrderLines } from '../../hooks/chart/useOrderLines'
 import { usePreviewLine } from '../../hooks/chart/usePreviewLine'
+import { AssetSearch } from '../AssetSearch'
 
 import type { OrderLine, TradingChartHandle, TradingChartProps } from './types'
 
@@ -22,6 +23,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             currentPrice = 0,
             isInWatchlist = false,
             onAddToWatchlist,
+            onAssetSelect,
         },
         ref
     ) {
@@ -121,7 +123,10 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                         <TrendingUp className="w-6 h-6 text-primary" />
                         {symbol} Chart ({interval})
                     </CardTitle>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
+                        {onAssetSelect && (
+                            <AssetSearch onSelect={onAssetSelect} currentSymbol={symbol} />
+                        )}
                         {onAddToWatchlist && (
                             <Button
                                 variant="ghost"
