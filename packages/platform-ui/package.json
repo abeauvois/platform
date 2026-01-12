@@ -26,7 +26,7 @@
     "lucide-react": "^0.562.0",
     "shadcn": "^3.6.3",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.4.0",
     "tw-animate-css": "^1.2.5"
   },
   "peerDependencies": {
