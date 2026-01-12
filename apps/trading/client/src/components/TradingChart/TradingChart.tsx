@@ -8,6 +8,7 @@ import { useChartInstance } from '../../hooks/chart/useChartInstance'
 import { useOrderHistorySeries } from '../../hooks/chart/useOrderHistorySeries'
 import { useOrderLines } from '../../hooks/chart/useOrderLines'
 import { usePreviewLine } from '../../hooks/chart/usePreviewLine'
+import { useTrendLines } from '../../hooks/chart/useTrendLines'
 import { AssetSearch } from '../AssetSearch'
 
 import type { OrderLine, TradingChartHandle, TradingChartProps } from './types'
@@ -34,13 +35,14 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             candlestickSeriesRef,
             ema20SeriesRef,
             orderHistorySeriesRef,
+            trendLineSeriesRef,
             priceLinesRef,
             previewLineRef,
             chartInitializedRef,
         } = useChartInstance({ symbol, interval, limit })
 
         // Data fetching and transformation
-        const { klinesData, refetchKlines } = useChartData({
+        const { klinesData, ema20Data, refetchKlines } = useChartData({
             symbol,
             interval,
             limit,
@@ -48,6 +50,14 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             ema20SeriesRef,
             chartRef,
             chartInitializedRef,
+        })
+
+        // Trend lines detection and rendering
+        useTrendLines({
+            klinesData,
+            ema20Data,
+            chartRef,
+            trendLineSeriesRef,
         })
 
         // Order lines management

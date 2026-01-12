@@ -288,3 +288,50 @@ export interface SymbolSearchResult {
     price: number;
     priceChangePercent24h: number;
 }
+
+/**
+ * Swing point detected in price data (local high or low)
+ */
+export interface SwingPoint {
+    time: number;          // Unix timestamp in seconds
+    price: number;         // High for swing high, Low for swing low
+    type: 'high' | 'low';
+    index: number;         // Index in the candlestick array
+}
+
+/**
+ * A trend line connecting two swing points
+ */
+export interface TrendLine {
+    id: string;
+    startPoint: SwingPoint;
+    endPoint: SwingPoint;
+    type: 'support' | 'resistance';
+    slope: number;         // Price change per second
+    isBroken: boolean;     // Whether the line has been broken by EMA
+}
+
+/**
+ * Configuration for swing point detection
+ */
+export interface SwingDetectionConfig {
+    lookbackBars: number;  // Number of bars on each side (default: 5)
+}
+
+/**
+ * Configuration for trend line detection
+ */
+export interface TrendLineConfig {
+    swingConfig: SwingDetectionConfig;
+    maxLines: number;      // Maximum number of lines to return per type
+    extendRight: boolean;  // Whether lines should extend to chart edge
+}
+
+/**
+ * Result of trend line detection
+ */
+export interface TrendLineResult {
+    supportLines: Array<TrendLine>;
+    resistanceLines: Array<TrendLine>;
+    swingPoints: Array<SwingPoint>;
+}

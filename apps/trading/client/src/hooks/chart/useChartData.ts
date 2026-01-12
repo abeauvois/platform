@@ -18,6 +18,7 @@ export interface UseChartDataParams {
 
 export interface UseChartDataReturn {
     klinesData: ReturnType<typeof useKlines>['data']
+    ema20Data: Array<{ time: Time; value: number }>
     refetchKlines: () => void
 }
 
@@ -113,6 +114,7 @@ export function useChartData({
 
     return {
         klinesData,
+        ema20Data,
         refetchKlines,
     }
 }
