@@ -25,6 +25,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             isInWatchlist = false,
             onAddToWatchlist,
             onAssetSelect,
+            onIntervalChange,
         },
         ref
     ) {
@@ -131,7 +132,25 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="w-6 h-6 text-primary" />
-                        {symbol} Chart ({interval})
+                        {symbol} Chart
+                        <div className="flex ml-2">
+                            <Button
+                                variant={interval === '1h' ? 'default' : 'ghost'}
+                                size="sm"
+                                className="rounded-r-none px-2 h-7 text-xs"
+                                onClick={() => onIntervalChange?.('1h')}
+                            >
+                                1H
+                            </Button>
+                            <Button
+                                variant={interval === '1d' ? 'default' : 'ghost'}
+                                size="sm"
+                                className="rounded-l-none px-2 h-7 text-xs"
+                                onClick={() => onIntervalChange?.('1d')}
+                            >
+                                1D
+                            </Button>
+                        </div>
                     </CardTitle>
                     <div className="flex items-center gap-2">
                         {onAssetSelect && (

@@ -37,6 +37,9 @@ function HomePage() {
   const { selectedAsset, baseAsset, quoteAsset, tradingSymbol, handleAssetSelect } =
     useSelectedAsset()
 
+  // Chart interval state
+  const [chartInterval, setChartInterval] = useState('1h')
+
   // Balances for the trading pair
   const { baseBalance, baseLockedBalance, quoteBalance, quoteLockedBalance } = useTradingBalances(
     baseAsset,
@@ -210,7 +213,7 @@ function HomePage() {
           <TradingChart
             ref={chartRef}
             symbol={tradingSymbol}
-            interval="1h"
+            interval={chartInterval}
             limit={100}
             currentPrice={currentPrice}
             orders={placedOrders
@@ -224,6 +227,7 @@ function HomePage() {
             isInWatchlist={isInWatchlist}
             onAddToWatchlist={isAuthenticated ? handleAddToWatchlist : undefined}
             onAssetSelect={handleAssetSelect}
+            onIntervalChange={setChartInterval}
           />
 
           <DragOrderPanel

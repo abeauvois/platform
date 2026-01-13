@@ -19,6 +19,7 @@ export interface TradingCardProps {
   error?: Error | null
   onRefresh?: () => void
   scrollable?: boolean
+  headerActions?: ReactNode
   children: ReactNode
 }
 
@@ -30,6 +31,7 @@ export function TradingCard({
   error = null,
   onRefresh,
   scrollable = false,
+  headerActions,
   children,
 }: Readonly<TradingCardProps>) {
   const cardClassName = scrollable
@@ -47,17 +49,20 @@ export function TradingCard({
           <span className={iconColor}>{icon}</span>
           {title}
         </CardTitle>
-        {onRefresh && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-full"
-            onClick={onRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {headerActions}
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full"
+              onClick={onRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className={contentClassName}>
         {error && (

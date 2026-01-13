@@ -46,6 +46,7 @@ export interface TradingChartProps {
     isInWatchlist?: boolean
     onAddToWatchlist?: () => void
     onAssetSelect?: (baseAsset: string) => void
+    onIntervalChange?: (interval: string) => void
 }
 
 /**
