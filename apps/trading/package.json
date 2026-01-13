@@ -22,7 +22,6 @@
     "@platform/auth": "workspace:*",
     "@platform/env": "workspace:*",
     "@platform/db": "workspace:*",
-    "@platform/platform-domain": "workspace:*",
     "@platform/trading-domain": "workspace:*",
     "@scalar/hono-api-reference": "^0.9.25",
     "drizzle-orm": "^0.45.1",

@@ -1,9 +1,30 @@
-import { Button, Card, CardContent, Input } from '@platform/ui'
-import { ChevronDown, ChevronUp, CirclePlus, Info } from 'lucide-react'
+import { Button, Card, CardContent, Label } from '@platform/ui'
+import { calculatePricePrecision, formatPrice } from '@platform/trading-domain'
+import { ChevronDown, CirclePlus, Info } from 'lucide-react'
 import { useState } from 'react'
+import { NumberInput, PercentageSlider, TabGroup } from './ui'
 
 type MarketType = 'spot' | 'cross' | 'isolated'
 type OrderType = 'limit' | 'market' | 'stop-limit'
+type OrderMode = 'normal' | 'borrow' | 'repay'
+
+const MARKET_TYPE_OPTIONS = [
+  { value: 'spot' as const, label: 'Spot' },
+  { value: 'cross' as const, label: 'Cross' },
+  { value: 'isolated' as const, label: 'Isolated' },
+]
+
+const ORDER_TYPE_OPTIONS = [
+  { value: 'limit' as const, label: 'Limit' },
+  { value: 'market' as const, label: 'Market' },
+  { value: 'stop-limit' as const, label: 'Stop Limit ▼' },
+]
+
+const ORDER_MODE_OPTIONS = [
+  { value: 'normal' as const, label: 'Normal' },
+  { value: 'borrow' as const, label: 'Borrow' },
+  { value: 'repay' as const, label: 'Repay' },
+]
 
 interface OrderFormProps {
   side: 'buy' | 'sell'
@@ -22,6 +43,7 @@ function OrderForm({
   availableBalance,
   availableAsset,
 }: Readonly<OrderFormProps>) {
+  const [orderMode, setOrderMode] = useState<OrderMode>('normal')
   const [price, setPrice] = useState(currentPrice.toString())
   const [amount, setAmount] = useState('')
   const [sliderValue, setSliderValue] = useState(0)
@@ -32,118 +54,45 @@ function OrderForm({
 
   const handleSliderChange = (value: number) => {
     setSliderValue(value)
-    if (availableBalance > 0) {
-      if (isBuy) {
-        const maxAmount = (availableBalance * value) / 100 / Number(price)
-        setAmount(maxAmount > 0 ? maxAmount.toFixed(6) : '')
-      } else {
-        const maxAmount = (availableBalance * value) / 100
-        setAmount(maxAmount > 0 ? maxAmount.toFixed(6) : '')
-      }
+    if (availableBalance > 0 && Number(price) > 0) {
+      const maxAmount = isBuy
+        ? (availableBalance * value) / 100 / Number(price)
+        : (availableBalance * value) / 100
+      const precision = calculatePricePrecision(availableBalance)
+      setAmount(maxAmount > 0 ? formatPrice(maxAmount, precision) : '')
     }
   }
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Normal/Borrow/Repay tabs */}
-      <div className="flex items-center gap-3 text-xs">
-        <button type="button" className="px-2 py-1 border border-muted-foreground/30 rounded text-foreground">
-          Normal
-        </button>
-        <button type="button" className="text-muted-foreground hover:text-foreground">
-          Borrow
-        </button>
-        <button type="button" className="text-muted-foreground hover:text-foreground">
-          Repay
-        </button>
+      <div className="flex items-center gap-2">
+        <TabGroup
+          options={ORDER_MODE_OPTIONS}
+          value={orderMode}
+          onChange={(v) => setOrderMode(v as OrderMode)}
+          variant="pill"
+        />
         <Info className="w-3.5 h-3.5 text-muted-foreground" />
       </div>
 
-      {/* Price input */}
-      <div className="relative">
-        <div className="flex items-center bg-input/20 dark:bg-input/30 border border-input rounded-md px-3 py-2">
-          <span className="text-muted-foreground text-xs w-12">Price</span>
-          <Input
-            type="text"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="flex-1 bg-transparent border-0 text-right text-sm font-medium p-0 h-auto focus-visible:ring-0"
-          />
-          <span className="text-muted-foreground text-xs ml-2">{quoteAsset}</span>
-        </div>
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-0">
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground p-0.5"
-            onClick={() => setPrice((Number(price) + 0.000001).toFixed(6))}
-          >
-            <ChevronUp className="w-3 h-3" />
-          </button>
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground p-0.5"
-            onClick={() => setPrice(Math.max(0, Number(price) - 0.000001).toFixed(6))}
-          >
-            <ChevronDown className="w-3 h-3" />
-          </button>
-        </div>
-      </div>
+      <NumberInput
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        suffix={quoteAsset}
+        referenceValue={currentPrice}
+      />
 
-      {/* Amount input */}
-      <div className="relative">
-        <div className="flex items-center bg-input/20 dark:bg-input/30 border border-input rounded-md px-3 py-2">
-          <span className="text-muted-foreground text-xs w-12">Amount</span>
-          <Input
-            type="text"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder=""
-            className="flex-1 bg-transparent border-0 text-right text-sm font-medium p-0 h-auto focus-visible:ring-0"
-          />
-          <span className="text-muted-foreground text-xs ml-2">{baseAsset}</span>
-        </div>
-        <div className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col gap-0">
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground p-0.5"
-            onClick={() => setAmount((Number(amount) + 1).toString())}
-          >
-            <ChevronUp className="w-3 h-3" />
-          </button>
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground p-0.5"
-            onClick={() => setAmount(Math.max(0, Number(amount) - 1).toString())}
-          >
-            <ChevronDown className="w-3 h-3" />
-          </button>
-        </div>
-      </div>
+      <NumberInput
+        label="Amount"
+        value={amount}
+        onChange={setAmount}
+        suffix={baseAsset}
+        referenceValue={availableBalance}
+      />
 
-      {/* Percentage slider */}
-      <div className="flex items-center gap-2 py-1">
-        <button
-          type="button"
-          className={`w-3 h-3 rotate-45 border ${sliderValue === 0 ? 'border-foreground bg-foreground' : 'border-muted-foreground/50'}`}
-          onClick={() => handleSliderChange(0)}
-        />
-        <div className="flex-1 relative h-0.5 bg-muted-foreground/30">
-          <div
-            className="absolute h-full bg-muted-foreground/50"
-            style={{ width: `${sliderValue}%` }}
-          />
-        </div>
-        {[25, 50, 75, 100].map((pct) => (
-          <button
-            key={pct}
-            type="button"
-            className={`w-3 h-3 rotate-45 border ${sliderValue >= pct ? 'border-foreground bg-foreground' : 'border-muted-foreground/50'}`}
-            onClick={() => handleSliderChange(pct)}
-          />
-        ))}
-      </div>
+      <PercentageSlider value={sliderValue} onChange={handleSliderChange} />
 
-      {/* Total */}
       <div className="flex items-center bg-input/20 dark:bg-input/30 border border-input rounded-md px-3 py-2">
         <span className="text-muted-foreground text-xs w-12">Total</span>
         <span className="flex-1 text-right text-sm text-muted-foreground">
@@ -152,8 +101,7 @@ function OrderForm({
         <span className="text-muted-foreground text-xs ml-2">{quoteAsset}</span>
       </div>
 
-      {/* TP/SL checkbox */}
-      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+      <Label className="cursor-pointer">
         <input
           type="checkbox"
           checked={tpslEnabled}
@@ -161,9 +109,8 @@ function OrderForm({
           className="w-4 h-4 rounded border-muted-foreground/30"
         />
         TP/SL
-      </label>
+      </Label>
 
-      {/* Available balance */}
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground flex items-center gap-1">
           Avbl <ChevronDown className="w-3 h-3" />
@@ -174,18 +121,14 @@ function OrderForm({
         </span>
       </div>
 
-      {/* Est. Fee */}
-      <div className="text-xs text-muted-foreground underline cursor-pointer">
-        Est. Fee
-      </div>
+      <div className="text-xs text-muted-foreground underline cursor-pointer">Est. Fee</div>
 
-      {/* Buy/Sell button */}
       <Button
-        className={`w-full py-3 font-medium ${
+        className={
           isBuy
-            ? 'bg-green-500 hover:bg-green-600 text-white'
-            : 'bg-red-500 hover:bg-red-600 text-white'
-        }`}
+            ? 'w-full py-3 bg-green-500 hover:bg-green-600 text-white'
+            : 'w-full py-3 bg-red-500 hover:bg-red-600 text-white'
+        }
       >
         {isBuy ? 'Buy' : 'Sell'} {baseAsset}
       </Button>
@@ -218,53 +161,35 @@ export function OrderCard({
   return (
     <Card className="bg-card/50 backdrop-blur">
       <CardContent className="p-4">
-        {/* Market type tabs */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-4">
-            {(['spot', 'cross', 'isolated'] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setMarketType(type)}
-                className={`text-sm capitalize pb-1 ${
-                  marketType === type
-                    ? 'text-foreground border-b-2 border-yellow-500'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">% Fee Level</span>
-            <span className="text-muted-foreground">⚡ Calculator</span>
+          <TabGroup
+            options={MARKET_TYPE_OPTIONS}
+            value={marketType}
+            onChange={(v) => setMarketType(v as MarketType)}
+            variant="underline"
+            size="md"
+          />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>% Fee Level</span>
+            <span>⚡ Calculator</span>
           </div>
         </div>
 
-        {/* Order type tabs and margin info */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            {(['limit', 'market', 'stop-limit'] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setOrderType(type)}
-                className={`text-xs capitalize ${
-                  orderType === type
-                    ? 'text-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {type === 'stop-limit' ? 'Stop Limit ▼' : type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
+            <TabGroup
+              options={ORDER_TYPE_OPTIONS}
+              value={orderType}
+              onChange={(v) => setOrderType(v as OrderType)}
+            />
             <Info className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
           {marketType !== 'spot' && (
             <div className="flex items-center gap-2 text-xs">
               <span className="text-green-500">🛡 ML {marginLevel.toFixed(2)}</span>
-              <span className="border border-muted-foreground/30 rounded px-2 py-0.5">{leverage}</span>
+              <span className="border border-muted-foreground/30 rounded px-2 py-0.5">
+                {leverage}
+              </span>
               <Button variant="ghost" size="sm" className="h-6 text-xs px-2">
                 Borrow/Repay
               </Button>
@@ -275,7 +200,6 @@ export function OrderCard({
           )}
         </div>
 
-        {/* Buy/Sell forms side by side */}
         <div className="grid grid-cols-2 gap-4">
           <OrderForm
             side="buy"

@@ -1,10 +1,11 @@
-import { Card, CardContent, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@platform/ui'
+import { Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@platform/ui'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 
 import { formatPrice } from '../utils/balance'
 import type { OrderMode } from '../hooks/useOrderMode'
 import type { AccountMode } from '../hooks/useAccountMode'
+import { AmountInput } from './ui'
 
 const MAX_ORDER_VALUE_USD = 500
 
@@ -177,18 +178,11 @@ export function DragOrderPanel({
             >
               BUY
             </DraggableButton>
-            <div className="flex items-center gap-1 bg-input/20 dark:bg-input/30 border border-input rounded-md px-2 py-1">
-              <Input
-                type="number"
-                value={buyAmount || ''}
-                onChange={(e) => onBuyAmountChange(Number(e.target.value))}
-                className="w-20 bg-transparent border-0 text-right text-sm font-medium p-0 h-auto focus-visible:ring-0"
-                step="0.0001"
-                min="0"
-                placeholder="0"
-              />
-              <span className="text-muted-foreground text-xs">{baseAsset}</span>
-            </div>
+            <AmountInput
+              value={buyAmount}
+              onChange={onBuyAmountChange}
+              suffix={baseAsset}
+            />
             <div className="text-xs text-muted-foreground">
               ≈ {formatPrice(buyOrderValue)}
             </div>
@@ -226,18 +220,11 @@ export function DragOrderPanel({
             >
               SELL
             </DraggableButton>
-            <div className="flex items-center gap-1 bg-input/20 dark:bg-input/30 border border-input rounded-md px-2 py-1">
-              <Input
-                type="number"
-                value={sellAmount || ''}
-                onChange={(e) => onSellAmountChange(Number(e.target.value))}
-                className="w-20 bg-transparent border-0 text-right text-sm font-medium p-0 h-auto focus-visible:ring-0"
-                step="0.0001"
-                min="0"
-                placeholder="0"
-              />
-              <span className="text-muted-foreground text-xs">{baseAsset}</span>
-            </div>
+            <AmountInput
+              value={sellAmount}
+              onChange={onSellAmountChange}
+              suffix={baseAsset}
+            />
             <div className="text-xs text-muted-foreground">
               ≈ {formatPrice(sellOrderValue)}
             </div>

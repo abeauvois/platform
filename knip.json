@@ -1,0 +1,114 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    "apps/api": {
+      "entry": ["server/index.ts", "server/routes/*.ts", "server/tasks/workers/*.ts"],
+      "project": ["server/**/*.ts"],
+      "ignore": ["server/**/*.test.ts", "server/infrastructure/__tests__/**"]
+    },
+    "apps/cli": {
+      "entry": ["index.ts", "commands/**/*.ts"],
+      "project": ["**/*.ts"],
+      "ignore": ["**/*.test.ts"]
+    },
+    "apps/dashboard": {
+      "entry": ["src/main.tsx", "src/routes/**/*.tsx"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/**/*.test.{ts,tsx}"]
+    },
+    "apps/trading": {
+      "entry": ["server/index.ts", "server/routes/*.ts"],
+      "project": ["server/**/*.ts"],
+      "ignore": ["**/*.test.ts", "server/adapters/__tests__/**"]
+    },
+    "apps/trading/client": {
+      "entry": ["src/main.tsx", "src/routes/**/*.tsx"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/**/*.test.{ts,tsx}", "src/test/**"]
+    },
+    "apps/cli-landing": {
+      "entry": ["src/main.tsx"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/platform-ui": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/**/*.test.{ts,tsx}"]
+    },
+    "packages/platform-db": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/platform-auth": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/platform-domain": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/platform-sdk": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "ignore": ["tests/**/*.ts"]
+    },
+    "packages/platform-task": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/platform-env": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/platform-utils": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/trading-domain": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "ignore": ["src/**/*.test.ts"]
+    },
+    "packages/trading-sdk": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/cached-http-client": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/sdk-cli": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignore": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/*.d.ts",
+    "**/drizzle/**",
+    "eslint.config.js",
+    "config.cli.ts",
+    "src/utils/**"
+  ],
+  "ignoreBinaries": ["eslint", "gh"],
+  "ignoreUnresolved": ["bun-types"],
+  "ignoreDependencies": [
+    "pg",
+    "ws",
+    "@neondatabase/serverless",
+    "drizzle-orm",
+    "drizzle-seed",
+    "@hono/zod-validator",
+    "hono",
+    "tailwindcss",
+    "daisyui",
+    "shadcn",
+    "@types/pg",
+    "@types/ws",
+    "@tanstack/eslint-config",
+    "web-vitals",
+    "@tanstack/react-form"
+  ],
+  "ignoreExportsUsedInFile": true
+}
