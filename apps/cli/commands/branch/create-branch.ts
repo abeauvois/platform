@@ -7,7 +7,7 @@ import { sanitizeBranchName } from './lib/branch-name-sanitizer.js';
  * Create branch command - Creates a git branch from arbitrary text
  *
  * Usage:
- *   cli branch create "fix: This is a bug fix"      # Creates and checks out branch
+ *   cli branch create "fix: This is a bug fix"      # Creates branch (stays on current)
  *   cli branch create "feature: new api" --dry-run  # Only shows sanitized name
  */
 export const createBranchCommand = command(
@@ -48,8 +48,8 @@ export const createBranchCommand = command(
 		spinner.start(`Creating branch: ${branchName}`);
 
 		try {
-			await $`git checkout -b ${branchName}`.quiet();
-			spinner.stop(`Created and checked out: ${branchName}`);
+			await $`git branch ${branchName}`.quiet();
+			spinner.stop(`Created branch: ${branchName}`);
 			p.outro('Done!');
 		} catch (error) {
 			spinner.stop('Failed to create branch');
