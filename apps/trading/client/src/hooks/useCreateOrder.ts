@@ -13,6 +13,8 @@ export interface CreateOrderRequest {
     price?: number
     stopPrice?: number
     timeInForce?: 'GTC' | 'IOC' | 'FOK'
+    /** Whether to place order on margin account (default: false = spot) */
+    isMarginOrder?: boolean
 }
 
 export interface OrderResponse {

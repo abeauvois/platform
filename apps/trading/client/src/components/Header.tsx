@@ -6,7 +6,7 @@ import {
   toast,
 } from '@platform/ui'
 import { Link, useRouter } from '@tanstack/react-router'
-import { Loader2, LogIn, LogOut, ShieldAlert } from 'lucide-react'
+import { Loader2, LogIn, LogOut, Settings, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 
 import { authClient } from '../lib/auth-client'
@@ -59,31 +59,51 @@ export default function Header() {
           )}
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           {session ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={(props) => (
-                  <Button
-                    {...props}
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={handleSignOut}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
-                    ) : (
-                      <LogOut className="h-5 w-5 text-yellow-500" />
-                    )}
-                  </Button>
-                )}
-              />
-              <TooltipContent>
-                <p>Sign out</p>
-              </TooltipContent>
-            </Tooltip>
+            <>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <Button
+                      {...props}
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                      onClick={() => router.navigate({ to: '/settings' })}
+                    >
+                      <Settings className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                    </Button>
+                  )}
+                />
+                <TooltipContent>
+                  <p>Settings</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <Button
+                      {...props}
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                      onClick={handleSignOut}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
+                      ) : (
+                        <LogOut className="h-5 w-5 text-yellow-500" />
+                      )}
+                    </Button>
+                  )}
+                />
+                <TooltipContent>
+                  <p>Sign out</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
           ) : (
             <Tooltip>
               <TooltipTrigger

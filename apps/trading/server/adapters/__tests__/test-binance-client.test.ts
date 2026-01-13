@@ -1126,4 +1126,210 @@ describe('BinanceClient', () => {
             expect(result).toEqual([]);
         });
     });
+
+    describe('createOrder with margin support', () => {
+        test('should throw error when not authenticated', async () => {
+            await expect(client.createOrder({
+                symbol: 'BTCUSDT',
+                side: 'buy',
+                type: 'limit',
+                quantity: 0.001,
+                price: 45000,
+            })).rejects.toThrow('Authentication required');
+        });
+
+        test('should use spot endpoint when isMarginOrder is false', async () => {
+            // Arrange: Mock exchange info for symbol filters
+            const mockExchangeInfo = {
+                symbols: [{
+                    symbol: 'BTCUSDT',
+                    status: 'TRADING',
+                    baseAsset: 'BTC',
+                    quoteAsset: 'USDT',
+                    filters: [
+                        { filterType: 'LOT_SIZE', minQty: '0.00001', maxQty: '1000', stepSize: '0.00001' },
+                        { filterType: 'PRICE_FILTER', minPrice: '0.01', maxPrice: '100000', tickSize: '0.01' },
+                    ],
+                }],
+            };
+
+            const mockOrderResponse = {
+                symbol: 'BTCUSDT',
+                orderId: 12345,
+                orderListId: -1,
+                clientOrderId: 'client123',
+                transactTime: Date.now(),
+                price: '45000.00',
+                origQty: '0.001',
+                executedQty: '0.0',
+                cummulativeQuoteQty: '0.0',
+                status: 'NEW',
+                timeInForce: 'GTC',
+                type: 'LIMIT',
+                side: 'BUY',
+            };
+
+            let callCount = 0;
+            // @ts-ignore
+            global.fetch = mock(() => {
+                callCount++;
+                if (callCount === 1) {
+                    // First call: exchange info for symbol filters
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(mockExchangeInfo),
+                    } as Response);
+                }
+                // Second call: order placement
+                return Promise.resolve({
+                    ok: true,
+                    text: () => Promise.resolve(JSON.stringify(mockOrderResponse)),
+                } as Response);
+            });
+
+            // Act
+            await authenticatedClient.createOrder({
+                symbol: 'BTCUSDT',
+                side: 'buy',
+                type: 'limit',
+                quantity: 0.001,
+                price: 45000,
+                isMarginOrder: false,
+            });
+
+            // Assert: Second call should use spot endpoint
+            const calls = (global.fetch as ReturnType<typeof mock>).mock.calls;
+            const orderCallUrl = calls[1][0] as string;
+            expect(orderCallUrl).toContain('https://api.binance.com/api/v3/order');
+            expect(orderCallUrl).not.toContain('/sapi/v1/margin/order');
+        });
+
+        test('should use margin endpoint when isMarginOrder is true', async () => {
+            // Arrange: Mock exchange info for symbol filters
+            const mockExchangeInfo = {
+                symbols: [{
+                    symbol: 'BTCUSDT',
+                    status: 'TRADING',
+                    baseAsset: 'BTC',
+                    quoteAsset: 'USDT',
+                    filters: [
+                        { filterType: 'LOT_SIZE', minQty: '0.00001', maxQty: '1000', stepSize: '0.00001' },
+                        { filterType: 'PRICE_FILTER', minPrice: '0.01', maxPrice: '100000', tickSize: '0.01' },
+                    ],
+                }],
+            };
+
+            const mockOrderResponse = {
+                symbol: 'BTCUSDT',
+                orderId: 12345,
+                orderListId: -1,
+                clientOrderId: 'client123',
+                transactTime: Date.now(),
+                price: '45000.00',
+                origQty: '0.001',
+                executedQty: '0.0',
+                cummulativeQuoteQty: '0.0',
+                status: 'NEW',
+                timeInForce: 'GTC',
+                type: 'LIMIT',
+                side: 'BUY',
+            };
+
+            let callCount = 0;
+            // @ts-ignore
+            global.fetch = mock(() => {
+                callCount++;
+                if (callCount === 1) {
+                    // First call: exchange info for symbol filters
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(mockExchangeInfo),
+                    } as Response);
+                }
+                // Second call: order placement
+                return Promise.resolve({
+                    ok: true,
+                    text: () => Promise.resolve(JSON.stringify(mockOrderResponse)),
+                } as Response);
+            });
+
+            // Act
+            await authenticatedClient.createOrder({
+                symbol: 'BTCUSDT',
+                side: 'buy',
+                type: 'limit',
+                quantity: 0.001,
+                price: 45000,
+                isMarginOrder: true,
+            });
+
+            // Assert: Second call should use margin endpoint
+            const calls = (global.fetch as ReturnType<typeof mock>).mock.calls;
+            const orderCallUrl = calls[1][0] as string;
+            expect(orderCallUrl).toContain('https://api.binance.com/sapi/v1/margin/order');
+        });
+
+        test('should default to spot endpoint when isMarginOrder is not specified', async () => {
+            // Arrange: Mock exchange info for symbol filters
+            const mockExchangeInfo = {
+                symbols: [{
+                    symbol: 'BTCUSDT',
+                    status: 'TRADING',
+                    baseAsset: 'BTC',
+                    quoteAsset: 'USDT',
+                    filters: [
+                        { filterType: 'LOT_SIZE', minQty: '0.00001', maxQty: '1000', stepSize: '0.00001' },
+                        { filterType: 'PRICE_FILTER', minPrice: '0.01', maxPrice: '100000', tickSize: '0.01' },
+                    ],
+                }],
+            };
+
+            const mockOrderResponse = {
+                symbol: 'BTCUSDT',
+                orderId: 12345,
+                orderListId: -1,
+                clientOrderId: 'client123',
+                transactTime: Date.now(),
+                price: '45000.00',
+                origQty: '0.001',
+                executedQty: '0.0',
+                cummulativeQuoteQty: '0.0',
+                status: 'NEW',
+                timeInForce: 'GTC',
+                type: 'LIMIT',
+                side: 'BUY',
+            };
+
+            let callCount = 0;
+            // @ts-ignore
+            global.fetch = mock(() => {
+                callCount++;
+                if (callCount === 1) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(mockExchangeInfo),
+                    } as Response);
+                }
+                return Promise.resolve({
+                    ok: true,
+                    text: () => Promise.resolve(JSON.stringify(mockOrderResponse)),
+                } as Response);
+            });
+
+            // Act - isMarginOrder not specified
+            await authenticatedClient.createOrder({
+                symbol: 'BTCUSDT',
+                side: 'buy',
+                type: 'limit',
+                quantity: 0.001,
+                price: 45000,
+            });
+
+            // Assert: Should use spot endpoint by default
+            const calls = (global.fetch as ReturnType<typeof mock>).mock.calls;
+            const orderCallUrl = calls[1][0] as string;
+            expect(orderCallUrl).toContain('https://api.binance.com/api/v3/order');
+            expect(orderCallUrl).not.toContain('/sapi/v1/margin/order');
+        });
+    });
 });

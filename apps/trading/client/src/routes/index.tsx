@@ -12,8 +12,10 @@ import { SpotBalancesCard } from '../components/SpotBalancesCard'
 import { StopPriceModal } from '../components/StopPriceModal'
 import { TradingChart } from '../components/TradingChart'
 import { WatchlistCard } from '../components/WatchlistCard'
+import { useAccountMode } from '../hooks/useAccountMode'
 import { useCurrentPrice } from '../hooks/useCurrentPrice'
 import { useDragOrder } from '../hooks/useDragOrder'
+import { useMarginAvailability } from '../hooks/useMarginAvailability'
 import { useFetchOrderHistory } from '../hooks/useFetchOrderHistory'
 import { useOrderAmounts } from '../hooks/useOrderAmounts'
 import { useOrderManagement } from '../hooks/useOrderManagement'
@@ -33,12 +35,39 @@ function HomePage() {
   const tradingData = useTradingData()
   const chartRef = useRef<TradingChartHandle>(null)
 
+  // Get authentication status early (needed for useAccountMode)
+  // Note: We'll get the full useOrderManagement later, but auth status is available from the hook
+  const { isAuthenticated } = useOrderManagement(chartRef, tradingData.refetch)
+
+  // Account mode state (spot vs margin) - syncs with server settings
+  const { accountMode, setAccountMode } = useAccountMode(isAuthenticated)
+
   // Asset selection and trading pair configuration
+  // When user selects from margin balance card, auto-switch to margin mode
   const { selectedAsset, baseAsset, quoteAsset, tradingSymbol, handleAssetSelect } =
-    useSelectedAsset()
+    useSelectedAsset({
+      onSourceChange: (source) => {
+        if (source === 'margin') {
+          setAccountMode('margin')
+        } else if (source === 'spot') {
+          setAccountMode('spot')
+        }
+      },
+    })
 
   // Chart interval state
   const [chartInterval, setChartInterval] = useState('1h')
+
+  // Margin availability for leverage trading (short selling and leveraged buying)
+  const { maxBorrowableBase, maxBorrowableQuote } = useMarginAvailability({
+    baseAsset,
+    quoteAsset,
+    isAuthenticated,
+    accountMode,
+  })
+
+  // Check if user has any margin balances
+  const hasMarginBalance = tradingData.marginBalances.length > 0
 
   // Balances for the trading pair
   const { baseBalance, baseLockedBalance, quoteBalance, quoteLockedBalance } = useTradingBalances(
@@ -68,7 +97,8 @@ function HomePage() {
   }>({ isOpen: false, side: 'buy' })
 
   // Order CRUD operations and real-time updates
-  const { placedOrders, createOrder, cancelOrder, isAuthenticated } = useOrderManagement(
+  // Note: isAuthenticated already extracted at top of component
+  const { placedOrders, createOrder, cancelOrder } = useOrderManagement(
     chartRef,
     tradingData.refetch
   )
@@ -118,6 +148,7 @@ function HomePage() {
           type: orderType,
           quantity,
           stopPrice,
+          isMarginOrder: accountMode === 'margin',
         },
         {
           onError: (error) => {
@@ -128,7 +159,7 @@ function HomePage() {
 
       setStopMarketModal({ isOpen: false, side: 'buy' })
     },
-    [stopMarketModal.side, buyAmount, sellAmount, currentPrice, tradingSymbol, createOrder]
+    [stopMarketModal.side, buyAmount, sellAmount, currentPrice, tradingSymbol, createOrder, accountMode]
   )
 
   // Handle buy button click (opens stop-market modal in stop mode)
@@ -158,7 +189,10 @@ function HomePage() {
     quoteBalance,
     quoteLockedBalance,
     orderMode,
+    accountMode,
     currentPrice,
+    maxBorrowableBase,
+    maxBorrowableQuote,
     createOrder,
   })
 
@@ -190,7 +224,7 @@ function HomePage() {
             error={tradingData.spotError}
             refetch={tradingData.refetch}
             selectedAsset={selectedAsset}
-            onAssetSelect={handleAssetSelect}
+            onAssetSelect={(asset) => handleAssetSelect(asset, 'spot')}
           />
 
           <MarginAccountCard
@@ -204,7 +238,7 @@ function HomePage() {
             error={tradingData.marginError}
             refetch={tradingData.refetch}
             selectedAsset={selectedAsset}
-            onAssetSelect={handleAssetSelect}
+            onAssetSelect={(asset) => handleAssetSelect(asset, 'margin')}
           />
         </div>
 
@@ -243,9 +277,14 @@ function HomePage() {
             onSellAmountChange={setSellAmount}
             orderMode={orderMode}
             onOrderModeChange={setOrderMode}
+            accountMode={accountMode}
+            onAccountModeChange={setAccountMode}
+            hasMarginBalance={hasMarginBalance}
             onBuyClick={handleBuyClick}
             onSellClick={handleSellClick}
             isAuthenticated={isAuthenticated}
+            maxBorrowableBase={maxBorrowableBase}
+            maxBorrowableQuote={maxBorrowableQuote}
           />
 
           <OrdersTable orders={placedOrders} onCancelOrder={cancelOrder} />

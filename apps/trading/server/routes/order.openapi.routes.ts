@@ -34,6 +34,10 @@ const CreateOrderRequestSchema = z.object({
         example: 'GTC',
         description: 'Time in force (GTC=Good Till Cancel, IOC=Immediate Or Cancel, FOK=Fill Or Kill)',
     }),
+    isMarginOrder: z.boolean().optional().default(false).openapi({
+        example: false,
+        description: 'Whether to place order on margin account (default: false = spot)',
+    }),
 }).refine(
     (data) => {
         // Validate price is provided for limit orders
@@ -290,6 +294,7 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
                     price: data.price,
                     stopPrice: data.stopPrice,
                     timeInForce: data.timeInForce,
+                    isMarginOrder: data.isMarginOrder,
                 });
 
                 return c.json({

@@ -57,6 +57,8 @@ export interface CreateOrderData {
     price?: number;
     stopPrice?: number;
     timeInForce?: 'GTC' | 'IOC' | 'FOK';
+    /** Whether to place order on margin account (default: false = spot) */
+    isMarginOrder?: boolean;
 }
 
 /**
@@ -334,4 +336,14 @@ export interface TrendLineResult {
     supportLines: Array<TrendLine>;
     resistanceLines: Array<TrendLine>;
     swingPoints: Array<SwingPoint>;
+}
+
+/**
+ * Maximum borrowable amount for margin trading
+ * Used to determine available leverage for BUY (borrow quote) or SELL (borrow base/short)
+ */
+export interface MaxBorrowable {
+    asset: string;
+    amount: number;      // Max amount that can be borrowed
+    borrowLimit: number; // Total borrow limit for the account
 }

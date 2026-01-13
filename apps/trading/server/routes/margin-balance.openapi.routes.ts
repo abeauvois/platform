@@ -27,6 +27,16 @@ const ErrorSchema = z.object({
     error: z.string().openapi({ example: 'Failed to fetch margin balance', description: 'Error message' }),
 }).openapi('MarginBalanceError');
 
+const MaxBorrowableParamsSchema = z.object({
+    asset: z.string().openapi({ example: 'BTC', description: 'Asset symbol to check borrowable amount' }),
+}).openapi('MaxBorrowableParams');
+
+const MaxBorrowableResponseSchema = z.object({
+    asset: z.string().openapi({ example: 'BTC', description: 'Asset symbol' }),
+    amount: z.number().openapi({ example: 1.5, description: 'Maximum amount that can be borrowed' }),
+    borrowLimit: z.number().openapi({ example: 100000, description: 'Total borrow limit for the account' }),
+}).openapi('MaxBorrowableResponse');
+
 // Route definitions
 const getAllMarginBalancesRoute = createRoute({
     method: 'get',
@@ -40,6 +50,43 @@ const getAllMarginBalancesRoute = createRoute({
             content: {
                 'application/json': {
                     schema: MarginBalancesResponseSchema,
+                },
+            },
+        },
+        500: {
+            description: 'Server error or authentication failure',
+            content: {
+                'application/json': {
+                    schema: ErrorSchema,
+                },
+            },
+        },
+    },
+});
+
+const getMaxBorrowableRoute = createRoute({
+    method: 'get',
+    path: '/max-borrowable',
+    tags: ['Margin'],
+    summary: 'Get maximum borrowable amount for an asset',
+    description: 'Returns the maximum amount that can be borrowed for a specific asset in cross margin account. Used for determining available leverage for BUY (borrow quote) or SELL (short/borrow base). Requires API credentials.',
+    request: {
+        query: MaxBorrowableParamsSchema,
+    },
+    responses: {
+        200: {
+            description: 'Max borrowable amount retrieved successfully',
+            content: {
+                'application/json': {
+                    schema: MaxBorrowableResponseSchema,
+                },
+            },
+        },
+        400: {
+            description: 'Missing or invalid asset parameter',
+            content: {
+                'application/json': {
+                    schema: ErrorSchema,
                 },
             },
         },
@@ -78,6 +125,23 @@ export function createMarginBalanceOpenApiRoutes(exchangeClient: IExchangeClient
             } catch (error) {
                 console.error('Failed to fetch margin balances: ', error);
                 const message = error instanceof Error ? error.message : 'Failed to fetch margin balances';
+                return c.json({ error: message }, 500);
+            }
+        })
+        .openapi(getMaxBorrowableRoute, async (c) => {
+            try {
+                const { asset } = c.req.valid('query');
+
+                if (!asset || asset.trim() === '') {
+                    return c.json({ error: 'Asset parameter is required' }, 400);
+                }
+
+                const result = await exchangeClient.getMaxBorrowable(asset);
+
+                return c.json(result, 200);
+            } catch (error) {
+                console.error('Failed to fetch max borrowable: ', error);
+                const message = error instanceof Error ? error.message : 'Failed to fetch max borrowable';
                 return c.json({ error: message }, 500);
             }
         });

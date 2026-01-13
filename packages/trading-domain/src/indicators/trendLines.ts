@@ -13,6 +13,7 @@ import { detectSwingPoints } from './swingPoints.js'
  *
  * - Connect swing lows to form ascending support lines (higher lows)
  * - Connect swing highs to form descending resistance lines (lower highs)
+ * - Deduplicates lines to ensure only one line per starting point
  *
  * @param swingPoints - Array of detected swing points
  * @param config - Configuration for trend line generation
@@ -22,9 +23,6 @@ export function generateTrendLines(
   swingPoints: Array<SwingPoint>,
   config: TrendLineConfig
 ): { supportLines: Array<TrendLine>; resistanceLines: Array<TrendLine> } {
-  const supportLines: Array<TrendLine> = []
-  const resistanceLines: Array<TrendLine> = []
-
   // Separate swing highs and lows
   const swingLows = swingPoints
     .filter((p) => p.type === 'low')
@@ -34,6 +32,9 @@ export function generateTrendLines(
     .sort((a, b) => a.time - b.time)
 
   // Generate ascending support lines from swing lows
+  // Use a Map to keep only one line per starting point (the one with most recent end)
+  const supportByStartIndex = new Map<number, TrendLine>()
+
   for (let i = 0; i < swingLows.length - 1; i++) {
     for (let j = i + 1; j < swingLows.length; j++) {
       const start = swingLows[i]
@@ -44,19 +45,28 @@ export function generateTrendLines(
         const timeDelta = end.time - start.time
         const slope = timeDelta > 0 ? (end.price - start.price) / timeDelta : 0
 
-        supportLines.push({
+        const newLine: TrendLine = {
           id: `support-${start.index}-${end.index}`,
           startPoint: start,
           endPoint: end,
           type: 'support',
           slope,
           isBroken: false,
-        })
+        }
+
+        // Keep line with most recent end point for each start point
+        const existing = supportByStartIndex.get(start.index)
+        if (!existing || end.time > existing.endPoint.time) {
+          supportByStartIndex.set(start.index, newLine)
+        }
       }
     }
   }
 
   // Generate descending resistance lines from swing highs
+  // Use a Map to keep only one line per starting point (the one with most recent end)
+  const resistanceByStartIndex = new Map<number, TrendLine>()
+
   for (let i = 0; i < swingHighs.length - 1; i++) {
     for (let j = i + 1; j < swingHighs.length; j++) {
       const start = swingHighs[i]
@@ -67,17 +77,26 @@ export function generateTrendLines(
         const timeDelta = end.time - start.time
         const slope = timeDelta > 0 ? (end.price - start.price) / timeDelta : 0
 
-        resistanceLines.push({
+        const newLine: TrendLine = {
           id: `resistance-${start.index}-${end.index}`,
           startPoint: start,
           endPoint: end,
           type: 'resistance',
           slope,
           isBroken: false,
-        })
+        }
+
+        // Keep line with most recent end point for each start point
+        const existing = resistanceByStartIndex.get(start.index)
+        if (!existing || end.time > existing.endPoint.time) {
+          resistanceByStartIndex.set(start.index, newLine)
+        }
       }
     }
   }
+
+  const supportLines = Array.from(supportByStartIndex.values())
+  const resistanceLines = Array.from(resistanceByStartIndex.values())
 
   // Sort by recency (most recent end point first) and limit to maxLines
   const sortByRecency = (a: TrendLine, b: TrendLine) =>

@@ -17,6 +17,8 @@ export interface CreateOrderParams {
   quantity: number
   price?: number
   stopPrice?: number
+  /** Whether to place order on margin account (default: false = spot) */
+  isMarginOrder?: boolean
 }
 
 export interface UseOrderManagementReturn {

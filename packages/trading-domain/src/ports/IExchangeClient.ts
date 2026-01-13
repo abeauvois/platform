@@ -3,7 +3,7 @@
  * Interface for fetching market data from cryptocurrency exchanges
  */
 
-import type { MarketTicker, AccountBalance, MarginBalance, Candlestick, Order, CreateOrderData, SymbolPrice, UserDataEventCallback, TradableSymbol } from '../types.js';
+import type { MarketTicker, AccountBalance, MarginBalance, MaxBorrowable, Candlestick, Order, CreateOrderData, SymbolPrice, UserDataEventCallback, TradableSymbol } from '../types.js';
 
 /**
  * Exchange client interface for fetching market data
@@ -54,6 +54,14 @@ export interface IExchangeClient {
      * @returns Array of margin balances for all assets with non-zero balance
      */
     getMarginBalances(): Promise<MarginBalance[]>;
+
+    /**
+     * Get maximum borrowable amount for an asset in cross margin account
+     * Used for determining available leverage for BUY (borrow quote) or SELL (short/borrow base)
+     * @param asset - Asset symbol (e.g., 'BTC', 'USDC')
+     * @returns Maximum borrowable amount and borrow limit
+     */
+    getMaxBorrowable(asset: string): Promise<MaxBorrowable>;
 
     /**
      * Check if the client is authenticated

@@ -2,6 +2,7 @@ import type {
   Candlestick,
   BalanceResponse,
   MarginBalanceResponse,
+  MaxBorrowable,
   SymbolPrice,
 } from '@platform/trading-domain'
 
@@ -37,6 +38,18 @@ export async function fetchMarginBalances(): Promise<MarginBalanceResponse> {
   const response = await fetch('/api/trading/margin-balance')
   if (!response.ok) {
     throw new Error('Failed to fetch margin balances')
+  }
+  return response.json()
+}
+
+/**
+ * Fetch maximum borrowable amount for an asset in cross margin account
+ * Used for determining available leverage for BUY (borrow quote) or SELL (short/borrow base)
+ */
+export async function fetchMaxBorrowable(asset: string): Promise<MaxBorrowable> {
+  const response = await fetch(`/api/trading/margin-balance/max-borrowable?asset=${encodeURIComponent(asset)}`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch max borrowable for ${asset}`)
   }
   return response.json()
 }
@@ -166,6 +179,59 @@ export async function fetchSymbols(params?: {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error('Failed to fetch symbols')
+  }
+  return response.json()
+}
+
+/**
+ * Account mode for trading orders
+ */
+export type AccountMode = 'spot' | 'margin'
+
+/**
+ * User trading settings response from API
+ */
+export interface UserTradingSettingsResponse {
+  defaultAccountMode: AccountMode
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Fetch user trading settings
+ */
+export async function fetchUserSettings(): Promise<UserTradingSettingsResponse> {
+  const response = await fetch('/api/trading/settings', {
+    credentials: 'include',
+  })
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Authentication required')
+    }
+    throw new Error('Failed to fetch settings')
+  }
+  return response.json()
+}
+
+/**
+ * Update user trading settings
+ */
+export async function updateUserSettings(data: {
+  defaultAccountMode?: AccountMode
+}): Promise<UserTradingSettingsResponse> {
+  const response = await fetch('/api/trading/settings', {
+    method: 'PUT',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Authentication required')
+    }
+    throw new Error('Failed to update settings')
   }
   return response.json()
 }

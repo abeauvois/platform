@@ -11,11 +11,13 @@ import { createKlinesOpenApiRoutes } from './routes/klines.openapi.routes';
 import { createMarginBalanceOpenApiRoutes } from './routes/margin-balance.openapi.routes';
 import { createOrderOpenApiRoutes } from './routes/order.openapi.routes';
 import { createOrderStreamRoutes } from './routes/order-stream.routes';
+import { createSettingsOpenApiRoutes } from './routes/settings.openapi.routes';
 import { createSymbolsOpenApiRoutes } from './routes/symbols.openapi.routes';
 import { createTickerOpenApiRoutes } from './routes/ticker.openapi.routes';
 import { createTickersOpenApiRoutes } from './routes/tickers.openapi.routes';
 import { createWatchlistOpenApiRoutes } from './routes/watchlist.openapi.routes';
 import { BinanceClient } from './adapters/BinanceClient';
+import { DrizzleUserSettingsRepository } from './infrastructure/DrizzleUserSettingsRepository';
 import { DrizzleWatchlistRepository } from './infrastructure/DrizzleWatchlistRepository';
 
 // Create exchange clients (dependency injection at composition root)
@@ -24,6 +26,9 @@ const publicExchangeClient = new BinanceClient();
 
 // Watchlist repository for user watchlist persistence
 const watchlistRepository = new DrizzleWatchlistRepository();
+
+// User settings repository for trading preferences
+const userSettingsRepository = new DrizzleUserSettingsRepository();
 
 // Simple ID generator for watchlist items
 const idGenerator = {
@@ -84,6 +89,9 @@ app.route('/api/trading/watchlist', createWatchlistOpenApiRoutes(
   idGenerator
 ));
 
+// User settings route (requires user auth)
+app.route('/api/trading/settings', createSettingsOpenApiRoutes(userSettingsRepository));
+
 // Balance and order routes require authentication - create client lazily to allow startup without credentials
 try {
   const authenticatedClient = createAuthenticatedClient();
@@ -127,6 +135,10 @@ app.doc('/api/docs/openapi.json', {
     {
       name: 'Watchlist',
       description: 'User watchlist management - requires user authentication',
+    },
+    {
+      name: 'Settings',
+      description: 'User trading settings - requires user authentication',
     },
     {
       name: 'Balance',

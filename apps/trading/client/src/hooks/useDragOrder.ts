@@ -7,6 +7,7 @@ import type { RefObject } from 'react'
 import type { TradingChartHandle } from '../components/TradingChart'
 import type { CreateOrderParams } from './useOrderManagement'
 import type { OrderMode } from './useOrderMode'
+import type { AccountMode } from './useAccountMode'
 
 import {
   getPricePrecision,
@@ -33,8 +34,14 @@ export interface UseDragOrderConfig {
   quoteLockedBalance: number
   /** Order mode: 'stop_limit' creates stop-limit orders, 'limit' creates regular limit orders */
   orderMode: OrderMode
+  /** Account mode: 'spot' or 'margin' */
+  accountMode: AccountMode
   /** Current market price (needed for stop order type detection) */
   currentPrice: number
+  /** Max borrowable for base asset (for margin short selling) */
+  maxBorrowableBase?: number
+  /** Max borrowable for quote asset (for margin leveraged buying) */
+  maxBorrowableQuote?: number
   createOrder: (
     params: CreateOrderParams,
     callbacks?: {
@@ -79,7 +86,10 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
     quoteBalance,
     quoteLockedBalance,
     orderMode,
+    accountMode,
     currentPrice,
+    maxBorrowableBase = 0,
+    maxBorrowableQuote = 0,
     createOrder,
   } = config
 
@@ -166,12 +176,16 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
         return
       }
 
-      // For BUY orders, check if we have enough quote balance
+      // For BUY orders, check if we have enough quote balance (+ borrowable in margin mode)
       if (side === 'buy') {
         const orderValue = quantity * dragPrice
+        // In margin mode, add borrowable amount to available balance
+        const effectiveQuoteBalance = accountMode === 'margin'
+          ? quoteBalance + maxBorrowableQuote
+          : quoteBalance
         const balanceValidation = validateBalance(
           orderValue,
-          quoteBalance,
+          effectiveQuoteBalance,
           quoteAsset,
           quoteLockedBalance
         )
@@ -182,11 +196,15 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
         }
       }
 
-      // For SELL orders, check if we have enough base balance
+      // For SELL orders, check if we have enough base balance (+ borrowable in margin mode for short selling)
       if (side === 'sell') {
+        // In margin mode, add borrowable amount to available balance (short selling)
+        const effectiveBaseBalance = accountMode === 'margin'
+          ? baseBalance + maxBorrowableBase
+          : baseBalance
         const balanceValidation = validateBalance(
           quantity,
-          baseBalance,
+          effectiveBaseBalance,
           baseAsset,
           baseLockedBalance
         )
@@ -250,6 +268,7 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
           quantity,
           price: orderPrice,
           stopPrice,
+          isMarginOrder: accountMode === 'margin',
         },
         {
           onError: (error) => {
@@ -270,7 +289,10 @@ export function useDragOrder(config: UseDragOrderConfig): UseDragOrderReturn {
       quoteBalance,
       quoteLockedBalance,
       orderMode,
+      accountMode,
       currentPrice,
+      maxBorrowableBase,
+      maxBorrowableQuote,
       createOrder,
     ]
   )

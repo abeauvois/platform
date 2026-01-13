@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 import { formatPrice } from '../utils/balance'
 import type { OrderMode } from '../hooks/useOrderMode'
+import type { AccountMode } from '../hooks/useAccountMode'
 
 const MAX_ORDER_VALUE_USD = 500
 
@@ -63,12 +64,22 @@ export interface DragOrderPanelProps {
   orderMode: OrderMode
   /** Callback when order mode changes */
   onOrderModeChange: (mode: OrderMode) => void
+  /** Current account mode (spot or margin) */
+  accountMode: AccountMode
+  /** Callback when account mode changes */
+  onAccountModeChange: (mode: AccountMode) => void
+  /** Whether user has margin balance (to enable/disable margin option) */
+  hasMarginBalance: boolean
   /** Callback when BUY button is clicked (for stop-market orders) */
   onBuyClick: () => void
   /** Callback when SELL button is clicked (for stop-market orders) */
   onSellClick: () => void
   /** Whether the user is authenticated (required for trading) */
   isAuthenticated: boolean
+  /** Max borrowable for base asset (for margin short selling) */
+  maxBorrowableBase?: number
+  /** Max borrowable for quote asset (for margin leveraged buying) */
+  maxBorrowableQuote?: number
 }
 
 export function DragOrderPanel({
@@ -82,17 +93,30 @@ export function DragOrderPanel({
   onSellAmountChange,
   orderMode,
   onOrderModeChange,
+  accountMode,
+  onAccountModeChange,
+  hasMarginBalance,
   onBuyClick,
   onSellClick,
   isAuthenticated,
+  maxBorrowableBase = 0,
+  maxBorrowableQuote = 0,
 }: Readonly<DragOrderPanelProps>) {
   // Calculate order values in USD
   const buyOrderValue = buyAmount * currentPrice
   const sellOrderValue = sellAmount * currentPrice
 
+  // For margin mode, include borrowable amounts in available balance
+  const effectiveQuoteLimit = accountMode === 'margin'
+    ? availableQuote + maxBorrowableQuote
+    : availableQuote
+  const effectiveBaseLimit = accountMode === 'margin'
+    ? availableBase + maxBorrowableBase
+    : availableBase
+
   // Determine if buttons should be disabled (also disabled when not authenticated)
-  const isBuyDisabled = !isAuthenticated || buyAmount <= 0 || buyOrderValue > MAX_ORDER_VALUE_USD || buyOrderValue > availableQuote
-  const isSellDisabled = !isAuthenticated || sellAmount <= 0 || sellOrderValue > MAX_ORDER_VALUE_USD || sellAmount > availableBase
+  const isBuyDisabled = !isAuthenticated || buyAmount <= 0 || buyOrderValue > MAX_ORDER_VALUE_USD || buyOrderValue > effectiveQuoteLimit
+  const isSellDisabled = !isAuthenticated || sellAmount <= 0 || sellOrderValue > MAX_ORDER_VALUE_USD || sellAmount > effectiveBaseLimit
 
   // Format available amounts
   const formatAmount = (amount: number, decimals = 4) => {
@@ -111,15 +135,26 @@ export function DragOrderPanel({
   return (
     <Card className="bg-card/50 backdrop-blur">
       <CardContent className="p-4">
-        {/* Order Mode Selector */}
-        <div className="flex justify-center mb-4">
+        {/* Order Mode & Account Mode Selectors */}
+        <div className="flex justify-center gap-2 mb-4">
           <Select value={orderMode} onValueChange={(value) => onOrderModeChange(value as OrderMode)}>
-            <SelectTrigger className="w-[200px] bg-input/50 border-input">
-              <SelectValue placeholder="Select order mode" />
+            <SelectTrigger className="w-[180px] bg-input/50 border-input">
+              <SelectValue placeholder="Order type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="stop_limit">Stop-Limit (default)</SelectItem>
+              <SelectItem value="stop_limit">Stop-Limit</SelectItem>
               <SelectItem value="limit">Limit Order</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={accountMode} onValueChange={(value) => onAccountModeChange(value as AccountMode)}>
+            <SelectTrigger className="w-[110px] bg-input/50 border-input">
+              <SelectValue placeholder="Account" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="spot">Spot</SelectItem>
+              <SelectItem value="margin" disabled={!hasMarginBalance}>
+                Margin
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -128,7 +163,11 @@ export function DragOrderPanel({
           {/* BUY Section */}
           <div className="flex flex-col items-center gap-2">
             <div className="text-xs text-muted-foreground">
-              Available: <span className="text-green-400 font-medium">{formatPrice(availableQuote)}</span>
+              {accountMode === 'margin' && maxBorrowableQuote > 0 ? (
+                <>Available: <span className="text-green-400 font-medium">{formatPrice(effectiveQuoteLimit)}</span> <span className="text-yellow-400">(+margin)</span></>
+              ) : (
+                <>Available: <span className="text-green-400 font-medium">{formatPrice(availableQuote)}</span></>
+              )}
             </div>
             <DraggableButton
               id="drag-buy"
@@ -157,7 +196,7 @@ export function DragOrderPanel({
               <div className="text-xs text-red-400">
                 {buyOrderValue > MAX_ORDER_VALUE_USD
                   ? `Max ${formatPrice(MAX_ORDER_VALUE_USD)}`
-                  : buyOrderValue > availableQuote
+                  : buyOrderValue > effectiveQuoteLimit
                     ? 'Insufficient balance'
                     : ''}
               </div>
@@ -173,7 +212,11 @@ export function DragOrderPanel({
           {/* SELL Section */}
           <div className="flex flex-col items-center gap-2">
             <div className="text-xs text-muted-foreground">
-              Available: <span className="text-red-400 font-medium">{formatAmount(availableBase)} {baseAsset}</span>
+              {accountMode === 'margin' && maxBorrowableBase > 0 ? (
+                <>Available: <span className="text-red-400 font-medium">{formatAmount(effectiveBaseLimit)} {baseAsset}</span> <span className="text-yellow-400">(+short)</span></>
+              ) : (
+                <>Available: <span className="text-red-400 font-medium">{formatAmount(availableBase)} {baseAsset}</span></>
+              )}
             </div>
             <DraggableButton
               id="drag-sell"
@@ -202,7 +245,7 @@ export function DragOrderPanel({
               <div className="text-xs text-red-400">
                 {sellOrderValue > MAX_ORDER_VALUE_USD
                   ? `Max ${formatPrice(MAX_ORDER_VALUE_USD)}`
-                  : sellAmount > availableBase
+                  : sellAmount > effectiveBaseLimit
                     ? 'Insufficient balance'
                     : ''}
               </div>

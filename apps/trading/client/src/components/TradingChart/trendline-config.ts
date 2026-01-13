@@ -15,8 +15,10 @@ export const TRENDLINE_COLORS = {
  */
 export const TRENDLINE_CONFIG = {
     lookbackBars: 5,
-    maxLines: 5,
+    maxLines: 3,
     extendRight: true,
+    /** Number of candles to extend the line beyond the end point */
+    extendCandles: 15,
 } as const
 
 /**

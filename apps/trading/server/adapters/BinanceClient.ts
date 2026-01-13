@@ -7,7 +7,7 @@
  */
 
 import WebSocket from 'ws';
-import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, Order, SymbolPrice, TradableSymbol, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, MaxBorrowable, Order, SymbolPrice, TradableSymbol, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
 
 /**
  * Binance API response type for 24hr ticker
@@ -75,6 +75,15 @@ interface BinanceMarginAccountResponse {
         interest: string;
         netAsset: string;
     }>;
+}
+
+/**
+ * Binance max borrowable response type
+ * GET /sapi/v1/margin/maxBorrowable
+ */
+interface BinanceMaxBorrowableResponse {
+    amount: string;      // Max amount borrowable
+    borrowLimit: string; // Account's borrow limit
 }
 
 /**
@@ -441,6 +450,44 @@ export class BinanceClient implements IExchangeClient {
     }
 
     /**
+     * Get maximum borrowable amount for an asset in cross margin account
+     * Uses Binance GET /sapi/v1/margin/maxBorrowable endpoint
+     * @param asset - Asset symbol (e.g., 'BTC', 'USDC')
+     * @returns Maximum borrowable amount and borrow limit
+     */
+    async getMaxBorrowable(asset: string): Promise<MaxBorrowable> {
+        if (!this.isAuthenticated()) {
+            throw new Error('Authentication required: API key and secret must be provided');
+        }
+
+        const timestamp = Date.now();
+        const upperAsset = asset.toUpperCase();
+        const queryString = `asset=${upperAsset}&timestamp=${timestamp}`;
+        const signature = await this.sign(queryString);
+        const url = `${this.sapiUrl}/margin/maxBorrowable?${queryString}&signature=${signature}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-MBX-APIKEY': this.apiKey!,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
+        }
+
+        const data: BinanceMaxBorrowableResponse = await response.json();
+
+        return {
+            asset: upperAsset,
+            amount: Number.parseFloat(data.amount),
+            borrowLimit: Number.parseFloat(data.borrowLimit),
+        };
+    }
+
+    /**
      * Get historical candlestick/kline data (public endpoint)
      * @param symbol - Trading pair (e.g., 'BTCUSDT')
      * @param interval - Time interval ('1m', '5m', '1h', '1d', etc.)
@@ -594,6 +641,7 @@ export class BinanceClient implements IExchangeClient {
 
     /**
      * Create a new order (requires authentication)
+     * Supports both spot and margin orders via isMarginOrder flag
      * @param data - Order details
      * @returns Created order with ID and status
      */
@@ -604,6 +652,7 @@ export class BinanceClient implements IExchangeClient {
 
         const timestamp = Date.now();
         const binanceSymbol = this.convertSymbol(data.symbol);
+        const isMargin = data.isMarginOrder ?? false;
 
         // Get symbol filter info for quantity/price precision
         const filterInfo = await this.getSymbolFilterInfo(data.symbol);
@@ -636,10 +685,15 @@ export class BinanceClient implements IExchangeClient {
 
         const queryString = params.toString();
         const signature = await this.sign(queryString);
-        const url = `${this.baseUrl}/order?${queryString}&signature=${signature}`;
+
+        // Use margin endpoint for margin orders, spot endpoint otherwise
+        const orderEndpoint = isMargin
+            ? `${this.sapiUrl}/margin/order`
+            : `${this.baseUrl}/order`;
+        const url = `${orderEndpoint}?${queryString}&signature=${signature}`;
 
         // Log request parameters for debugging
-        console.log('[BinanceClient] Creating order with params:', Object.fromEntries(params));
+        console.log(`[BinanceClient] Creating ${isMargin ? 'margin' : 'spot'} order with params:`, Object.fromEntries(params));
 
         const response = await fetch(url, {
             method: 'POST',

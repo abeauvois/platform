@@ -83,13 +83,18 @@ export function useTrendLines({
             }
         }
 
-        // Calculate extension time (extend to current time + some buffer)
+        // Calculate extension time (extend a fixed number of candles beyond end point)
         const lastKline = klinesData.klines.at(-1)
         if (!lastKline) return
 
-        // Extend lines to 20% beyond the last kline time
-        const extendTime = Math.floor(lastKline.closeTime / 1000) +
-            Math.floor((lastKline.closeTime - klinesData.klines[0].openTime) / 1000 / 5)
+        // Calculate average candle duration in seconds
+        const avgCandleDuration =
+            (lastKline.closeTime - klinesData.klines[0].openTime) /
+            1000 /
+            klinesData.klines.length
+
+        // Extension amount in seconds (fixed number of candles)
+        const extensionSeconds = avgCandleDuration * TRENDLINE_CONFIG.extendCandles
 
         // Add or update series for each trend line
         for (const line of allLines) {
@@ -108,7 +113,10 @@ export function useTrendLines({
             }
 
             // Calculate end time and price
-            const endTime = config.extendRight ? extendTime : line.endPoint.time
+            // Extend from the line's end point by a fixed number of candles
+            const endTime = config.extendRight
+                ? line.endPoint.time + extensionSeconds
+                : line.endPoint.time
             const endPrice = config.extendRight
                 ? getPriceAtTime(line, endTime)
                 : line.endPoint.price
