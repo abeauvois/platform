@@ -110,8 +110,10 @@ jobs:
             path: apps/api
           - name: dashboard
             path: apps/dashboard
-          - name: trading
-            path: apps/trading
+          - name: trading-server
+            path: apps/trading-server
+          - name: trading-client
+            path: apps/trading-client
           - name: cli
             path: apps/cli
           - name: packages
@@ -166,7 +168,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     strategy:
       matrix:
-        app: [api, trading]
+        app: [api, trading-server]
     steps:
       - uses: actions/checkout@v6
 
