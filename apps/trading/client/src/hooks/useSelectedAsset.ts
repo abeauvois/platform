@@ -7,7 +7,7 @@ const DEFAULT_BASE_ASSET = 'BTC'
 /**
  * Source of asset selection
  */
-export type AssetSource = 'spot' | 'margin'
+export type AssetSource = 'spot' | 'margin' | 'watchlist'
 
 /**
  * Strip "LD" prefix from symbols (e.g., "LDBANANAS31" -> "BANANAS31")

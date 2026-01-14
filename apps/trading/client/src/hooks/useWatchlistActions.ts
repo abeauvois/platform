@@ -3,6 +3,8 @@ import { useWatchlist } from './queries'
 import { useWatchlistMutations } from './useWatchlistMutations'
 import { extractBaseAsset } from '../utils/symbol'
 
+import type { AssetSource } from './useSelectedAsset'
+
 /**
  * Consolidated hook for all watchlist-related actions and state
  * Reduces boilerplate in components using watchlist functionality
@@ -10,7 +12,7 @@ import { extractBaseAsset } from '../utils/symbol'
 export function useWatchlistActions(
   tradingSymbol: string,
   isAuthenticated: boolean,
-  onAssetSelect: (asset: string) => void
+  onAssetSelect: (asset: string, source?: AssetSource) => void
 ) {
   const {
     data: watchlistData,
@@ -35,7 +37,7 @@ export function useWatchlistActions(
   const handleWatchlistSelect = useCallback(
     (symbol: string) => {
       const baseAsset = extractBaseAsset(symbol)
-      onAssetSelect(baseAsset)
+      onAssetSelect(baseAsset, 'watchlist')
     },
     [onAssetSelect]
   )

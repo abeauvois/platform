@@ -44,7 +44,7 @@ function HomePage() {
 
   // Asset selection and trading pair configuration
   // When user selects from margin balance card, auto-switch to margin mode
-  const { selectedAsset, baseAsset, quoteAsset, tradingSymbol, handleAssetSelect } =
+  const { selectedAsset, baseAsset, quoteAsset, tradingSymbol, assetSource, handleAssetSelect } =
     useSelectedAsset({
       onSourceChange: (source) => {
         if (source === 'margin') {
@@ -223,7 +223,7 @@ function HomePage() {
             isPricesLoading={tradingData.isPricesLoading}
             error={tradingData.spotError}
             refetch={tradingData.refetch}
-            selectedAsset={selectedAsset}
+            selectedAsset={assetSource === 'spot' ? selectedAsset : undefined}
             onAssetSelect={(asset) => handleAssetSelect(asset, 'spot')}
           />
 
@@ -237,7 +237,7 @@ function HomePage() {
             isPricesLoading={tradingData.isPricesLoading}
             error={tradingData.marginError}
             refetch={tradingData.refetch}
-            selectedAsset={selectedAsset}
+            selectedAsset={assetSource === 'margin' ? selectedAsset : undefined}
             onAssetSelect={(asset) => handleAssetSelect(asset, 'margin')}
           />
         </div>
@@ -297,7 +297,7 @@ function HomePage() {
             isLoading={isWatchlistLoading}
             error={watchlistError}
             refetch={refetchWatchlist}
-            selectedSymbol={tradingSymbol}
+            selectedSymbol={assetSource === 'watchlist' ? tradingSymbol : undefined}
             onSymbolSelect={handleWatchlistSelect}
             onRemoveSymbol={handleWatchlistRemove}
           />
