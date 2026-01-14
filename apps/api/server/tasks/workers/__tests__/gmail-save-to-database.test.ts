@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { BaseContent, type ISourceReader, type ILogger, type WorkflowContext } from '@platform/platform-domain';
+import { BaseContent, Bookmark, type ISourceReader, type ILogger, type WorkflowContext } from '@platform/platform-domain';
 import { InMemoryBookmarkRepository } from '../../../infrastructure/InMemoryBookmarkRepository';
 import { ReadStep, SaveToBookmarkStep } from '../steps';
 import type { StepFactoryConfig } from '../presets';
@@ -116,14 +116,14 @@ describe('Gmail Preset - Save to Database', () => {
             expect(isValidUrl(bookmark.url)).toBe(true);
         }
 
-        const bookmark1 = savedBookmarks.find(b => b.url === 'https://example.com/article1');
+        const bookmark1 = savedBookmarks.find((b: Bookmark) => b.url === 'https://example.com/article1');
         expect(bookmark1).toBeDefined();
         expect(bookmark1?.userId).toBe('test-user-123');
         expect(bookmark1?.sourceAdapter).toBe('Gmail');
         expect(bookmark1?.tags).toEqual(['tech', 'news']);
         expect(bookmark1?.summary).toBe('First article summary');
 
-        const bookmark2 = savedBookmarks.find(b => b.url === 'https://example.com/article2');
+        const bookmark2 = savedBookmarks.find((b: Bookmark) => b.url === 'https://example.com/article2');
         expect(bookmark2).toBeDefined();
         expect(bookmark2?.userId).toBe('test-user-123');
         expect(bookmark2?.tags).toEqual(['programming']);
