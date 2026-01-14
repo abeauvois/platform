@@ -5,6 +5,7 @@
   "description": "Monorepo for email link extractor and cached HTTP client library",
   "workspaces": [
     "apps/*",
+    "apps/trading/client",
     "packages/*"
   ],
   "scripts": {

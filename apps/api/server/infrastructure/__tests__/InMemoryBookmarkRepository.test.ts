@@ -274,7 +274,7 @@ describe('InMemoryBookmarkRepository', () => {
             const user1Bookmarks = await repository.findByUserId('user-1');
 
             expect(user1Bookmarks).toHaveLength(2);
-            expect(user1Bookmarks.every(b => b.userId === 'user-1')).toBe(true);
+            expect(user1Bookmarks.every((b: Bookmark) => b.userId === 'user-1')).toBe(true);
         });
     });
 
