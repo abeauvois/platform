@@ -49,6 +49,14 @@ export interface Order {
 /**
  * Create order request data
  */
+/**
+ * Margin side effect type for auto-borrow behavior
+ * - NO_SIDE_EFFECT: Only use existing margin balance (no borrowing)
+ * - MARGIN_BUY: Auto-borrow to complete the order
+ * - AUTO_BORROW_REPAY: Auto-borrow if needed, auto-repay if possible
+ */
+export type MarginSideEffectType = 'NO_SIDE_EFFECT' | 'MARGIN_BUY' | 'AUTO_BORROW_REPAY';
+
 export interface CreateOrderData {
     symbol: string;
     side: 'buy' | 'sell';
@@ -59,6 +67,8 @@ export interface CreateOrderData {
     timeInForce?: 'GTC' | 'IOC' | 'FOK';
     /** Whether to place order on margin account (default: false = spot) */
     isMarginOrder?: boolean;
+    /** Side effect type for margin orders (default: MARGIN_BUY for margin orders) */
+    sideEffectType?: MarginSideEffectType;
 }
 
 /**

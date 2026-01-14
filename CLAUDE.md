@@ -5,7 +5,6 @@ This file provides guidance to Claude Code when working with code in this reposi
 ## Monorepo Structure
 
 This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
-Never create ".js" extensions if not asked for it.
 
 ```
 /apps
@@ -141,6 +140,22 @@ When creating new features:
    ```
 
 ## Code Style & Conventions
+
+### File Extensions
+
+```typescript
+// ✅ GOOD: Use .ts extension for imports (Bun resolves these automatically)
+import { MyService } from './MyService.ts'
+import { utils } from '@platform/domain'
+
+// ❌ NEVER: Use .js extension in imports or create .js files
+import { MyService } from './MyService.js'  // WRONG
+```
+
+**Rules:**
+- Never create `.js` files - always use `.ts` (or `.tsx` for React components)
+- Never use `.js` extensions in import statements
+- Exception: Config files that require `.js` (e.g., `postcss.config.js`, `tailwind.config.js`)
 
 ### TypeScript
 

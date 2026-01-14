@@ -670,6 +670,13 @@ export class BinanceClient implements IExchangeClient {
             newOrderRespType: 'RESULT', // Request full response with status, side, etc.
         });
 
+        // For margin orders, add sideEffectType to enable auto-borrow
+        // Default to MARGIN_BUY which auto-borrows if balance is insufficient
+        if (isMargin) {
+            const sideEffectType = data.sideEffectType ?? 'MARGIN_BUY';
+            params.append('sideEffectType', sideEffectType);
+        }
+
         // Add price for limit orders (including stop_loss_limit, take_profit_limit)
         if (this.isLimitType(data.type) && data.price !== undefined) {
             const roundedPrice = this.roundToStepSize(data.price, filterInfo.tickSize);

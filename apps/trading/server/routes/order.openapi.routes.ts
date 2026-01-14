@@ -38,6 +38,10 @@ const CreateOrderRequestSchema = z.object({
         example: false,
         description: 'Whether to place order on margin account (default: false = spot)',
     }),
+    sideEffectType: z.enum(['NO_SIDE_EFFECT', 'MARGIN_BUY', 'AUTO_BORROW_REPAY']).optional().openapi({
+        example: 'MARGIN_BUY',
+        description: 'Side effect type for margin orders (default: MARGIN_BUY for auto-borrow)',
+    }),
 }).refine(
     (data) => {
         // Validate price is provided for limit orders
@@ -295,6 +299,7 @@ export function createOrderOpenApiRoutes(exchangeClient: IExchangeClient) {
                     stopPrice: data.stopPrice,
                     timeInForce: data.timeInForce,
                     isMarginOrder: data.isMarginOrder,
+                    sideEffectType: data.sideEffectType,
                 });
 
                 return c.json({
