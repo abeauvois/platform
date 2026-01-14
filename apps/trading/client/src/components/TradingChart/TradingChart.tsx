@@ -5,11 +5,13 @@ import { forwardRef, useCallback, useImperativeHandle } from 'react'
 
 import { useChartData } from '../../hooks/chart/useChartData'
 import { useChartInstance } from '../../hooks/chart/useChartInstance'
+import { useCrosshairInfo } from '../../hooks/chart/useCrosshairInfo'
 import { useOrderHistorySeries } from '../../hooks/chart/useOrderHistorySeries'
 import { useOrderLines } from '../../hooks/chart/useOrderLines'
 import { usePreviewLine } from '../../hooks/chart/usePreviewLine'
 import { useTrendLines } from '../../hooks/chart/useTrendLines'
 import { AssetSearch } from '../AssetSearch'
+import { CrosshairOverlay } from './CrosshairOverlay'
 
 import type { OrderLine, TradingChartHandle, TradingChartProps } from './types'
 
@@ -83,6 +85,13 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             currentPrice,
             candlestickSeriesRef,
             previewLineRef,
+        })
+
+        // Crosshair info for variation display
+        const crosshairInfo = useCrosshairInfo({
+            chartRef,
+            candlestickSeriesRef,
+            lastPrice: currentPrice,
         })
 
         // Drag-and-drop setup
@@ -182,11 +191,12 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                         </Button>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="relative">
                     <div
                         ref={setRefs}
                         className={`w-full transition-all ${isOver ? 'opacity-90' : ''}`}
                     />
+                    <CrosshairOverlay crosshairInfo={crosshairInfo} />
                     {isOver && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div className="bg-yellow-500/20 text-yellow-500 px-4 py-2 rounded-lg font-medium">

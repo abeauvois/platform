@@ -51,7 +51,7 @@ export function getChartOptions(width: number) {
             horzLines: { color: CHART_COLORS.grid },
         },
         crosshair: {
-            mode: 1,
+            mode: 0, // Normal mode - free cursor (not snapping to data points)
         },
         rightPriceScale: {
             borderColor: CHART_COLORS.border,
