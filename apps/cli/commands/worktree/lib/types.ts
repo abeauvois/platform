@@ -91,15 +91,5 @@ export interface WarpLayout {
 // Re-export PR types from github-pr.ts for convenience
 export type { PrInfo, PrCheck, PrReview } from './github-pr.js';
 
-/**
- * Port interface for progress reporting (decouples business logic from CLI presentation)
- */
-export interface IProgressReporter {
-	start(message: string): void;
-	update(message: string): void;
-	stop(message: string): void;
-	info(message: string): void;
-	warn(message: string): void;
-	error(message: string): void;
-	note(content: string, title: string): void;
-}
+// Re-export progress reporter from shared lib
+export type { IProgressReporter } from '../../../lib/progress-reporter.js';
