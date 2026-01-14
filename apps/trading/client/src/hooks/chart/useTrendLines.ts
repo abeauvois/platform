@@ -3,7 +3,6 @@ import {
     getPriceAtTime,
     type TrendLineConfig,
 } from '@platform/trading-domain'
-import { LineSeries } from 'lightweight-charts'
 import { useEffect, useMemo } from 'react'
 
 import {
@@ -102,8 +101,7 @@ export function useTrendLines({
 
             // Create new series if it doesn't exist
             if (!series) {
-                series = chart.addSeries(
-                    LineSeries,
+                series = chart.addLineSeries(
                     getTrendLineSeriesOptions(line.type, line.isBroken)
                 )
                 trendLineSeriesRef.current.set(line.id, series)

@@ -1,4 +1,3 @@
-import { LineSeries } from 'lightweight-charts'
 import { useEffect } from 'react'
 
 import { getOrderHistorySeriesOptions } from '../../components/TradingChart/chart-config'
@@ -72,7 +71,7 @@ export function useOrderHistorySeries({
 
             // Create new series if it doesn't exist
             if (!series) {
-                series = chart.addSeries(LineSeries, getOrderHistorySeriesOptions(order.side))
+                series = chart.addLineSeries(getOrderHistorySeriesOptions(order.side))
                 orderHistorySeriesRef.current.set(order.id, series)
             }
 
