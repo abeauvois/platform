@@ -86,7 +86,7 @@ create_worktree() {
     # Copy .env files from main repo
     print_info "Copying .env files..."
 
-    for env_file in .env apps/api/.env apps/dashboard/.env apps/trading/.env packages/platform-db/.env; do
+    for env_file in .env apps/api/.env apps/dashboard/.env apps/trading-server/.env packages/platform-db/.env; do
         if [ -f "$REPO_ROOT/$env_file" ]; then
             mkdir -p "$(dirname "$WORKTREE_PATH/$env_file")"
             cp "$REPO_ROOT/$env_file" "$WORKTREE_PATH/$env_file"
@@ -123,14 +123,14 @@ EOF
         fi
     fi
 
-    # Update PORT in apps/trading/.env if it exists
-    if [ -f "$WORKTREE_PATH/apps/trading/.env" ]; then
+    # Update PORT in apps/trading-server/.env if it exists
+    if [ -f "$WORKTREE_PATH/apps/trading-server/.env" ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/^PORT=.*/PORT=$TRADING_SERVER_PORT/" "$WORKTREE_PATH/apps/trading/.env" 2>/dev/null || true
-            sed -i '' "s|CLIENT_URL=.*|CLIENT_URL=http://localhost:$TRADING_CLIENT_PORT|" "$WORKTREE_PATH/apps/trading/.env" 2>/dev/null || true
+            sed -i '' "s/^PORT=.*/PORT=$TRADING_SERVER_PORT/" "$WORKTREE_PATH/apps/trading-server/.env" 2>/dev/null || true
+            sed -i '' "s|CLIENT_URL=.*|CLIENT_URL=http://localhost:$TRADING_CLIENT_PORT|" "$WORKTREE_PATH/apps/trading-server/.env" 2>/dev/null || true
         else
-            sed -i "s/^PORT=.*/PORT=$TRADING_SERVER_PORT/" "$WORKTREE_PATH/apps/trading/.env" 2>/dev/null || true
-            sed -i "s|CLIENT_URL=.*|CLIENT_URL=http://localhost:$TRADING_CLIENT_PORT|" "$WORKTREE_PATH/apps/trading/.env" 2>/dev/null || true
+            sed -i "s/^PORT=.*/PORT=$TRADING_SERVER_PORT/" "$WORKTREE_PATH/apps/trading-server/.env" 2>/dev/null || true
+            sed -i "s|CLIENT_URL=.*|CLIENT_URL=http://localhost:$TRADING_CLIENT_PORT|" "$WORKTREE_PATH/apps/trading-server/.env" 2>/dev/null || true
         fi
     fi
 

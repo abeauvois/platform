@@ -1,19 +1,17 @@
 {
-  "name": "trading",
+  "name": "trading-server",
   "scripts": {
-    "client": "cd client && bun run dev",
-    "server": "bun --bun run --hot server/index.ts",
-    "dev": "concurrently \"bun run server\" \"bun run client\"",
+    "dev": "bun --bun run --hot index.ts",
+    "build": "bun build ./index.ts --outdir ./dist --target bun",
+    "start": "bun run ./dist/index.js",
     "db:up": "docker compose up -d",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun run ./scripts/seed-local-db.script.ts",
     "open-auth-docs": "open-cli http://localhost:3001/api/auth/reference",
-    "build": "bun build ./server/index.ts --outdir ./dist/server --target bun && cd client && bun run build",
-    "start": "bun run ./dist/server/index.js",
-    "docker:build": "docker build -t hono-todo-app .",
-    "docker:run": "docker run -p 3001:3001 --env-file .env -e DATABASE_URL='postgresql://user:password@host.docker.internal:5432/trading_db' hono-todo-app"
+    "docker:build": "docker build -t trading-server .",
+    "docker:run": "docker run -p 3001:3001 --env-file .env -e DATABASE_URL='postgresql://user:password@host.docker.internal:5432/trading_db' trading-server"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.1.5",
@@ -33,7 +31,6 @@
     "@types/bun": "latest",
     "@types/pg": "^8.15.5",
     "@types/ws": "^8.18.1",
-    "concurrently": "^9.2.0",
     "drizzle-kit": "^0.31.4",
     "drizzle-seed": "^0.3.1",
     "open-cli": "^8.0.0"

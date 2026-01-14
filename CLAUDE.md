@@ -10,9 +10,8 @@ This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
 /apps
 ├── api/              # Central platform server (Hono, port 3000)
 ├── dashboard/        # Web client (React + Vite, port 5000)
-├── trading/          # Trading app with hybrid architecture
-│   ├── server/       # Trading-specific APIs (Hono + OpenAPI, port 3001)
-│   └── client/       # Trading client (React + Vite, port 5001)
+├── trading-server/   # Trading-specific APIs (Hono + OpenAPI, port 3001)
+├── trading-client/   # Trading client (React + Vite, port 5001)
 └── cli/              # Command-line interface (cleye)
 
 /packages
@@ -39,8 +38,8 @@ IMPORTANT: key hexagonal architecture principle: the application layer should ex
 
 - **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, workflows, and background tasks (via @platform/task)
 - **Dashboard Client** (`/apps/dashboard`): React frontend for the platform
-- **Trading Server** (`/apps/trading/server`): Trading-specific APIs with Binance integration and OpenAPI docs at `/api/docs`
-- **Trading Client** (`/apps/trading/client`): Hybrid - connects to both API server (auth) and trading server (trading APIs)
+- **Trading Server** (`/apps/trading-server`): Trading-specific APIs with Binance integration and OpenAPI docs at `/api/docs`
+- **Trading Client** (`/apps/trading-client`): Hybrid - connects to both API server (auth) and trading server (trading APIs)
 - **CLI** (`/apps/cli`): Command-line interface using cleye framework with commands in `/apps/cli/commands/`
 
 ### Configuration
@@ -404,13 +403,15 @@ You MUST:
 
 When adding, removing, or renaming apps/packages, you MUST update the affected Dockerfiles:
 - `apps/api/Dockerfile` - copies all workspace `package.json` files for lockfile resolution
-- `apps/trading/Dockerfile` - if trading dependencies change
+- `apps/trading-server/Dockerfile` - if trading server dependencies change
 
 The API Dockerfile must list ALL workspace packages for `bun install --frozen-lockfile` to work:
 ```dockerfile
 # All apps
 COPY apps/api/package.json ./apps/api/
 COPY apps/cli/package.json ./apps/cli/
+COPY apps/trading-server/package.json ./apps/trading-server/
+COPY apps/trading-client/package.json ./apps/trading-client/
 # ... all other apps
 
 # All packages

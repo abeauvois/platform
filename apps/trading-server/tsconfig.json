@@ -11,7 +11,7 @@
     "types": ["bun-types"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./server/*"],
+      "@/*": ["./*"],
       "@platform/auth": ["../../packages/platform-auth/src/index.ts"],
       "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"],
       "@platform/trading-domain": ["../../packages/trading-domain/src/index.ts"]

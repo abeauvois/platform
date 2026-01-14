@@ -1,5 +1,5 @@
-# Trading App Dockerfile
-# Must be built from repository root: docker build -f apps/trading/Dockerfile .
+# Trading Server Dockerfile
+# Must be built from repository root: docker build -f apps/trading-server/Dockerfile .
 
 FROM oven/bun:1.3.5 AS base
 WORKDIR /app
@@ -9,8 +9,8 @@ FROM base AS deps
 COPY package.json bun.lock ./
 
 # Copy all workspace package.json files for lockfile resolution
-COPY apps/trading/package.json ./apps/trading/
-COPY apps/trading/client/package.json ./apps/trading/client/
+COPY apps/trading-server/package.json ./apps/trading-server/
+COPY apps/trading-client/package.json ./apps/trading-client/
 COPY apps/api/package.json ./apps/api/
 COPY apps/cli/package.json ./apps/cli/
 COPY apps/cli-landing/package.json ./apps/cli-landing/
@@ -36,30 +36,24 @@ FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build packages first (required by trading app and client)
+# Build packages first (required by trading server)
 RUN cd packages/cached-http-client && bun run build || true
 RUN cd packages/platform-task && bun run build || true
 RUN cd packages/platform-utils && bun run build || true
 RUN cd packages/platform-domain && bun run build || true
-RUN cd packages/platform-ui && bun run build || true
 RUN cd packages/trading-domain && bun run build || true
 
 # Build trading server
-WORKDIR /app/apps/trading
-RUN bun build ./server/index.ts --outdir ./dist/server --target bun
-
-# Build trading client
-WORKDIR /app/apps/trading/client
-RUN bunx vite build
+WORKDIR /app/apps/trading-server
+RUN bun build ./index.ts --outdir ./dist --target bun
 
 # Production image
 FROM oven/bun:1.3.5 AS release
 WORKDIR /app
 
 # Copy built artifacts
-COPY --from=build /app/apps/trading/dist/server ./dist/server
-COPY --from=build /app/apps/trading/client/dist ./client/dist
-COPY --from=build /app/apps/trading/package.json ./
+COPY --from=build /app/apps/trading-server/dist ./dist
+COPY --from=build /app/apps/trading-server/package.json ./
 
 # Copy workspace packages (needed at runtime)
 COPY --from=build /app/packages ./packages
@@ -70,4 +64,4 @@ ENV PORT=3001
 
 EXPOSE 3001
 
-CMD ["bun", "run", "./dist/server/index.js"]
+CMD ["bun", "run", "./dist/index.js"]

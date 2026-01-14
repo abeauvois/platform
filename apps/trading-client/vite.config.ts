@@ -6,7 +6,7 @@ import tanstackRouter from '@tanstack/router-plugin/vite'
 import { resolve } from 'node:path'
 
 // Load env from monorepo root for worktree port configuration
-const rootEnv = loadEnv('development', resolve(__dirname, '../../..'), '')
+const rootEnv = loadEnv('development', resolve(__dirname, '../..'), '')
 
 // Environment-based configuration (prefer root env, fallback to process.env)
 const TRADING_CLIENT_PORT = Number(rootEnv.TRADING_CLIENT_PORT || process.env.TRADING_CLIENT_PORT) || 5001
@@ -42,13 +42,13 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       // Resolve workspace packages from source for build
-      '@platform/trading-sdk': resolve(__dirname, '../../../packages/trading-sdk/src/index.ts'),
-      '@platform/trading-domain': resolve(__dirname, '../../../packages/trading-domain/src/index.ts'),
-      '@platform/sdk': resolve(__dirname, '../../../packages/platform-sdk/src/index.ts'),
-      '@platform/platform-domain/browser': resolve(__dirname, '../../../packages/platform-domain/src/browser.ts'),
-      '@platform/platform-domain': resolve(__dirname, '../../../packages/platform-domain/src/index.ts'),
-      '@platform/ui/globals.css': resolve(__dirname, '../../../packages/platform-ui/src/styles/globals.css'),
-      '@platform/ui': resolve(__dirname, '../../../packages/platform-ui/src/index.ts'),
+      '@platform/trading-sdk': resolve(__dirname, '../../packages/trading-sdk/src/index.ts'),
+      '@platform/trading-domain': resolve(__dirname, '../../packages/trading-domain/src/index.ts'),
+      '@platform/sdk': resolve(__dirname, '../../packages/platform-sdk/src/index.ts'),
+      '@platform/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
+      '@platform/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
+      '@platform/ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
+      '@platform/ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
     },
   },
   optimizeDeps: {
