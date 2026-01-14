@@ -1,5 +1,5 @@
 import type { IProgressReporter } from '../../../lib/progress-reporter.js';
-import type { BaseContent } from '@platform/platform-domain';
+import type { SourceContentItem } from '@platform/sdk';
 
 /**
  * Options for reading Gmail
@@ -19,7 +19,7 @@ export interface IGmailApiClient {
 			email?: string;
 			limitDays?: number;
 			withUrl?: boolean;
-		}): Promise<Array<BaseContent>>;
+		}): Promise<Array<SourceContentItem>>;
 	};
 }
 
@@ -50,7 +50,7 @@ export async function readGmailMessages(
 	apiClient: IGmailApiClient,
 	options: GmailReadOptions,
 	reporter: IProgressReporter
-): Promise<Array<BaseContent>> {
+): Promise<Array<SourceContentItem>> {
 	reporter.start('Fetching Gmail messages...');
 
 	const items = await apiClient.sources.readGmail({
@@ -68,7 +68,7 @@ export async function readGmailMessages(
  * Display Gmail read results
  */
 export function displayGmailResults(
-	items: Array<BaseContent>,
+	items: Array<SourceContentItem>,
 	reporter: IProgressReporter,
 	truncate: (text: string, maxLength: number) => string
 ): void {
