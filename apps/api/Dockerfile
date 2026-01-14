@@ -14,6 +14,7 @@ COPY apps/cli/package.json ./apps/cli/
 COPY apps/cli-landing/package.json ./apps/cli-landing/
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY apps/trading/package.json ./apps/trading/
+COPY apps/trading/client/package.json ./apps/trading/client/
 
 COPY packages/cached-http-client/package.json ./packages/cached-http-client/
 COPY packages/platform-auth/package.json ./packages/platform-auth/
