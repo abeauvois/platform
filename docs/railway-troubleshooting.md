@@ -202,16 +202,108 @@ railway variables --set "KEY=value"
 railway open
 ```
 
+## Issue 7: Workspace Dependencies with Nixpacks
+
+**Symptom:**
+```
+npm error code EUNSUPPORTEDPROTOCOL
+npm error Unsupported URL Type "workspace:": workspace:*
+```
+
+**Cause:**
+Nixpacks defaults to npm for Node.js projects. npm doesn't understand `workspace:*` protocol - only Bun and pnpm support it.
+
+**Solution:**
+Use a Dockerfile instead of Nixpacks for apps with workspace dependencies:
+
+```dockerfile
+# Use Bun to handle workspace:* dependencies
+FROM oven/bun:1.3.5 AS base
+# ... build stages ...
+
+# For static sites, use Caddy to serve
+FROM caddy:2-alpine AS release
+COPY --from=build /app/apps/my-app/dist /srv
+```
+
+Update `railway.json`:
+```json
+{
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "apps/my-app/Dockerfile"
+  }
+}
+```
+
+## Issue 8: Root railway.toml Overrides All Services
+
+**Symptom:**
+```
+Container failed to start
+The executable `bun` could not be found.
+```
+
+This happens when a Dockerfile-based service (e.g., using Caddy) is overridden by the root `railway.toml`'s `startCommand`.
+
+**Cause:**
+The root `railway.toml` applies to ALL services in the project. Settings like `startCommand = "bun run start"` override each service's Dockerfile CMD/ENTRYPOINT, even dashboard settings.
+
+**Solution:**
+Remove `startCommand` from root `railway.toml` and let each service use its Dockerfile's CMD/ENTRYPOINT:
+
+```toml
+# railway.toml
+[build]
+buildCommand = "bun run build"
+
+[deploy]
+# Do NOT set startCommand here - each service uses its Dockerfile CMD/ENTRYPOINT
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+```
+
+Each service's Dockerfile should define its own start command:
+- API/backend services: `CMD ["bun", "run", "./dist/index.js"]`
+- Static sites with Caddy: `ENTRYPOINT ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]`
+
+**Key insight:** Dashboard settings do NOT override `railway.toml` - the file always wins.
+
+## Issue 9: SPA Routing with Static Sites
+
+**Symptom:**
+Direct navigation to routes like `/dashboard` or `/settings` returns 404.
+
+**Cause:**
+Static file servers don't know about client-side routing - they look for actual files at those paths.
+
+**Solution:**
+Use a Caddyfile with `try_files` fallback:
+
+```caddyfile
+:{$PORT:80} {
+    root * /srv
+    encode gzip
+
+    # Fallback to index.html for SPA routing
+    try_files {path} /index.html
+
+    file_server
+}
+```
+
 ## File Structure
 
 ```
 /
-├── railway.toml          # Railway configuration
-├── nixpacks.toml         # Nixpacks build hints (optional)
+├── railway.toml          # Railway configuration (applies to all services)
 ├── package.json          # Root package with build/start scripts
 └── apps/
-    └── api/
-        ├── railway.json  # Service-specific config (optional)
-        └── server/
-            └── index.ts  # API entry point with /api/health endpoint
+    ├── api/
+    │   ├── Dockerfile    # CMD ["bun", "run", "./dist/index.js"]
+    │   └── railway.json  # Service-specific build config
+    └── trading-client/
+        ├── Dockerfile    # ENTRYPOINT for Caddy
+        ├── Caddyfile     # SPA routing configuration
+        └── railway.json  # builder: DOCKERFILE
 ```
