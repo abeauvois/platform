@@ -6,6 +6,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build && tsc",
+    "build:railway": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@platform/trading-domain": "workspace:*",
+    "@platform/trading-sdk": "workspace:*",
     "@platform/ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-form": "^0.36.0",

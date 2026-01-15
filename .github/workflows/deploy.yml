@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - trading
+          - trading-client
           - api
       environment:
         description: "Environment to deploy to"
@@ -47,6 +48,8 @@ jobs:
           INPUT_ENV: ${{ inputs.environment }}
           TRADING_PROD_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_PROD_SERVICE_ID }}
           TRADING_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_STAGING_SERVICE_ID }}
+          TRADING_CLIENT_PROD_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_CLIENT_PROD_SERVICE_ID }}
+          TRADING_CLIENT_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_CLIENT_STAGING_SERVICE_ID }}
           API_PROD_SERVICE_ID: ${{ secrets.RAILWAY_API_PROD_SERVICE_ID }}
           API_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_API_STAGING_SERVICE_ID }}
         run: |
@@ -63,6 +66,10 @@ jobs:
               echo "service_id=$TRADING_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
             elif [[ "$INPUT_APP" == "trading" && "$INPUT_ENV" == "production" ]]; then
               echo "service_id=$TRADING_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
+            elif [[ "$INPUT_APP" == "trading-client" && "$INPUT_ENV" == "staging" ]]; then
+              echo "service_id=$TRADING_CLIENT_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
+            elif [[ "$INPUT_APP" == "trading-client" && "$INPUT_ENV" == "production" ]]; then
+              echo "service_id=$TRADING_CLIENT_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
             elif [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "staging" ]]; then
               echo "service_id=$API_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
             elif [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "production" ]]; then

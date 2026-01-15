@@ -8,12 +8,23 @@ import type {
     MarketTickerResponse,
     Portfolio,
     Trade,
+    BalanceResponse,
+    MarginBalanceResponse,
+    MaxBorrowable,
+    SymbolPrice,
+    KlinesResponse,
+    WatchlistItemResponse,
+    UserTradingSettingsResponse,
+    SymbolSearchResult,
 } from '@platform/trading-domain';
 
 interface TradingApiClientConfig {
     baseUrl: string;
     sessionToken?: string;
-    logger: ILogger;
+    /** Optional logger - uses no-op logger if not provided */
+    logger?: ILogger;
+    /** Fetch credentials mode for cookie handling (default: 'include' for browser) */
+    credentials?: 'include' | 'omit' | 'same-origin';
 }
 
 /**
@@ -23,7 +34,10 @@ interface TradingApiClientConfig {
  */
 export class TradingApiClient extends BaseClient {
     constructor(config: TradingApiClientConfig) {
-        super(config);
+        super({
+            ...config,
+            credentials: config.credentials ?? 'include', // Default to include for browser cookie auth
+        });
     }
 
     /**
@@ -353,7 +367,7 @@ export class TradingApiClient extends BaseClient {
      * Get trade history
      * Requires authentication
      */
-    async getTradeHistory(symbol?: string, limit?: number): Promise<Trade[]> {
+    async getTradeHistory(symbol?: string, limit?: number): Promise<Array<Trade>> {
         try {
             this.logger.info('Fetching trade history...');
 
@@ -366,7 +380,7 @@ export class TradingApiClient extends BaseClient {
                 ? `/api/trading/trades?${queryString}`
                 : '/api/trading/trades';
 
-            const trades = await this.authenticatedRequest<Trade[]>(endpoint, {
+            const trades = await this.authenticatedRequest<Array<Trade>>(endpoint, {
                 method: 'GET',
             });
 
@@ -376,6 +390,316 @@ export class TradingApiClient extends BaseClient {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             this.logger.error(`Error fetching trade history: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    // ============================================
+    // Balance Methods (Authenticated)
+    // ============================================
+
+    /**
+     * Get spot wallet balances
+     * Requires Binance API credentials on server
+     */
+    async getSpotBalances(): Promise<BalanceResponse> {
+        try {
+            this.logger.info('Fetching spot balances...');
+
+            const balances = await this.authenticatedRequest<BalanceResponse>(
+                '/api/trading/balance',
+                { method: 'GET' }
+            );
+
+            this.logger.info(`Fetched ${balances.count} spot balances`);
+            return balances;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching spot balances: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Get margin account balances
+     * Requires Binance API credentials on server
+     */
+    async getMarginBalances(): Promise<MarginBalanceResponse> {
+        try {
+            this.logger.info('Fetching margin balances...');
+
+            const balances = await this.authenticatedRequest<MarginBalanceResponse>(
+                '/api/trading/margin-balance',
+                { method: 'GET' }
+            );
+
+            this.logger.info(`Fetched ${balances.count} margin balances`);
+            return balances;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching margin balances: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Get maximum borrowable amount for an asset
+     * Requires Binance API credentials on server
+     */
+    async getMaxBorrowable(asset: string): Promise<MaxBorrowable> {
+        try {
+            this.logger.info(`Fetching max borrowable for ${asset}...`);
+
+            const result = await this.authenticatedRequest<MaxBorrowable>(
+                `/api/trading/margin-balance/max-borrowable?asset=${encodeURIComponent(asset)}`,
+                { method: 'GET' }
+            );
+
+            this.logger.info(`Max borrowable for ${asset}: ${result.amount}`);
+            return result;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching max borrowable: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    // ============================================
+    // Watchlist Methods (User Authenticated)
+    // ============================================
+
+    /**
+     * Get user watchlist with current prices
+     * Requires user authentication
+     */
+    async getWatchlist(): Promise<Array<WatchlistItemResponse>> {
+        try {
+            this.logger.info('Fetching watchlist...');
+
+            const watchlist = await this.authenticatedRequest<Array<WatchlistItemResponse>>(
+                '/api/trading/watchlist',
+                { method: 'GET' }
+            );
+
+            this.logger.info(`Fetched ${watchlist.length} watchlist items`);
+            return watchlist;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching watchlist: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Add a symbol to watchlist
+     * Requires user authentication
+     */
+    async addToWatchlist(symbol: string): Promise<void> {
+        try {
+            this.logger.info(`Adding ${symbol} to watchlist...`);
+
+            await this.authenticatedRequest<void>('/api/trading/watchlist', {
+                method: 'POST',
+                body: JSON.stringify({ symbol }),
+            });
+
+            this.logger.info(`${symbol} added to watchlist`);
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error adding to watchlist: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Remove a symbol from watchlist
+     * Requires user authentication
+     */
+    async removeFromWatchlist(symbol: string): Promise<void> {
+        try {
+            this.logger.info(`Removing ${symbol} from watchlist...`);
+
+            await this.authenticatedRequest<void>(
+                `/api/trading/watchlist/${encodeURIComponent(symbol)}`,
+                { method: 'DELETE' }
+            );
+
+            this.logger.info(`${symbol} removed from watchlist`);
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error removing from watchlist: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    // ============================================
+    // User Settings Methods (User Authenticated)
+    // ============================================
+
+    /**
+     * Get user trading settings
+     * Requires user authentication
+     */
+    async getUserSettings(): Promise<UserTradingSettingsResponse> {
+        try {
+            this.logger.info('Fetching user settings...');
+
+            const settings = await this.authenticatedRequest<UserTradingSettingsResponse>(
+                '/api/trading/settings',
+                { method: 'GET' }
+            );
+
+            this.logger.info('User settings fetched successfully');
+            return settings;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching user settings: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Update user trading settings
+     * Requires user authentication
+     */
+    async updateUserSettings(data: { defaultAccountMode?: 'spot' | 'margin' }): Promise<UserTradingSettingsResponse> {
+        try {
+            this.logger.info('Updating user settings...');
+
+            const settings = await this.authenticatedRequest<UserTradingSettingsResponse>(
+                '/api/trading/settings',
+                {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }
+            );
+
+            this.logger.info('User settings updated successfully');
+            return settings;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error updating user settings: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    // ============================================
+    // Additional Market Data Methods (Public)
+    // ============================================
+
+    /**
+     * Get candlestick/klines data for charting
+     * Does not require authentication
+     */
+    async getKlines(params: {
+        symbol: string;
+        interval: string;
+        limit: number;
+    }): Promise<KlinesResponse> {
+        try {
+            this.logger.info(`Fetching klines for ${params.symbol}...`);
+
+            const { symbol, interval, limit } = params;
+            const response = await fetch(
+                `${this.baseUrl}/api/trading/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`,
+                {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch klines: ${response.statusText}`);
+            }
+
+            const data = await this.parseJsonResponse<KlinesResponse>(response);
+            this.logger.info(`Fetched ${data.count} klines`);
+            return data;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching klines: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Get current prices for multiple symbols
+     * Does not require authentication
+     */
+    async getPrices(symbols: Array<string>): Promise<Array<SymbolPrice>> {
+        try {
+            if (symbols.length === 0) return [];
+
+            this.logger.info(`Fetching prices for ${symbols.length} symbols...`);
+
+            const response = await fetch(
+                `${this.baseUrl}/api/trading/tickers?symbols=${symbols.join(',')}`,
+                {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch prices: ${response.statusText}`);
+            }
+
+            const data = await this.parseJsonResponse<Array<SymbolPrice>>(response);
+            this.logger.info(`Fetched ${data.length} prices`);
+            return data;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching prices: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Get tradable symbols with optional price data
+     * Does not require authentication
+     */
+    async getSymbols(params?: {
+        quoteAsset?: string;
+        withPrices?: boolean;
+    }): Promise<Array<SymbolSearchResult>> {
+        try {
+            this.logger.info('Fetching symbols...');
+
+            const searchParams = new URLSearchParams();
+            if (params?.quoteAsset) searchParams.set('quoteAsset', params.quoteAsset);
+            if (params?.withPrices) searchParams.set('withPrices', 'true');
+
+            const queryString = searchParams.toString();
+            const url = queryString
+                ? `${this.baseUrl}/api/trading/symbols?${queryString}`
+                : `${this.baseUrl}/api/trading/symbols`;
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch symbols: ${response.statusText}`);
+            }
+
+            const data = await this.parseJsonResponse<Array<SymbolSearchResult>>(response);
+            this.logger.info(`Fetched ${data.length} symbols`);
+            return data;
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error fetching symbols: ${errorMessage}`);
             throw error;
         }
     }

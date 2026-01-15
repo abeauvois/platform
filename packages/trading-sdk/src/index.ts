@@ -14,8 +14,18 @@ export type {
     MarketTicker,
     MarketTickerResponse,
     AccountBalance,
+    MarginBalance,
     Portfolio,
     Trade,
+    BalanceResponse,
+    MarginBalanceResponse,
+    MaxBorrowable,
+    SymbolPrice,
+    KlinesResponse,
+    WatchlistItemResponse,
+    UserTradingSettingsResponse,
+    SymbolSearchResult,
+    Candlestick,
 } from '@platform/trading-domain';
 
 // Re-export auth types from platform SDK for convenience

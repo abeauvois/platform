@@ -220,6 +220,33 @@ catch (error) {
 }
 ```
 
+### Data Fetching (Frontend)
+
+```typescript
+// ✅ GOOD: Use TanStack Query with SDK client
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { tradingClient } from '@/lib/trading-client'
+
+function useBalances() {
+  return useQuery({
+    queryKey: ['balances'],
+    queryFn: () => tradingClient.getBalances(),
+  })
+}
+
+// ❌ AVOID: Direct fetch calls in components or lib files
+async function fetchBalances() {
+  const response = await fetch('/api/trading/balance')
+  return response.json()
+}
+```
+
+**Rules:**
+- Always use TanStack Query for server state management in frontend apps
+- Create SDK client instances for API interactions
+- Never use raw `fetch()` for API calls in frontend apps
+- Define query keys in a centralized factory (`query-keys.ts`)
+
 ## Anti-Patterns to AVOID
 
 ### ❌ Don't Skip Tests

@@ -357,3 +357,33 @@ export interface MaxBorrowable {
     amount: number;      // Max amount that can be borrowed
     borrowLimit: number; // Total borrow limit for the account
 }
+
+/**
+ * API response envelope for klines/candlestick data
+ */
+export interface KlinesResponse {
+    exchange: string;
+    symbol: string;
+    interval: string;
+    klines: Array<Candlestick>;
+    count: number;
+}
+
+/**
+ * Watchlist item with current price data
+ */
+export interface WatchlistItemResponse {
+    symbol: string;
+    price: number;
+    priceChangePercent24h: number | null;
+    addedAt: string;
+}
+
+/**
+ * User trading settings response
+ */
+export interface UserTradingSettingsResponse {
+    defaultAccountMode: 'spot' | 'margin';
+    createdAt: string;
+    updatedAt: string;
+}
