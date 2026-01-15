@@ -9,7 +9,7 @@ The trading platform consists of two Railway services:
 | Service | Type | Build | Port |
 |---------|------|-------|------|
 | **trading-server** | Backend API | Dockerfile | 3001 |
-| **trading-client** | Static SPA | Nixpacks | N/A |
+| **trading-client** | Static SPA | Dockerfile + Caddy | 80 |
 
 Both services share the same PostgreSQL database as the main API server for session authentication.
 
@@ -65,7 +65,7 @@ The trading server is a Hono API that:
 
 ### Trading Client (Static Site)
 
-**Build method:** Nixpacks with static file serving
+**Build method:** Dockerfile with Caddy server
 
 The trading client is a React SPA built with Vite that:
 - Connects to trading-server for market data and orders
@@ -77,14 +77,17 @@ The trading client is a React SPA built with Vite that:
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "bun install && bun run build:railway"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "apps/trading-client/Dockerfile"
   },
   "deploy": {
-    "staticDirectory": "dist"
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 30
   }
 }
 ```
+
+**Note:** Uses Dockerfile instead of Nixpacks because the app has `workspace:*` dependencies that require Bun (npm doesn't support this protocol). Caddy serves the static files with proper SPA routing.
 
 ## Environment Variables
 
