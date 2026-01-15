@@ -1,7 +1,0 @@
-# Override root railway.toml settings for trading-client
-# This service uses Caddy to serve static files, not Bun
-
-[deploy]
-startCommand = "caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
-healthcheckPath = "/"
-healthcheckTimeout = 30
