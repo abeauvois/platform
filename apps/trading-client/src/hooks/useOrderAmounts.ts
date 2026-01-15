@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Maximum order value in USD
-const MAX_ORDER_VALUE_USD = 500
+// Default percentage of available balance for order amounts
+const DEFAULT_BALANCE_PERCENTAGE = 0.33
 
 export interface UseOrderAmountsReturn {
   buyAmount: number
@@ -13,7 +13,9 @@ export interface UseOrderAmountsReturn {
 /**
  * Hook to manage buy/sell order amounts with auto-calculated defaults
  *
- * Default calculation: min($500 worth / price, 25% of available balance)
+ * Default calculation: 33% of available balance (in volume)
+ * - Buy: 33% of (quoteBalance / currentPrice)
+ * - Sell: 33% of baseBalance
  *
  * Amounts are only auto-calculated on:
  * - Initial load (when transitioning from 0 to valid price)
@@ -25,35 +27,53 @@ export function useOrderAmounts(
   currentPrice: number,
   baseBalance: number,
   quoteBalance: number,
-  symbol?: string
+  symbol?: string,
+  priceAsset?: string
 ): UseOrderAmountsReturn {
   const [buyAmount, setBuyAmount] = useState(0)
   const [sellAmount, setSellAmount] = useState(0)
 
-  // Track the last symbol we initialized for (to reset on symbol change)
-  const lastSymbolRef = useRef<string | undefined>(undefined)
+  // Track the symbol we last calculated for
+  const calculatedForSymbolRef = useRef<string | undefined>(undefined)
 
-  // Calculate default amounts only on initial load or symbol change
+  // Calculate default amounts when symbol changes and we have valid price
   useEffect(() => {
-    // Check if symbol changed (need to recalculate defaults)
-    const symbolChanged = symbol !== undefined && symbol !== lastSymbolRef.current
+    // Skip if no symbol
+    if (!symbol) return
 
-    // Only initialize when we first get valid data or when symbol changes
-    if (currentPrice > 0 && (lastSymbolRef.current === undefined || symbolChanged)) {
-      // For BUY: use quote balance (USDC) to calculate max buy amount
-      const maxBuyByValue = MAX_ORDER_VALUE_USD / currentPrice
-      const maxBuyByBalance = quoteBalance / currentPrice
-      const defaultBuy = Math.min(maxBuyByValue, maxBuyByBalance * 0.25)
+    // Extract base asset from symbol (e.g., "BTCUSDC" -> "BTC")
+    const symbolBaseAsset = symbol.replace(/USD[CT]$/, '')
+
+    // Only calculate if:
+    // 1. We haven't calculated for this symbol yet
+    // 2. Price is valid (> 0)
+    // 3. Price is for the correct asset (priceAsset matches symbol's base asset)
+    const needsCalculation = symbol !== calculatedForSymbolRef.current
+    const priceIsValid = currentPrice > 0
+    const priceMatchesSymbol = !priceAsset || priceAsset === symbolBaseAsset
+
+    if (needsCalculation) {
+      if (!priceIsValid || !priceMatchesSymbol) {
+        // Reset amounts while waiting for correct price
+        setBuyAmount(0)
+        setSellAmount(0)
+        return
+      }
+
+      // Price is valid and matches symbol - calculate defaults
+      // For BUY: 33% of available volume (quoteBalance / price)
+      const availableBuyVolume = quoteBalance / currentPrice
+      const defaultBuy = availableBuyVolume * DEFAULT_BALANCE_PERCENTAGE
       setBuyAmount(defaultBuy > 0 ? Math.floor(defaultBuy * 10000) / 10000 : 0)
 
-      // For SELL: use base balance to calculate max sell amount
-      const maxSellByValue = MAX_ORDER_VALUE_USD / currentPrice
-      const defaultSell = Math.min(maxSellByValue, baseBalance * 0.25)
+      // For SELL: 33% of base balance
+      const defaultSell = baseBalance * DEFAULT_BALANCE_PERCENTAGE
       setSellAmount(defaultSell > 0 ? Math.floor(defaultSell * 10000) / 10000 : 0)
 
-      lastSymbolRef.current = symbol
+      // Mark this symbol as calculated
+      calculatedForSymbolRef.current = symbol
     }
-  }, [baseBalance, quoteBalance, currentPrice, symbol])
+  }, [baseBalance, quoteBalance, currentPrice, symbol, priceAsset])
 
   return {
     buyAmount,

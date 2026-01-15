@@ -178,14 +178,14 @@ export function DragOrderPanel({
             >
               BUY
             </DraggableButton>
+            <div className="text-xs text-muted-foreground">
+              ≈ {formatPrice(buyOrderValue)}
+            </div>
             <AmountInput
               value={buyAmount}
               onChange={onBuyAmountChange}
               suffix={baseAsset}
             />
-            <div className="text-xs text-muted-foreground">
-              ≈ {formatPrice(buyOrderValue)}
-            </div>
             {isBuyDisabled && buyAmount > 0 && (
               <div className="text-xs text-red-400">
                 {buyOrderValue > MAX_ORDER_VALUE_USD
@@ -220,14 +220,14 @@ export function DragOrderPanel({
             >
               SELL
             </DraggableButton>
+            <div className="text-xs text-muted-foreground">
+              ≈ {formatPrice(sellOrderValue)}
+            </div>
             <AmountInput
               value={sellAmount}
               onChange={onSellAmountChange}
               suffix={baseAsset}
             />
-            <div className="text-xs text-muted-foreground">
-              ≈ {formatPrice(sellOrderValue)}
-            </div>
             {isSellDisabled && sellAmount > 0 && (
               <div className="text-xs text-red-400">
                 {sellOrderValue > MAX_ORDER_VALUE_USD

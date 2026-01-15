@@ -452,6 +452,10 @@ export class BinanceClient implements IExchangeClient {
     /**
      * Get maximum borrowable amount for an asset in cross margin account
      * Uses Binance GET /sapi/v1/margin/maxBorrowable endpoint
+     * When Binance returns a 400 error for max-borrowable (e.g., "The system does not have enough asset now"), the client now returns 0 instead of throwing an error. This handles cases where:
+     *   - The asset isn't available for borrowing
+     *   - Binance has insufficient liquidity
+     *   - The asset isn't supported for margin trading
      * @param asset - Asset symbol (e.g., 'BTC', 'USDC')
      * @returns Maximum borrowable amount and borrow limit
      */
@@ -475,6 +479,15 @@ export class BinanceClient implements IExchangeClient {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            // Return 0 for cases where borrowing is not available
+            // Common cases: "The system does not have enough asset now", asset not borrowable, etc.
+            if (response.status === 400) {
+                return {
+                    asset: upperAsset,
+                    amount: 0,
+                    borrowLimit: 0,
+                };
+            }
             throw new Error(`Binance API error: ${response.status} - ${errorData.msg || response.statusText}`);
         }
 

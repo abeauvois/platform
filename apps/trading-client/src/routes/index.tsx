@@ -77,14 +77,15 @@ function HomePage() {
   )
 
   // Current price synced from prices map
-  const currentPrice = useCurrentPrice(baseAsset, tradingData.prices)
+  const { price: currentPrice, asset: priceAsset } = useCurrentPrice(baseAsset, tradingData.prices)
 
   // Order amounts with auto-calculated defaults
   const { buyAmount, sellAmount, setBuyAmount, setSellAmount } = useOrderAmounts(
     currentPrice,
     baseBalance,
     quoteBalance,
-    tradingSymbol
+    tradingSymbol,
+    priceAsset
   )
 
   // Order mode state (stop_limit or limit)

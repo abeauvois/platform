@@ -14,6 +14,7 @@ import { detectSwingPoints } from './swingPoints.js'
  * - Connect swing lows to form ascending support lines (higher lows)
  * - Connect swing highs to form descending resistance lines (lower highs)
  * - Deduplicates lines to ensure only one line per starting point
+ * - Deduplicates lines to ensure only one line per ending point (keeps newest)
  *
  * @param swingPoints - Array of detected swing points
  * @param config - Configuration for trend line generation
@@ -95,8 +96,27 @@ export function generateTrendLines(
     }
   }
 
-  const supportLines = Array.from(supportByStartIndex.values())
-  const resistanceLines = Array.from(resistanceByStartIndex.values())
+  // Deduplicate by end point: keep only the newest line (most recent start) for each end point
+  const deduplicateByEndPoint = (
+    lines: Array<TrendLine>
+  ): Array<TrendLine> => {
+    const byEndIndex = new Map<number, TrendLine>()
+    for (const line of lines) {
+      const existing = byEndIndex.get(line.endPoint.index)
+      // Keep the line with the most recent start point
+      if (!existing || line.startPoint.time > existing.startPoint.time) {
+        byEndIndex.set(line.endPoint.index, line)
+      }
+    }
+    return Array.from(byEndIndex.values())
+  }
+
+  const supportLines = deduplicateByEndPoint(
+    Array.from(supportByStartIndex.values())
+  )
+  const resistanceLines = deduplicateByEndPoint(
+    Array.from(resistanceByStartIndex.values())
+  )
 
   // Sort by recency (most recent end point first) and limit to maxLines
   const sortByRecency = (a: TrendLine, b: TrendLine) =>
