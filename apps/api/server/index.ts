@@ -20,27 +20,65 @@ const app = new Hono();
 const DASHBOARD_URL = env.DASHBOARD_URL || `http://localhost:${env.DASHBOARD_PORT}`;
 const TRADING_CLIENT_URL = env.TRADING_CLIENT_URL || `http://localhost:${env.TRADING_CLIENT_PORT}`;
 
+// Allowed origins for CORS
+const allowedOrigins = [
+  DASHBOARD_URL,
+  TRADING_CLIENT_URL,
+  ...(process.env.CLIENT_URLS?.split(',').filter(Boolean) || []),
+];
+
+// Helper to check if origin is allowed
+function isAllowedOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  return allowedOrigins.includes(origin) ? origin : null;
+}
+
+// Log allowed origins on startup for debugging
+console.log('[CORS] Allowed origins:', allowedOrigins);
+
 const router = app
   .use(logger())
   .use(
     '/api/*',
     cors({
-      origin: (origin) => {
-        const allowedOrigins = [
-          DASHBOARD_URL,
-          TRADING_CLIENT_URL,
-          ...(process.env.CLIENT_URLS?.split(',') || []),
-        ];
-        if (allowedOrigins.includes(origin)) {
-          return origin;
-        }
-        return null;
-      },
+      origin: (origin) => isAllowedOrigin(origin),
       credentials: true,
     })
   )
   .get('/api/health', (c) => c.json({ status: 'ok' }))
-  .on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
+  .on(['POST', 'GET', 'OPTIONS'], '/api/auth/*', async (c) => {
+    const origin = c.req.header('origin');
+    const allowedOrigin = isAllowedOrigin(origin ?? null);
+
+    // Handle preflight
+    if (c.req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': allowedOrigin || '',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Allow-Credentials': 'true',
+        },
+      });
+    }
+
+    // Get response from better-auth
+    const response = await auth.handler(c.req.raw);
+
+    // Clone response and add CORS headers
+    const newHeaders = new Headers(response.headers);
+    if (allowedOrigin) {
+      newHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      newHeaders.set('Access-Control-Allow-Credentials', 'true');
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders,
+    });
+  })
   .route('/api/bookmarks', bookmarks)
   .route('/api/config', config)
   .route('/api/workflows', workflows)
