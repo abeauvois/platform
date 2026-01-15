@@ -50,6 +50,9 @@ const router = app
     const origin = c.req.header('origin');
     const allowedOrigin = isAllowedOrigin(origin ?? null);
 
+    // Debug logging
+    console.log('[AUTH CORS]', { origin, allowedOrigin, allowedOrigins });
+
     // Handle preflight
     if (c.req.method === 'OPTIONS') {
       return new Response(null, {
