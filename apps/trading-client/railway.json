@@ -6,6 +6,7 @@
   },
   "deploy": {
     "healthcheckPath": "/",
-    "healthcheckTimeout": 30
+    "healthcheckTimeout": 30,
+    "startCommand": "caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
   }
 }
