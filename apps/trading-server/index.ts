@@ -78,6 +78,7 @@ app.use(
 
 // Health check endpoint for Railway deployment
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // Trading API routes with OpenAPI documentation
 app.route('/api/trading/ticker', createTickerOpenApiRoutes(publicExchangeClient));
