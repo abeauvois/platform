@@ -1,5 +1,5 @@
 [build]
-buildCommand = "bun run build"
+buildCommand = "cd apps/trading-server && bun run build"
 
 [deploy]
 startCommand = "cd apps/trading-server && bun run start"
