@@ -7,6 +7,7 @@ Common questions about hexagonal architecture, dependency injection, and design 
 - [Config Objects in Constructors](#config-objects-in-constructors)
 - [Where to Use Config Objects](#where-to-use-config-objects)
 - [Services vs Adapters](#services-vs-adapters)
+- [Cross-Service Authentication Architecture](#cross-service-authentication-architecture)
 
 ---
 
@@ -588,4 +589,143 @@ This architecture ensures:
 
 ---
 
-_Last updated: 2025-11-19_
+## Cross-Service Authentication Architecture
+
+### ❓ Why does trading-client authenticate directly with Platform API instead of going through Trading Server?
+
+**Short answer: Platform serves as the canonical identity provider, and direct authentication provides the best latency with independent token validation.**
+
+### Current Architecture
+
+```
+┌─────────────────┐      1. Sign In          ┌─────────────────┐
+│  Trading Client │ ────────────────────────►│   Platform API  │
+│                 │◄────────────────────────│                 │
+│                 │   Bearer Token           │                 │
+│                 │   (set-auth-token)       │                 │
+└────────┬────────┘                          └────────┬────────┘
+         │                                            │
+         │ 2. Trading Ops                             │
+         │ (Authorization: Bearer <token>)            │ Shared:
+         ▼                                            │ - DATABASE_URL
+┌─────────────────┐                                   │ - BETTER_AUTH_SECRET
+│ Trading Server  │◄──────────────────────────────────┘
+│                 │   (validates token independently)
+└─────────────────┘
+```
+
+**Flow:**
+1. Trading-client authenticates directly with Platform API
+2. Platform returns bearer token in `set-auth-token` response header
+3. Client stores token in localStorage
+4. Client sends token as `Authorization: Bearer` header to Trading Server
+5. Trading Server validates token using shared database + auth secret
+
+### Why Direct Authentication (Not Proxied)?
+
+| Benefit | Explanation |
+|---------|-------------|
+| **Lower Latency** | Auth requests go directly to Platform API without an extra hop through Trading Server |
+| **Independent Validation** | Trading Server validates tokens using shared `BETTER_AUTH_SECRET` + `DATABASE_URL` - no runtime dependency on Platform API |
+| **Failure Isolation** | If Platform API is down, Trading Server can still validate cached sessions and serve read operations |
+| **Canonical Identity Provider** | Platform is the single source of truth for auth, payments, settings - clients should connect directly |
+| **Standard Pattern** | Mirrors OAuth 2.0 where clients get tokens from auth server and use them with resource servers |
+
+### Alternative: Proxied Authentication
+
+```
+┌─────────────────┐     All Requests    ┌─────────────────┐     Auth      ┌─────────────────┐
+│  Trading Client │ ──────────────────► │ Trading Server  │ ────────────► │   Platform API  │
+│                 │◄────────────────── │                 │◄────────────── │                 │
+└─────────────────┘                     └─────────────────┘               └─────────────────┘
+```
+
+**When this pattern makes sense:**
+
+- **Single-domain deployment** - Client only knows one URL
+- **BFF (Backend-for-Frontend)** - Trading Server aggregates/transforms Platform responses
+- **Token opacity** - Don't want clients to see/store auth tokens
+- **API Gateway** - Adding rate limiting, caching at Trading Server level
+
+### Trade-off Comparison
+
+| Aspect | Direct (Current) | Proxied |
+|--------|------------------|---------|
+| **Latency** | Lower for auth | Higher (extra hop) |
+| **Client Complexity** | Knows 2 service URLs | Knows 1 URL |
+| **Coupling** | Client → Platform + Trading | Client → Trading only |
+| **Failure Isolation** | Better (services independent) | Worse (Trading depends on Platform) |
+| **Scalability** | Auth traffic distributed | Trading Server bottleneck |
+| **Token Management** | Client manages token | Server manages token |
+
+### How Token Validation Works
+
+Both Platform API and Trading Server can validate tokens because they share:
+
+1. **`BETTER_AUTH_SECRET`** - Same signing secret for token validation
+2. **`DATABASE_URL`** - Same database for session lookup
+
+```typescript
+// apps/trading-server/lib/auth.ts
+const auth = createAuth({
+  db,
+  schema,
+  provider: 'pg',
+  trustedOrigins: [TRADING_CLIENT_URL, DASHBOARD_URL],
+});
+
+// The bearer() plugin enables Authorization header validation
+// better-auth validates token against shared database
+```
+
+### Implementation Details
+
+**Client captures token on sign-in:**
+```typescript
+// apps/trading-client/src/lib/auth-client.ts
+export const authClient = createAuthClient({
+  baseURL: config.authApiUrl,
+  fetchOptions: {
+    credentials: 'include',
+    onSuccess: (ctx) => {
+      const token = ctx.response.headers.get('set-auth-token');
+      if (token) saveAuthToken(token);
+    },
+  },
+});
+```
+
+**SDK sends bearer token:**
+```typescript
+// apps/trading-client/src/lib/trading-client.ts
+export const tradingClient = new TradingApiClient({
+  baseUrl: config.tradingApiUrl,
+  getToken: getAuthToken, // Returns token from localStorage
+});
+```
+
+**Trading Server validates via middleware:**
+```typescript
+// apps/trading-server/middlewares/auth.middleware.ts
+const session = await auth.api.getSession({
+  headers: c.req.raw.headers, // Reads Authorization: Bearer header
+});
+if (!session) return c.json({ error: 'Unauthorized' }, 401);
+```
+
+### Summary
+
+The direct authentication pattern is recommended when:
+- ✅ Platform is your canonical identity provider
+- ✅ You want lower auth latency
+- ✅ Services should be independently resilient
+- ✅ Following standard OAuth-like patterns
+
+Consider proxied authentication when:
+- 🔄 Client should only know one service URL
+- 🔄 You need server-side token management
+- 🔄 Adding API gateway functionality
+
+---
+
+_Last updated: 2026-01-16_
