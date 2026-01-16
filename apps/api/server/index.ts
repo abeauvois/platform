@@ -30,14 +30,7 @@ const allowedOrigins = [
 // Helper to check if origin is allowed
 function isAllowedOrigin(origin: string | null): string | null {
   if (!origin) return null;
-  // TEMPORARY: Log and allow all origins to debug CORS
-  console.error('[CORS DEBUG] Origin:', origin, 'Allowed:', allowedOrigins);
-  if (allowedOrigins.includes(origin)) {
-    return origin;
-  }
-  // TEMPORARY: Allow all origins for debugging
-  console.error('[CORS DEBUG] Origin not in list, allowing anyway for debug');
-  return origin;
+  return allowedOrigins.includes(origin) ? origin : null;
 }
 
 const router = app
