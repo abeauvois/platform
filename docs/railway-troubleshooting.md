@@ -292,6 +292,196 @@ Use a Caddyfile with `try_files` fallback:
 }
 ```
 
+## Issue 10: CORS with better-auth Bypassing Hono Middleware
+
+**Symptom:**
+Browser shows CORS errors on `/api/auth/*` endpoints even though Hono CORS middleware is configured.
+
+**Cause:**
+When using `auth.handler(c.req.raw)`, better-auth returns a Response directly, bypassing Hono's middleware response processing. The CORS headers never get added.
+
+**Solution:**
+Manually wrap auth handler to add CORS headers:
+
+```typescript
+.on(['POST', 'GET', 'OPTIONS'], '/api/auth/*', async (c) => {
+  const origin = c.req.header('origin');
+  const allowedOrigin = isAllowedOrigin(origin ?? null);
+
+  // Handle preflight
+  if (c.req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': allowedOrigin || '',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+      },
+    });
+  }
+
+  const response = await auth.handler(c.req.raw);
+  const newHeaders = new Headers(response.headers);
+  if (allowedOrigin) {
+    newHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+    newHeaders.set('Access-Control-Allow-Credentials', 'true');
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
+})
+```
+
+## Issue 11: Service Running Wrong App Code
+
+**Symptom:**
+Deploy logs show wrong start command:
+```
+$ cd apps/api && bun run start
+```
+When it should be:
+```
+$ cd apps/trading-server && bun run start
+```
+
+**Cause:**
+1. Start command in Railway dashboard configured incorrectly
+2. Root `railway.toml` settings applied to all services
+3. Service-specific `railway.toml` not being picked up
+
+**Solution:**
+Set **Custom Start Command** directly in Railway dashboard (Settings → Deploy):
+```
+cd apps/trading-server && bun run start
+```
+
+Dashboard settings for start command override `railway.toml` when set explicitly.
+
+## Issue 12: Module Not Found - Wrong Build Output
+
+**Symptom:**
+```
+error: Module not found "./dist/index.js"
+```
+
+**Cause:**
+Root `buildCommand = "bun run build"` only builds the API server, not trading-server. The start command tries to run `./dist/index.js` which doesn't exist.
+
+**Solution:**
+Update root `package.json` to build all services:
+
+```json
+{
+  "scripts": {
+    "build": "bun run build:lib && bun run build:api && bun run build:trading-server",
+    "build:api": "cd apps/api && bun run build",
+    "build:trading-server": "cd apps/trading-server && bun run build"
+  }
+}
+```
+
+## Issue 13: Database Migration with Internal URL
+
+**Symptom:**
+```
+error: ENOTFOUND postgres.railway.internal
+```
+
+**Cause:**
+`postgres.railway.internal` only resolves inside Railway's network. Running migrations locally uses this internal URL.
+
+**Solution:**
+Use public DATABASE_URL for local migrations:
+
+```bash
+# Get public URL
+railway variables --service=Postgres
+
+# Run with public URL
+DATABASE_URL="postgresql://user:pass@hostname:port/railway" bun run db:migrate
+```
+
+Or use Railway's database proxy:
+```bash
+railway connect Postgres
+# Then in another terminal, use localhost with the proxy port
+```
+
+## Issue 14: Aggressive Build Caching
+
+**Symptom:**
+Code changes not reflected after deployment. Build logs show "cached" for all steps including `bun run build`.
+
+**Solution:**
+Set `NO_CACHE=1` environment variable:
+
+```bash
+railway variables --set "NO_CACHE=1" --service=trading-server
+railway redeploy --service=trading-server --yes
+```
+
+After successful deployment, clean up:
+```bash
+railway variables --unset "NO_CACHE" --service=trading-server
+```
+
+## Issue 15: Binance API IP Whitelist with Dynamic IPs
+
+**Symptom:**
+```
+error: Binance API error: 400 - Invalid API-key, IP, or permissions for action.
+```
+
+**Cause:**
+Railway uses dynamic IPs that change with each deployment. Whitelisted IPs become invalid after redeployment.
+
+**Solutions:**
+
+1. **Use unrestricted API key** (recommended):
+   - Binance → API Management → Edit restrictions
+   - Remove IP restriction
+   - Limit to read-only permissions for security
+
+2. **Railway Static IPs** (paid feature):
+   - Check Settings → Networking for static IP options
+
+3. **Check current IP** (temporary):
+   ```bash
+   railway run --service=trading-server curl -s ifconfig.me
+   ```
+
+## Service Configuration Reference
+
+| Service | Start Command | Build Command | Healthcheck |
+|---------|--------------|---------------|-------------|
+| platform | `cd apps/api && bun run start` | `bun run build` | `/api/health` |
+| trading-server | `cd apps/trading-server && bun run start` | `bun run build` | `/api/health` |
+| trading-client | Dockerfile ENTRYPOINT (Caddy) | Dockerfile | N/A |
+
+## Required Environment Variables by Service
+
+### platform
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `APP_ENV` | Yes | `development` or `production` |
+| `BETTER_AUTH_SECRET` | Yes | Auth signing secret |
+| `TRADING_CLIENT_URL` | Yes | For CORS |
+| `DASHBOARD_URL` | No | For CORS |
+
+### trading-server
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `BINANCE_API_KEY` | Yes | Binance API key (unrestricted recommended) |
+| `BINANCE_API_SECRET` | Yes | Binance API secret |
+| `TRADING_CLIENT_URL` | Yes | For CORS |
+| `API_URL` | No | Platform API URL |
+
 ## File Structure
 
 ```
@@ -302,6 +492,9 @@ Use a Caddyfile with `try_files` fallback:
     ├── api/
     │   ├── Dockerfile    # CMD ["bun", "run", "./dist/index.js"]
     │   └── railway.json  # Service-specific build config
+    ├── trading-server/
+    │   ├── railway.toml  # Service-specific config (may be overridden)
+    │   └── Dockerfile
     └── trading-client/
         ├── Dockerfile    # ENTRYPOINT for Caddy
         ├── Caddyfile     # SPA routing configuration
