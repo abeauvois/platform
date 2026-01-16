@@ -95,8 +95,6 @@
   "ignoreUnresolved": ["bun-types"],
   "ignoreDependencies": [
     "pg",
-    "ws",
-    "@neondatabase/serverless",
     "drizzle-orm",
     "drizzle-seed",
     "@hono/zod-validator",

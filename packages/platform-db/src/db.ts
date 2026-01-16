@@ -1,10 +1,5 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { drizzle as neonDrizzle } from 'drizzle-orm/neon-http';
-import { neon, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
-
-neonConfig.webSocketConstructor = ws;
 
 export const pool = new Pool({
     connectionString: process.env.DATABASE_URL!,
@@ -21,14 +16,9 @@ const getDbConn = () => {
         throw new Error('APP_ENV must be either "development" or "production"');
     }
 
-    if (process.env.APP_ENV === 'development') {
-        // Use node-postgres Pool for development
-        return drizzle(pool);
-    }
-
-    // Use Neon serverless for production
-    const sql = neon(process.env.DATABASE_URL);
-    return neonDrizzle({ client: sql });
+    // Use node-postgres Pool for both development and production
+    // Works with Railway PostgreSQL and any standard PostgreSQL database
+    return drizzle(pool);
 };
 
 export const db = getDbConn();
