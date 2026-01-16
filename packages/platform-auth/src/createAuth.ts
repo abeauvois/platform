@@ -24,6 +24,8 @@ if (!AUTH_SECRET) {
  * @returns Configured better-auth instance
  */
 export function createAuth(config: CreateAuthConfig) {
+    const isProduction = process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production';
+
     return betterAuth({
         basePath: '/api/auth',
         secret: AUTH_SECRET,
@@ -36,5 +38,15 @@ export function createAuth(config: CreateAuthConfig) {
         },
         trustedOrigins: config.trustedOrigins,
         plugins: [openAPI()],
+        advanced: {
+            // Enable secure cookies in production for cross-origin requests
+            useSecureCookies: isProduction,
+            // Set SameSite=None for cross-origin cookie sharing
+            defaultCookieAttributes: isProduction ? {
+                sameSite: 'none',
+                secure: true,
+                httpOnly: true,
+            } : undefined,
+        },
     });
 }
