@@ -1,43 +1,36 @@
 import { useEffect } from 'react'
 
-import { getOrderHistorySeriesOptions } from '../../components/TradingChart/chart-config'
-import { parseIntervalToSeconds } from '../../utils/interval'
+import { getSideColor } from '../../components/TradingChart/chart-config'
 
 import type { OrderHistoryItem } from '../../components/TradingChart/types'
 import type { KlinesResponse } from '../../lib/api'
-import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts'
+import type { ISeriesApi, SeriesMarker, Time } from 'lightweight-charts'
 
 export interface UseOrderHistorySeriesParams {
     orderHistory: Array<OrderHistoryItem>
-    interval: string
     klinesData: KlinesResponse | undefined
-    chartRef: React.MutableRefObject<IChartApi | null>
-    orderHistorySeriesRef: React.MutableRefObject<Map<string, ISeriesApi<'Line'>>>
+    candlestickSeriesRef: React.MutableRefObject<ISeriesApi<'Candlestick'> | null>
 }
 
 /**
- * Hook to manage order history visualization as line series
+ * Hook to manage order history visualization as markers on the candlestick series
  *
  * Handles:
  * - Filtering orders within visible time range
- * - Creating/updating/removing line series for orders
- * - Positioning lines at order execution time
+ * - Rendering buy/sell markers at order execution points
+ * - Markers don't cover candlesticks (unlike line series)
  */
 export function useOrderHistorySeries({
     orderHistory,
-    interval,
     klinesData,
-    chartRef,
-    orderHistorySeriesRef,
+    candlestickSeriesRef,
 }: UseOrderHistorySeriesParams): void {
     useEffect(() => {
-        if (!chartRef.current || !klinesData?.klines.length) return
+        if (!candlestickSeriesRef.current || !klinesData?.klines.length) {
+            return
+        }
 
-        const chart = chartRef.current
-
-        // Calculate half the line width in seconds (1.5 candles on each side = 3 candles total)
-        const intervalSeconds = parseIntervalToSeconds(interval)
-        const halfLineWidth = intervalSeconds * 1.5
+        const series = candlestickSeriesRef.current
 
         // Get the visible time range from klines data
         const firstKline = klinesData.klines[0]
@@ -52,34 +45,19 @@ export function useOrderHistorySeries({
             return order.time >= chartStartTime && order.time <= chartEndTime
         })
 
-        // Get current order IDs in the visible history
-        const currentOrderIds = new Set(visibleOrders.map((o) => o.id))
+        // Create markers for each visible order
+        const markers: Array<SeriesMarker<Time>> = visibleOrders
+            .filter((order) => order.price)
+            .map((order) => ({
+                time: order.time as Time,
+                position: order.side === 'buy' ? ('belowBar' as const) : ('aboveBar' as const),
+                color: getSideColor(order.side),
+                shape: order.side === 'buy' ? ('arrowUp' as const) : ('arrowDown' as const),
+                size: 1,
+            }))
+            .sort((a, b) => (a.time as number) - (b.time as number))
 
-        // Remove series for orders no longer visible
-        for (const [orderId, series] of orderHistorySeriesRef.current) {
-            if (!currentOrderIds.has(orderId)) {
-                chart.removeSeries(series)
-                orderHistorySeriesRef.current.delete(orderId)
-            }
-        }
-
-        // Add or update series for each visible order
-        for (const order of visibleOrders) {
-            if (!order.price) continue
-
-            let series = orderHistorySeriesRef.current.get(order.id)
-
-            // Create new series if it doesn't exist
-            if (!series) {
-                series = chart.addLineSeries(getOrderHistorySeriesOptions(order.side))
-                orderHistorySeriesRef.current.set(order.id, series)
-            }
-
-            // Set data for this order's series (2 points at same price, different times)
-            series.setData([
-                { time: (order.time - halfLineWidth) as Time, value: order.price },
-                { time: (order.time + halfLineWidth) as Time, value: order.price },
-            ])
-        }
-    }, [orderHistory, interval, klinesData, chartRef, orderHistorySeriesRef])
+        // Set markers on the candlestick series
+        series.setMarkers(markers)
+    }, [orderHistory, klinesData, candlestickSeriesRef])
 }

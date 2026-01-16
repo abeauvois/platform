@@ -37,7 +37,6 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             chartRef,
             candlestickSeriesRef,
             ema20SeriesRef,
-            orderHistorySeriesRef,
             trendLineSeriesRef,
             priceLinesRef,
             previewLineRef,
@@ -71,13 +70,11 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             priceLinesRef,
         })
 
-        // Order history visualization
+        // Order history visualization (as markers on candlestick series)
         useOrderHistorySeries({
             orderHistory,
-            interval,
             klinesData,
-            chartRef,
-            orderHistorySeriesRef,
+            candlestickSeriesRef,
         })
 
         // Preview line for drag operations

@@ -115,15 +115,3 @@ export function getPreviewLineOptions(side: 'buy' | 'sell', title: string) {
     }
 }
 
-/**
- * Get order history series options
- */
-export function getOrderHistorySeriesOptions(side: 'buy' | 'sell') {
-    return {
-        color: getSideColor(side),
-        lineWidth: 3 as const,
-        priceLineVisible: false,
-        lastValueVisible: false,
-        crosshairMarkerVisible: false,
-    }
-}
