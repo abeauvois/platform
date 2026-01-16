@@ -2,38 +2,163 @@
 
 A modular platform for building real-world applications with Bun, TypeScript, and hexagonal architecture.
 
-## Architecture Overview
+## System Architecture Overview
 
-This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                                   CLIENTS                                            │
+├─────────────────────┬─────────────────────┬─────────────────────────────────────────┤
+│     Dashboard       │   Trading Client    │              CLI                         │
+│   (React + Vite)    │   (React + Vite)    │           (cleye)                        │
+│     Port 5000       │     Port 5001       │                                          │
+│                     │                     │                                          │
+│  ┌───────────────┐  │  ┌───────────────┐  │  ┌───────────────┐                       │
+│  │ @platform/sdk │  │  │@platform/     │  │  │ @platform/sdk │                       │
+│  │               │  │  │trading-sdk    │  │  │ @platform/    │                       │
+│  │ @platform/ui  │  │  │               │  │  │ sdk-cli       │                       │
+│  └───────┬───────┘  │  │ @platform/ui  │  │  └───────┬───────┘                       │
+│          │          │  └───────┬───────┘  │          │                               │
+└──────────┼──────────┴──────────┼──────────┴──────────┼───────────────────────────────┘
+           │                     │                     │
+           │    ┌────────────────┼─────────────────────┘
+           │    │                │
+           ▼    ▼                ▼
+┌─────────────────────┐  ┌─────────────────────┐
+│   Platform API      │  │   Trading Server    │
+│   (Hono)            │  │   (Hono + OpenAPI)  │
+│   Port 3000         │  │   Port 3001         │
+│                     │  │                     │
+│ • Auth (better-auth)│  │ • Market Data       │
+│ • Bookmarks         │  │ • Orders            │
+│ • Workflows         │  │ • Positions         │
+│ • Config            │  │ • Watchlist         │
+│ • Background Tasks  │  │ • Binance API       │
+│                     │  │                     │
+│  ┌───────────────┐  │  │  ┌───────────────┐  │
+│  │ @platform/auth│  │  │  │ @platform/auth│  │
+│  │ @platform/db  │  │  │  │ @platform/db  │  │
+│  │ @platform/task│  │  │  │ @platform/    │  │
+│  └───────────────┘  │  │  │ trading-domain│  │
+└──────────┬──────────┘  │  └───────────────┘  │
+           │             └──────────┬──────────┘
+           │                        │
+           ▼                        ▼
+┌─────────────────────────────────────────────┐
+│              PostgreSQL Database             │
+│                                              │
+│  • Users & Sessions (better-auth)            │
+│  • Bookmarks, Workflows, Tasks               │
+│  • Watchlist, Trading Settings               │
+└──────────────────────────────────────────────┘
+```
+
+## Cross-Service Authentication Flow
+
+Platform serves as the central authentication provider. Other services (like trading-server) validate tokens issued by platform.
+
+```
+┌─────────────────┐     1. Sign In      ┌─────────────────┐
+│  Trading Client │ ──────────────────► │   Platform API  │
+│                 │                     │                 │
+│                 │ ◄────────────────── │  (better-auth)  │
+│                 │  2. Session Cookie  │                 │
+│                 │  + Bearer Token     │                 │
+│                 │  (set-auth-token)   │                 │
+└────────┬────────┘                     └─────────────────┘
+         │
+         │ 3. API Request with
+         │    Authorization: Bearer <token>
+         ▼
+┌─────────────────┐
+│ Trading Server  │
+│                 │
+│ Validates token │
+│ using shared    │
+│ BETTER_AUTH_    │
+│ SECRET          │
+└─────────────────┘
+```
+
+**Key Points:**
+- Platform API issues both session cookies and bearer tokens
+- Bearer tokens enable cross-service authentication
+- All services share the same `BETTER_AUTH_SECRET` to validate tokens
+- Clients store bearer token in localStorage for cross-origin requests
+
+## Directory Structure
 
 ```
 /apps
 ├── api/              # Central platform server (Hono, port 3000)
-├── dashboard/        # Web client (React + Vite, port 5000)
-├── trading/          # Trading app with hybrid architecture
-│   ├── server/       # Trading-specific APIs (Hono + OpenAPI, port 3001)
-│   └── client/       # Trading client (React + Vite, port 5001)
-└── cli/              # Command-line interface
+├── dashboard/        # Web dashboard client (React + Vite, port 5000)
+├── trading-server/   # Trading-specific APIs (Hono + OpenAPI, port 3001)
+├── trading-client/   # Trading client (React + Vite, port 5001)
+├── cli/              # Command-line interface (cleye)
+└── cli-landing/      # CLI landing page (React + Vite, port 5002)
 
 /packages
 ├── platform-task/       # Background task abstractions (pg-boss)
-├── platform-domain/     # Shared domain entities, ports, and services
-├── platform-auth/       # Authentication (better-auth)
+├── platform-domain/     # Shared domain entities and services
+├── platform-auth/       # Authentication (better-auth + bearer plugin)
 ├── platform-db/         # Database schema (Drizzle ORM + PostgreSQL)
 ├── platform-sdk/        # Platform API client SDK
+├── platform-env/        # Environment variable definitions
+├── platform-utils/      # Shared utility functions
+├── platform-ui/         # Shared UI components (React + TailwindCSS)
 ├── trading-domain/      # Trading-specific domain models
 ├── trading-sdk/         # Trading API client SDK
-└── cached-http-client/  # HTTP client with caching
-
-/src                  # Legacy domain code (being migrated to packages/domain)
-├── domain/           # Core business logic and entities
-├── application/      # Use cases and workflows
-└── infrastructure/   # Adapters for external services
+├── cached-http-client/  # HTTP client with caching
+└── sdk-cli/             # CLI SDK utilities
 ```
 
-## Hexagonal Architecture (Ports and Adapters)
+## Dependency Matrix
 
-The core domain follows hexagonal architecture:
+### Apps → Packages Dependencies
+
+| App             | task | domain | auth | db  | sdk | env | utils | ui  | t-domain | t-sdk | cached-http |
+|-----------------|:----:|:------:|:----:|:---:|:---:|:---:|:-----:|:---:|:--------:|:-----:|:-----------:|
+| api             |  ✓   |   ✓    |  ✓   |  ✓  |     |  ✓  |   ✓   |     |          |       |      ✓      |
+| dashboard       |      |   ✓    |      |     |  ✓  |     |       |  ✓  |          |       |             |
+| trading-server  |      |        |  ✓   |  ✓  |     |  ✓  |       |     |    ✓     |       |             |
+| trading-client  |      |        |      |     |     |     |       |  ✓  |    ✓     |   ✓   |             |
+| cli             |      |   ✓    |      |     |  ✓  |     |   ✓   |     |          |       |             |
+| cli-landing     |      |        |      |     |     |     |       |     |          |       |             |
+
+### Package → Package Dependencies
+
+```
+Foundation Layer (no workspace dependencies):
+├── @platform/task         # pg-boss wrapper
+├── @platform/auth         # better-auth wrapper
+├── @platform/db           # Drizzle schema
+├── @platform/env          # Environment config
+├── @platform/utils        # Utilities
+├── @platform/ui           # UI components
+├── @platform/cached-http-client
+└── @platform/trading-domain
+
+Domain Layer:
+└── @platform/platform-domain
+    └── depends on: @platform/task
+
+SDK Layer:
+├── @platform/sdk
+│   └── depends on: @platform/platform-domain
+│
+└── @platform/trading-sdk
+    └── depends on: @platform/platform-domain
+                    @platform/trading-domain
+                    @platform/sdk
+
+CLI Layer:
+└── @platform/sdk-cli
+    └── depends on: @platform/sdk
+                    @platform/platform-domain
+```
+
+## Hexagonal Architecture
+
+The core domain follows hexagonal architecture (ports and adapters):
 
 ```
 ┌─────────────────────────────────────────┐
@@ -61,43 +186,30 @@ The core domain follows hexagonal architecture:
 - **Application**: Use cases and business workflows
 - **Infrastructure**: Adapters for external services
 
-## Client-Server Architecture
-
-| App            | Port | Purpose                                                             |
-| -------------- | ---- | ------------------------------------------------------------------- |
-| api            | 3000 | Central platform server (auth, todos, bookmarks, config, workflows) |
-| dashboard      | 5000 | React frontend for the platform                                     |
-| trading server | 3001 | Trading-specific APIs (Binance integration)                         |
-| trading client | 5001 | Connects to both API server (auth) and trading server               |
-
-### API Server Structure
-
-The API server follows hexagonal architecture with clear separation:
-
-- `infrastructure/` - Adapters implementing domain ports (repositories, API clients)
-- `tasks/` - Background task workers (pg-boss based) - a background task is a multi-steps workflow
-- `routes/` - HTTP API endpoints
-- `validators/` - Request validation schemas
-
-### Configuration
-
-The API server (`/apps/api`) is the single source of truth for configuration. Environment variables are stored in `/apps/api/.env` and served via the `/api/config` endpoint.
-
-- CLI and clients fetch config from the API (requires authentication)
-- Use `ApiConfigProvider` from `@platform/sdk` to load config
-- Use `EnvConfigProvider` for direct `.env` access (API server only)
-
 ## Technology Stack
 
-- **Runtime**: Bun
-- **Language**: TypeScript
-- **Backend**: Hono (lightweight HTTP framework)
-- **Frontend**: React 19 + Vite + TailwindCSS + DaisyUI
-- **Routing**: TanStack Router
-- **State**: TanStack React Query
-- **Database**: PostgreSQL + Drizzle ORM
-- **Auth**: better-auth
-- **Job Queue**: pg-boss (via @platform/task)
+| Category    | Technology                              |
+|-------------|----------------------------------------|
+| Runtime     | Bun                                    |
+| Language    | TypeScript                             |
+| Backend     | Hono (lightweight HTTP framework)      |
+| Frontend    | React 19 + Vite + TailwindCSS          |
+| Routing     | TanStack Router                        |
+| State       | TanStack React Query                   |
+| Database    | PostgreSQL + Drizzle ORM               |
+| Auth        | better-auth (with bearer plugin)       |
+| Job Queue   | pg-boss (via @platform/task)           |
+| API Docs    | OpenAPI + Scalar (trading-server)      |
+
+## Ports Reference
+
+| App             | Port | Purpose                                    |
+|-----------------|------|--------------------------------------------|
+| api             | 3000 | Central platform server                    |
+| dashboard       | 5000 | React frontend for the platform            |
+| trading-server  | 3001 | Trading-specific APIs (Binance)            |
+| trading-client  | 5001 | Trading client with auth + trading         |
+| cli-landing     | 5002 | CLI landing page                           |
 
 ## Development
 
@@ -123,132 +235,157 @@ bun run dev
 bun run dev:all
 
 # Individual apps
-bun run api           # Start API server (port 3000)
-bun run dashboard     # Start dashboard client (port 5000)
+bun run api            # Start API server (port 3000)
+bun run dashboard      # Start dashboard client (port 5000)
 bun run trading:server # Start trading server (port 3001)
 bun run trading:client # Start trading client (port 5001)
 
 # CLI
-bun run cli           # Run CLI
-bun run cli:dev       # Run CLI in watch mode
+bun run cli            # Run CLI
 ```
 
-### Database (from /apps/api)
+### Database
 
 ```bash
-bun run db:up         # Start PostgreSQL via Docker
-bun run db:generate   # Generate migrations
-bun run db:migrate    # Run migrations
-bun run db:studio     # Open Drizzle Studio
+bun run db:up          # Start PostgreSQL via Docker
+bun run db:generate    # Generate migrations
+bun run db:migrate     # Run migrations
+bun run db:studio      # Open Drizzle Studio
 ```
 
 ### Building
 
 ```bash
-bun run build         # Build all packages
-bun run build:lib     # Build library packages
+bun run build          # Build all packages
+bun run build:lib      # Build library packages
 ```
 
 ### Testing
 
 ```bash
-bun run test:unit     # Run unit tests
-bun run test:e2e      # Run end-to-end tests
-bun run it:notion     # Integration tests for Notion
-bun run it:twitter    # Integration tests for Twitter
+bun run test:unit      # Run unit tests
+bun run ci:local       # Run full CI locally (typecheck + lint + build + test)
 ```
 
-### Session Management
-
-The CLI stores session tokens in `~/.platform-cli/session.json`. If your session expires (401 errors), renew it:
-
-```bash
-# Using environment variables (recommended)
-export PLATFORM_EMAIL="your@email.com"
-export PLATFORM_PASSWORD="yourpassword"
-bun run api:renew-session
-
-# Or pass credentials directly
-bun run api:renew-session your@email.com yourpassword
-```
-
-## Packages
-
-### @platform/task
-
-Background task abstractions following hexagonal architecture. Provides a unified "Task" concept for background jobs.
-
-```typescript
-import {
-  initBoss,
-  PgBossTaskRunner,
-  TimestampIdGenerator,
-} from "@platform/task";
-
-// Initialize pg-boss
-const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
-
-// Create task runner
-const taskRunner = new PgBossTaskRunner(boss);
-await taskRunner.submit("my-task", { data: "payload" });
-```
-
-### @platform/platform-domain
-
-Shared domain entities, ports, and services used across applications.
+## Package Documentation
 
 ### @platform/auth
 
-Authentication package built on better-auth.
-
-### @platform/db
-
-Database schema and migrations using Drizzle ORM with PostgreSQL.
-
-### @platform/sdk
-
-Platform API client SDK for authentication and API communication.
+Authentication package built on better-auth with bearer token support for cross-service authentication.
 
 ```typescript
-import { PlatformApiClient } from "@platform/sdk";
+import { createAuth } from '@platform/auth';
 
-const client = new PlatformApiClient({
-  baseUrl: "http://localhost:3000",
-  logger: console,
-});
-
-// Authenticate
-await client.auth.signIn({ email: "user@example.com", password: "secret" });
-
-// Create and execute a workflow
-// A background task is a multi-steps workflow
-const workflow = client.workflow.create("gmail", {
-  filter: { email: "newsletter@example.com", limitDays: 7 },
-});
-
-await workflow.execute({
-  onComplete: ({ processedItems }) => console.log(processedItems),
+const auth = createAuth({
+  db,
+  schema,
+  provider: 'pg',
+  trustedOrigins: ['https://your-app.com'],
 });
 ```
 
-### @platform/trading-domain
+**Features:**
+- Email/password authentication
+- Session management with cookies
+- Bearer tokens for cross-service auth (via bearer plugin)
+- OpenAPI documentation
 
-Trading-specific domain models and business logic.
+### @platform/sdk
+
+Platform API client SDK with support for cookie and bearer token authentication.
+
+```typescript
+import { PlatformApiClient } from '@platform/sdk';
+
+// Browser with cookies
+const client = new PlatformApiClient({
+  baseUrl: 'http://localhost:3000',
+  credentials: 'include',
+});
+
+// Cross-service with bearer token
+const client = new PlatformApiClient({
+  baseUrl: 'http://localhost:3000',
+  getToken: () => localStorage.getItem('auth_token'),
+});
+```
 
 ### @platform/trading-sdk
 
 Trading API client SDK for market data and trading operations.
 
-### @platform/cached-http-client
+```typescript
+import { TradingApiClient } from '@platform/trading-sdk';
 
-HTTP client with built-in caching support.
+const client = new TradingApiClient({
+  baseUrl: 'http://localhost:3001',
+  getToken: () => localStorage.getItem('auth_token'),
+});
 
-## Key Patterns
+// Get watchlist
+const watchlist = await client.getWatchlist();
 
-- Workspace packages use `workspace:*` protocol for dependencies
-- Shared types exported from `@platform/domain`
-- Authentication handled by `@platform/auth` package
-- Database schema centralized in `@platform/db` package
+// Get market data
+const ticker = await client.getMarketTicker('BTCUSDT');
+```
+
+### @platform/task
+
+Background task abstractions following hexagonal architecture.
+
+```typescript
+import { initBoss, createQueue, registerWorker } from '@platform/task';
+
+const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
+await createQueue('my-queue');
+await registerWorker('my-queue', async (job) => {
+  // Process job
+});
+```
+
+### @platform/db
+
+Database schema and migrations using Drizzle ORM.
+
+```typescript
+import { db, eq } from '@platform/db';
+import { users } from '@platform/db/schema';
+
+const user = await db.select().from(users).where(eq(users.id, userId));
+```
+
+## Environment Variables
+
+### Platform API (apps/api)
+
+| Variable              | Required | Description                    |
+|-----------------------|----------|--------------------------------|
+| DATABASE_URL          | Yes      | PostgreSQL connection string   |
+| APP_ENV               | Yes      | `development` or `production`  |
+| BETTER_AUTH_SECRET    | Yes      | Auth signing secret            |
+| TRADING_CLIENT_URL    | Yes      | For CORS                       |
+| DASHBOARD_URL         | No       | For CORS                       |
+
+### Trading Server (apps/trading-server)
+
+| Variable              | Required | Description                    |
+|-----------------------|----------|--------------------------------|
+| DATABASE_URL          | Yes      | PostgreSQL connection string   |
+| BETTER_AUTH_SECRET    | Yes      | Auth signing secret (same!)    |
+| BINANCE_API_KEY       | Yes      | Binance API key                |
+| BINANCE_API_SECRET    | Yes      | Binance API secret             |
+| TRADING_CLIENT_URL    | Yes      | For CORS                       |
+
+### Trading Client (apps/trading-client)
+
+| Variable              | Required | Description                    |
+|-----------------------|----------|--------------------------------|
+| VITE_AUTH_API_URL     | Yes      | Platform API URL               |
+| VITE_TRADING_API_URL  | Yes      | Trading Server URL             |
+
+## Deployment
+
+See [docs/railway-troubleshooting.md](docs/railway-troubleshooting.md) for Railway deployment guide and common issues.
 
 ## License
 

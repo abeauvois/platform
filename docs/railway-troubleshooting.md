@@ -494,6 +494,61 @@ Also remove unused Neon dependencies from package.json files:
 - `@neondatabase/serverless`
 - `ws`
 
+## Issue 17: Cross-Service Authentication (401 on Trading Server)
+
+**Symptom:**
+```
+GET /api/trading/watchlist 401
+Authentication failed. Please sign in again.
+```
+
+User is logged in (can access platform API) but trading-server returns 401.
+
+**Cause:**
+Platform API and trading-server are on different domains. Session cookies set by platform don't get sent to trading-server because:
+1. Cookies are domain-specific (can't be shared across different origins)
+2. Even with `SameSite=None`, cookies only work when the **same server** sets and receives them
+3. Public suffix domains (like `*.up.railway.app`) may block cross-origin cookies entirely
+
+**Solution:**
+Use **bearer tokens** for cross-service authentication:
+
+1. **Platform API** issues bearer tokens (via better-auth bearer plugin)
+2. **Client** captures token from `set-auth-token` response header after sign-in
+3. **Client** sends `Authorization: Bearer <token>` to trading-server
+4. **Trading-server** validates token using shared `BETTER_AUTH_SECRET`
+
+**Implementation:**
+
+1. Add bearer plugin to `@platform/auth`:
+```typescript
+import { bearer } from 'better-auth/plugins';
+
+plugins: [bearer()]
+```
+
+2. Client captures token on sign-in:
+```typescript
+const authClient = createAuthClient({
+  fetchOptions: {
+    onSuccess: (ctx) => {
+      const token = ctx.response.headers.get('set-auth-token');
+      if (token) localStorage.setItem('auth_token', token);
+    },
+  },
+});
+```
+
+3. SDK sends bearer token:
+```typescript
+const tradingClient = new TradingApiClient({
+  baseUrl: 'https://trading-server.example.com',
+  getToken: () => localStorage.getItem('auth_token'),
+});
+```
+
+**Key requirement:** Both platform and trading-server must have the **same `BETTER_AUTH_SECRET`** environment variable to validate tokens.
+
 ## Service Configuration Reference
 
 | Service | Start Command | Build Command | Healthcheck |

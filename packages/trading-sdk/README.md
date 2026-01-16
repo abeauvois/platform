@@ -1,160 +1,183 @@
-# Trading SDK
+# @platform/trading-sdk
 
-A TypeScript SDK for trading operations that extends the platform SDK's authentication capabilities.
+TypeScript SDK for trading operations with cross-service authentication support.
 
-## Overview
+## Features
 
-The Trading SDK provides a comprehensive client for trading operations including:
-
-- Portfolio management
+- Portfolio and balance management
 - Position tracking
-- Order management
-- Market data fetching
-- Trade history
-
-It reuses the authentication infrastructure from `@platform/sdk` and domain types from `@platform/domain`, following the monorepo's hexagonal architecture patterns.
+- Order management (market, limit, stop)
+- Market data fetching (tickers, klines)
+- Watchlist management
+- User trading settings
+- **Cross-service auth** via bearer tokens
 
 ## Installation
 
 ```bash
-# From the monorepo root
-bun install
-
-# Build the package
-cd packages/trading-sdk
-bun run build
+bun add @platform/trading-sdk
 ```
 
 ## Usage
 
-### Basic Setup
+### Browser with Bearer Token (Recommended)
+
+For cross-origin authentication (e.g., trading-client → trading-server):
 
 ```typescript
-import { TradingApiClient } from "@platform/trading-sdk";
-import type { ILogger } from "@platform/domain";
+import { TradingApiClient } from '@platform/trading-sdk';
 
-// Create a simple logger (or use your own implementation)
-const logger: ILogger = {
-  info: (msg: string) => console.log(msg),
-  error: (msg: string) => console.error(msg),
-  warn: (msg: string) => console.warn(msg),
-  debug: (msg: string) => console.debug(msg),
-};
-
-// Initialize the client
 const client = new TradingApiClient({
-  baseUrl: "https://api.example.com",
-  logger,
+  baseUrl: 'https://trading-server.example.com',
+  getToken: () => localStorage.getItem('auth_token'),
+});
+
+// Token is sent as: Authorization: Bearer <token>
+const watchlist = await client.getWatchlist();
+```
+
+### Browser with Cookies (Same-Origin)
+
+```typescript
+import { TradingApiClient } from '@platform/trading-sdk';
+
+const client = new TradingApiClient({
+  baseUrl: 'http://localhost:3001',
+  credentials: 'include', // Browser handles cookies
 });
 ```
 
-### Authentication
-
-The Trading SDK extends `PlatformApiClient`, so all authentication methods are available:
+### With Custom Logger
 
 ```typescript
-// Sign up a new user
-const authResponse = await client.signUp({
-  email: "user@example.com",
-  password: "securePassword123",
-  name: "John Doe",
-});
+import { TradingApiClient } from '@platform/trading-sdk';
 
-// Or sign in an existing user
-const authResponse = await client.signIn({
-  email: "user@example.com",
-  password: "securePassword123",
-});
-
-// The sessionToken is automatically stored internally
-// You can also manually set it:
-client.setSessionToken(authResponse.sessionToken);
-```
-
-### Portfolio Operations
-
-```typescript
-// Get portfolio summary
-const portfolio = await client.getPortfolio();
-console.log(`Total Equity: $${portfolio.totalEquity}`);
-console.log(
-  `Total P&L: $${portfolio.totalPnL} (${portfolio.totalPnLPercent}%)`
-);
-
-// View all balances
-portfolio.balances.forEach((balance) => {
-  console.log(
-    `${balance.asset}: ${balance.total} (${balance.free} free, ${balance.locked} locked)`
-  );
+const client = new TradingApiClient({
+  baseUrl: 'https://api.example.com',
+  getToken: () => localStorage.getItem('auth_token'),
+  logger: {
+    info: (msg) => console.log(`[INFO] ${msg}`),
+    error: (msg) => console.error(`[ERROR] ${msg}`),
+    warning: (msg) => console.warn(`[WARN] ${msg}`),
+    debug: (msg) => console.debug(`[DEBUG] ${msg}`),
+  },
 });
 ```
 
-### Position Management
+## Authentication Modes
+
+| Mode | Config | Use Case |
+|------|--------|----------|
+| Bearer Token | `getToken: () => string` | Cross-origin (recommended) |
+| Browser Cookies | `credentials: 'include'` | Same-origin only |
+| Manual Token | `sessionToken` | CLI, scripts |
+
+**Priority:** `getToken` > `sessionToken` > browser cookies
+
+## API Reference
+
+### Balance & Portfolio
 
 ```typescript
-// Get all open positions
+// Get spot wallet balances
+const balances = await client.getSpotBalances();
+// { balances: [...], count: 5, totalUsd: 10000 }
+
+// Get margin account balances
+const marginBalances = await client.getMarginBalances();
+
+// Get max borrowable amount
+const maxBorrow = await client.getMaxBorrowable('USDT');
+```
+
+### Watchlist (User Authenticated)
+
+```typescript
+// Get watchlist with current prices
+const watchlist = await client.getWatchlist();
+// [{ symbol: 'BTCUSDT', price: 92000, priceChangePercent24h: 2.5, addedAt: '...' }]
+
+// Add to watchlist
+await client.addToWatchlist('ETHUSDT');
+
+// Remove from watchlist
+await client.removeFromWatchlist('ETHUSDT');
+```
+
+### Orders
+
+```typescript
+// Create market order
+const order = await client.createOrder({
+  symbol: 'BTCUSDT',
+  side: 'buy',
+  type: 'market',
+  quantity: 0.001,
+});
+
+// Create limit order
+const limitOrder = await client.createOrder({
+  symbol: 'ETHUSDT',
+  side: 'sell',
+  type: 'limit',
+  quantity: 0.1,
+  price: 3000,
+});
+
+// Get orders
+const orders = await client.getOrders('BTCUSDT');
+
+// Cancel order
+await client.cancelOrder('order-id');
+```
+
+### Positions
+
+```typescript
+// Get all positions
 const positions = await client.getPositions();
 
-// Get a specific position
-const position = await client.getPosition("position-id");
+// Get specific position
+const position = await client.getPosition('position-id');
 
-// Close a position
-await client.closePosition("position-id");
+// Close position
+await client.closePosition('position-id');
 ```
 
-### Order Management
+### Market Data (Public)
 
 ```typescript
-// Create a market order
-const order = await client.createOrder({
-  symbol: "BTC/USD",
-  side: "buy",
-  type: "market",
-  quantity: 0.1,
-});
-
-// Create a limit order
-const limitOrder = await client.createOrder({
-  symbol: "ETH/USD",
-  side: "sell",
-  type: "limit",
-  quantity: 1.0,
-  price: 2500.0,
-  timeInForce: "GTC", // Good-Till-Cancelled
-});
-
-// Get all orders
-const allOrders = await client.getOrders();
-
-// Get orders for a specific symbol
-const btcOrders = await client.getOrders("BTC/USD");
-
-// Get orders by status
-const filledOrders = await client.getOrders(undefined, "filled");
-
-// Get a specific order
-const orderDetails = await client.getOrder("order-id");
-
-// Cancel an order
-await client.cancelOrder("order-id");
-```
-
-### Market Data (Public - No Auth Required)
-
-```typescript
-// Get ticker for a single symbol
-const ticker = await client.getMarketTicker("BTC/USD");
-console.log(`${ticker.symbol}: $${ticker.lastPrice}`);
+// Get ticker for symbol
+const ticker = await client.getMarketTicker('BTCUSDT');
+// { symbol, price, priceChangePercent24h, volume, ... }
 
 // Get multiple tickers
-const tickers = await client.getMarketTickers([
-  "BTC/USD",
-  "ETH/USD",
-  "SOL/USD",
-]);
+const tickers = await client.getMarketTickers(['BTCUSDT', 'ETHUSDT']);
 
-// Get all available tickers
-const allTickers = await client.getMarketTickers();
+// Get klines/candlesticks
+const klines = await client.getKlines({
+  symbol: 'BTCUSDT',
+  interval: '1h',
+  limit: 100,
+});
+
+// Get prices
+const prices = await client.getPrices(['BTCUSDT', 'ETHUSDT']);
+
+// Search symbols
+const symbols = await client.getSymbols({ quoteAsset: 'USDT' });
+```
+
+### User Settings
+
+```typescript
+// Get settings
+const settings = await client.getUserSettings();
+
+// Update settings
+await client.updateUserSettings({
+  defaultAccountMode: 'margin',
+});
 ```
 
 ### Trade History
@@ -163,119 +186,74 @@ const allTickers = await client.getMarketTickers();
 // Get all trades
 const trades = await client.getTradeHistory();
 
-// Get trades for a specific symbol
-const btcTrades = await client.getTradeHistory("BTC/USD");
-
-// Get limited number of trades
-const recentTrades = await client.getTradeHistory(undefined, 50);
-
-// Get recent BTC trades
-const recentBtcTrades = await client.getTradeHistory("BTC/USD", 20);
+// Get trades for symbol with limit
+const recentTrades = await client.getTradeHistory('BTCUSDT', 50);
 ```
 
-## Architecture
+## Cross-Service Authentication
 
-The Trading SDK follows the monorepo's architectural principles:
+The trading-sdk is designed to work with platform as the central auth provider:
 
-### Inheritance from Platform SDK
+```
+┌─────────────────┐     Sign In      ┌─────────────────┐
+│  Trading Client │ ───────────────► │   Platform API  │
+│                 │                  │                 │
+│                 │ ◄─────────────── │                 │
+│                 │  Bearer Token    │                 │
+└────────┬────────┘  (set-auth-token)└─────────────────┘
+         │
+         │ Authorization: Bearer <token>
+         ▼
+┌─────────────────┐
+│ Trading Server  │ ← Uses same BETTER_AUTH_SECRET
+└─────────────────┘   to validate tokens
+```
+
+### Client Setup Example
 
 ```typescript
-TradingApiClient extends PlatformApiClient
-```
+// auth-token.ts
+export function getAuthToken(): string | null {
+  return localStorage.getItem('platform_auth_token');
+}
 
-This means:
+export function saveAuthToken(token: string): void {
+  localStorage.setItem('platform_auth_token', token);
+}
 
-- All authentication methods (`signUp`, `signIn`, `signOut`) are inherited
-- Session token management is handled automatically
-- Protected methods like `authenticatedRequest` can be reused
+// auth-client.ts (better-auth)
+import { createAuthClient } from 'better-auth/react';
+import { saveAuthToken } from './auth-token';
 
-### Reusing Domain Types
+export const authClient = createAuthClient({
+  baseURL: 'https://platform-api.example.com',
+  fetchOptions: {
+    credentials: 'include',
+    onSuccess: (ctx) => {
+      const token = ctx.response.headers.get('set-auth-token');
+      if (token) saveAuthToken(token);
+    },
+  },
+});
 
-The SDK depends on `@platform/domain` for shared interfaces:
+// trading-client.ts
+import { TradingApiClient } from '@platform/trading-sdk';
+import { getAuthToken } from './auth-token';
 
-- `ILogger` - Logging interface
-- `Bookmark` - For any bookmark-related features (if needed)
-
-### Type Safety
-
-All types are fully typed with TypeScript:
-
-- Request types: `CreateOrderData`, etc.
-- Response types: `Order`, `Position`, `Portfolio`, `Trade`, etc.
-- Auth types: Re-exported from `@platform/sdk`
-
-## API Reference
-
-### TradingApiClient Methods
-
-#### Authentication (Inherited)
-
-- `signUp(data: SignUpData): Promise<AuthResponse>`
-- `signIn(data: SignInData): Promise<AuthResponse>`
-- `signOut(): Promise<void>`
-- `setSessionToken(token: string): void`
-- `clearSessionToken(): void`
-
-#### Portfolio
-
-- `getPortfolio(): Promise<Portfolio>`
-
-#### Positions
-
-- `getPositions(): Promise<Position[]>`
-- `getPosition(positionId: string): Promise<Position>`
-- `closePosition(positionId: string): Promise<void>`
-
-#### Orders
-
-- `createOrder(data: CreateOrderData): Promise<Order>`
-- `getOrders(symbol?: string, status?: string): Promise<Order[]>`
-- `getOrder(orderId: string): Promise<Order>`
-- `cancelOrder(orderId: string): Promise<void>`
-
-#### Market Data
-
-- `getMarketTicker(symbol: string): Promise<MarketTicker>`
-- `getMarketTickers(symbols?: string[]): Promise<MarketTicker[]>`
-
-#### Trade History
-
-- `getTradeHistory(symbol?: string, limit?: number): Promise<Trade[]>`
-
-## Development
-
-### Building
-
-```bash
-bun run build
-```
-
-### Running Tests
-
-```bash
-# Unit tests
-bun run test:unit
-
-# Integration tests
-bun run test:integration
-
-# All tests
-bun run test
-```
-
-### Development Mode (Watch)
-
-```bash
-bun run dev
+export const tradingClient = new TradingApiClient({
+  baseUrl: 'https://trading-server.example.com',
+  getToken: getAuthToken,
+});
 ```
 
 ## Dependencies
 
-- `@platform/domain` - Shared domain types and interfaces
-- `@platform/sdk` - Platform SDK with authentication
-- `typescript` - TypeScript compiler
-- `bun` - Runtime and build tool
+- `@platform/sdk` - Base client with auth infrastructure
+- `@platform/platform-domain` - Shared domain types
+- `@platform/trading-domain` - Trading-specific types
 
-## License
+## Related Packages
 
-Part of the platform monorepo.
+- [@platform/sdk](../platform-sdk) - Platform API client
+- [@platform/auth](../platform-auth) - Authentication package
+- [@platform/trading-domain](../trading-domain) - Trading domain types
