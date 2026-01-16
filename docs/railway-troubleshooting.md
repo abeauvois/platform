@@ -454,6 +454,46 @@ Railway uses dynamic IPs that change with each deployment. Whitelisted IPs becom
    railway run --service=trading-server curl -s ifconfig.me
    ```
 
+## Issue 16: Neon Serverless Driver with Railway PostgreSQL
+
+**Symptom:**
+```
+NeonDbError: Error connecting to database: Error: Unable to connect. Is the computer able to access the url?
+  path: "https://api.proxy.rlwy.net/sql",
+  code: "ConnectionRefused"
+```
+
+**Cause:**
+The database connection code was configured to use Neon's serverless HTTP driver in production mode (`APP_ENV=production`). Railway uses standard PostgreSQL, not Neon, so the Neon HTTP protocol doesn't work.
+
+**Solution:**
+Use `node-postgres` (Pool) for Railway PostgreSQL instead of Neon's serverless driver:
+
+```typescript
+// packages/platform-db/src/db.ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+
+export const pool = new Pool({
+    connectionString: process.env.DATABASE_URL!,
+});
+
+const getDbConn = () => {
+    if (!process.env.DATABASE_URL)
+        throw new Error('No database connection string specified.');
+
+    // Use node-postgres Pool for both development and production
+    // Works with Railway PostgreSQL and any standard PostgreSQL database
+    return drizzle(pool);
+};
+
+export const db = getDbConn();
+```
+
+Also remove unused Neon dependencies from package.json files:
+- `@neondatabase/serverless`
+- `ws`
+
 ## Service Configuration Reference
 
 | Service | Start Command | Build Command | Healthcheck |
