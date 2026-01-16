@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { openAPI } from 'better-auth/plugins';
+import { openAPI, bearer } from 'better-auth/plugins';
 
 interface CreateAuthConfig {
     db: any;
@@ -37,7 +37,10 @@ export function createAuth(config: CreateAuthConfig) {
             enabled: true,
         },
         trustedOrigins: config.trustedOrigins,
-        plugins: [openAPI()],
+        plugins: [
+            openAPI(),
+            bearer(), // Enable bearer token auth for cross-service authentication
+        ],
         advanced: {
             // Enable secure cookies in production for cross-origin requests
             useSecureCookies: isProduction,

@@ -9,7 +9,7 @@ import { Link, useRouter } from '@tanstack/react-router'
 import { Loader2, LogIn, LogOut, Settings, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 
-import { authClient } from '../lib/auth-client'
+import { authClient, signOut } from '../lib/auth-client'
 import { TradingDragIcon } from './icons/TradingDragIcon'
 
 export default function Header() {
@@ -20,7 +20,7 @@ export default function Header() {
   const handleSignOut = async () => {
     setLoading(true)
     try {
-      await authClient.signOut()
+      await signOut() // Clears bearer token and signs out
       router.navigate({ to: '/' })
     } catch (err) {
       toast.error('Failed to logout, try again.')

@@ -10,6 +10,11 @@ export interface BaseClientConfig {
      * @see ApiClientConfig.credentials
      */
     credentials?: 'include' | 'omit' | 'same-origin';
+    /**
+     * Function to get bearer token for cross-service authentication.
+     * @see ApiClientConfig.getToken
+     */
+    getToken?: () => string | null;
 }
 
 /** No-op logger for when no logger is provided */
@@ -37,6 +42,7 @@ export class BaseClient {
             baseUrl: config.baseUrl,
             sessionToken: config.sessionToken,
             credentials: config.credentials,
+            getToken: config.getToken,
         });
     }
 

@@ -25,6 +25,8 @@ interface TradingApiClientConfig {
     logger?: ILogger;
     /** Fetch credentials mode for cookie handling (default: 'include' for browser) */
     credentials?: 'include' | 'omit' | 'same-origin';
+    /** Function to get bearer token for cross-service auth (e.g., platform auth token) */
+    getToken?: () => string | null;
 }
 
 /**
@@ -37,6 +39,7 @@ export class TradingApiClient extends BaseClient {
         super({
             ...config,
             credentials: config.credentials ?? 'include', // Default to include for browser cookie auth
+            getToken: config.getToken,
         });
     }
 

@@ -4,14 +4,15 @@
  */
 import { TradingApiClient } from '@platform/trading-sdk';
 import { config } from './config';
+import { getAuthToken } from './auth-token';
 
 /**
  * Singleton trading API client instance.
- * Uses browser cookies for authentication (credentials: 'include').
- * No logger needed in browser - uses noop logger by default.
+ * Uses bearer token for cross-service authentication with platform auth.
+ * The token is obtained from platform API after sign-in.
  */
 export const tradingClient = new TradingApiClient({
   baseUrl: config.tradingApiUrl,
-  // credentials defaults to 'include' for browser cookie auth
-  // logger defaults to noop logger
+  // Use bearer token for cross-service auth (platform auth -> trading-server)
+  getToken: getAuthToken,
 });

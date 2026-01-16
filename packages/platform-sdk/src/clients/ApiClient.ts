@@ -10,6 +10,12 @@ export interface ApiClientConfig {
      * @default 'omit' - Manual token management for backwards compatibility
      */
     credentials?: 'include' | 'omit' | 'same-origin';
+    /**
+     * Function to get bearer token for cross-service authentication.
+     * When provided, sends Authorization: Bearer <token> header.
+     * Used for platform auth across different services (e.g., trading-server using platform auth).
+     */
+    getToken?: () => string | null;
 }
 
 /**
@@ -20,11 +26,13 @@ export class ApiClient {
     private baseUrl: string;
     private sessionToken?: string;
     private readonly credentials: 'include' | 'omit' | 'same-origin';
+    private readonly getToken?: () => string | null;
 
     constructor(config: ApiClientConfig) {
         this.baseUrl = config.baseUrl;
         this.sessionToken = config.sessionToken;
         this.credentials = config.credentials ?? 'omit';
+        this.getToken = config.getToken;
     }
 
     /**
@@ -61,6 +69,7 @@ export class ApiClient {
      * Authentication is handled based on the credentials mode:
      * - 'include': Browser sends cookies automatically
      * - 'omit': Manual Cookie header with sessionToken (for CLI)
+     * - getToken: Bearer token in Authorization header (for cross-service auth)
      */
     async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const headers: Record<string, string> = {
@@ -68,8 +77,13 @@ export class ApiClient {
             ...(options.headers as Record<string, string> || {}),
         };
 
-        // Only set Cookie header manually when not using browser cookie handling
-        if (this.sessionToken && this.credentials === 'omit') {
+        // Bearer token takes priority for cross-service authentication
+        const bearerToken = this.getToken?.();
+        if (bearerToken) {
+            headers['Authorization'] = `Bearer ${bearerToken}`;
+        }
+        // Fall back to Cookie header when not using browser cookie handling
+        else if (this.sessionToken && this.credentials === 'omit') {
             headers['Cookie'] = `better-auth.session_token=${this.sessionToken}`;
         }
 
