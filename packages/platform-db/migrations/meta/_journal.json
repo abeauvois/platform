@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1764343384817,
-      "tag": "0000_safe_beyonder",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766942029176,
-      "tag": "0001_add_app_tables",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766942029177,
-      "tag": "0002_add_ingest_progress_columns",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1766942029178,
-      "tag": "0003_add_bookmarks_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1766942029179,
-      "tag": "0004_rename_ingest_jobs_to_background_tasks",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1766942029180,
-      "tag": "0005_add_pending_content_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1766942029181,
-      "tag": "0006_add_pending_content_user_url_unique",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1736380800000,
-      "tag": "0007_add_watchlist_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1736776560000,
-      "tag": "0008_add_user_trading_settings_table",
+      "when": 1768770295160,
+      "tag": "0000_furry_the_enforcers",
       "breakpoints": true
     }
   ]

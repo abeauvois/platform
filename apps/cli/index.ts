@@ -5,6 +5,7 @@ import { branchCommand } from './commands/branch/index.js';
 import { readCommand } from './commands/read/index.js';
 import { ingestCommand } from './commands/ingest/index.js';
 import { worktreeCommand } from './commands/worktree/index.js';
+import { scrapeCommand } from './commands/scrape/index.js';
 
 /**
  * CLI Entry Point: Platform CLI
@@ -24,7 +25,7 @@ cli({
         },
     },
 
-    commands: [branchCommand, readCommand, ingestCommand, worktreeCommand],
+    commands: [branchCommand, readCommand, ingestCommand, worktreeCommand, scrapeCommand],
 
     help: {
         description: 'Platform CLI for managing personal data',

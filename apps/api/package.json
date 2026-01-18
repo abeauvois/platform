@@ -2,7 +2,7 @@
   "name": "api",
   "scripts": {
     "dev": "bun --bun run --watch server/index.ts",
-    "build": "bun build ./server/index.ts --outdir ./dist --target bun",
+    "build": "bun build ./server/index.ts --outdir ./dist --target bun --external puppeteer-core",
     "start": "bun run ./dist/index.js",
     "db:up": "docker compose up -d",
     "db:generate": "drizzle-kit generate",
@@ -15,6 +15,7 @@
     "@hono/zod-validator": "^0.7.2",
     "zod": "^3.24.0",
     "@platform/auth": "workspace:*",
+    "@platform/browser-scraper": "workspace:*",
     "@platform/env": "workspace:*",
     "@platform/cached-http-client": "workspace:*",
     "@platform/db": "workspace:*",
@@ -23,7 +24,8 @@
     "@platform/utils": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.8.12",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "puppeteer-core": "^24.35.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

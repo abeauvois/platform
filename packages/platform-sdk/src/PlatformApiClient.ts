@@ -3,6 +3,7 @@ import { BookmarkClient } from './clients/BookmarkClient.js';
 import { ConfigClient } from './clients/ConfigClient.js';
 import { WorkflowClient } from './clients/WorkflowClient.js';
 import { SourcesClient } from './clients/SourcesClient.js';
+import { ScraperClient } from './clients/ScraperClient.js';
 import type { AuthResponse, ILogger, SignInData, SignUpData } from './types.js';
 import type { BaseClient } from './clients/BaseClient.js';
 
@@ -94,6 +95,7 @@ export class PlatformApiClient {
     readonly config: ConfigClient;
     readonly workflow: WorkflowClient;
     readonly sources: SourcesClient;
+    readonly scraper: ScraperClient;
 
     private readonly clients: Array<BaseClient>
     private readonly authClient: AuthClient;
@@ -111,8 +113,9 @@ export class PlatformApiClient {
         this.config = new ConfigClient(clientConfig);
         this.workflow = new WorkflowClient(clientConfig);
         this.sources = new SourcesClient(clientConfig);
+        this.scraper = new ScraperClient(clientConfig);
 
-        this.clients = [this.authClient, this.bookmarks, this.config, this.workflow, this.sources];
+        this.clients = [this.authClient, this.bookmarks, this.config, this.workflow, this.sources, this.scraper];
         this.auth = new SyncedAuthClient(this.authClient, this.clients);
     }
 

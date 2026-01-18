@@ -13,7 +13,7 @@
         "access": "public"
     },
     "scripts": {
-        "build": "bun build ./index.ts --outdir ./dist --target bun --format esm",
+        "build": "bun build ./index.ts --outdir ./dist --target bun --format esm --external puppeteer-core",
         "compile": "bun build ./index.ts --compile --outfile ./bin/platform",
         "compile:all": "bun run compile:macos && bun run compile:linux && bun run compile:windows",
         "compile:macos": "bun build ./index.ts --compile --target=bun-darwin-arm64 --outfile ./bin/platform-macos-arm64 && bun build ./index.ts --compile --target=bun-darwin-x64 --outfile ./bin/platform-macos-x64",
@@ -25,10 +25,13 @@
         "test": "bun test"
     },
     "dependencies": {
+        "@clack/prompts": "^0.11.0",
+        "@platform/browser-scraper": "workspace:*",
         "@platform/sdk": "workspace:*",
         "@platform/platform-domain": "workspace:*",
         "@platform/utils": "workspace:*",
-        "cleye": "^2.0.0"
+        "cleye": "^2.0.0",
+        "puppeteer-core": "^24.35.0"
     },
     "devDependencies": {
         "@types/bun": "latest",

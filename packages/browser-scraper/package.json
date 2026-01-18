@@ -1,0 +1,39 @@
+{
+  "name": "@platform/browser-scraper",
+  "version": "1.0.0",
+  "description": "Browser scraping adapter using Chrome DevTools Protocol with Puppeteer",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "bun test"
+  },
+  "keywords": [
+    "browser",
+    "scraping",
+    "puppeteer",
+    "cdp",
+    "chrome-devtools-protocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer-core": "^24.35.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {}
+}

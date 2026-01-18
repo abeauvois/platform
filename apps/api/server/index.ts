@@ -10,6 +10,7 @@ import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';
 import { workflows } from './routes/workflow.routes';
 import { sources } from './routes/sources.routes';
+import { scraper } from './routes/scraper.routes';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
 import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgroundTaskRepository';
@@ -82,7 +83,8 @@ const router = app
   .route('/api/bookmarks', bookmarks)
   .route('/api/config', config)
   .route('/api/workflows', workflows)
-  .route('/api/sources', sources);
+  .route('/api/sources', sources)
+  .route('/api/scraper', scraper);
 
 export type AppType = typeof router;
 
@@ -97,6 +99,7 @@ async function startJobQueue() {
     // Create queues
     await createQueue(QUEUE_NAMES.WORKFLOW);
     await createQueue(QUEUE_NAMES.BOOKMARK_ENRICHMENT);
+    await createQueue(QUEUE_NAMES.SCRAPER);
 
     // Register workers
     const taskRepository = new DrizzleBackgroundTaskRepository();

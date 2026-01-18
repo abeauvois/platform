@@ -16,6 +16,7 @@ COPY apps/dashboard/package.json ./apps/dashboard/
 COPY apps/trading-server/package.json ./apps/trading-server/
 COPY apps/trading-client/package.json ./apps/trading-client/
 
+COPY packages/browser-scraper/package.json ./packages/browser-scraper/
 COPY packages/cached-http-client/package.json ./packages/cached-http-client/
 COPY packages/platform-auth/package.json ./packages/platform-auth/
 COPY packages/platform-db/package.json ./packages/platform-db/
