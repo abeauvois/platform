@@ -1,7 +1,7 @@
 # API Server Dockerfile
 # Must be built from repository root: docker build -f apps/api/Dockerfile .
 
-FROM oven/bun:1.3.5 AS base
+FROM oven/bun:1.3.6 AS base
 WORKDIR /app
 
 # Install dependencies
@@ -51,7 +51,7 @@ WORKDIR /app/apps/api
 RUN bun run build
 
 # Production image
-FROM oven/bun:1.3.5 AS release
+FROM oven/bun:1.3.6 AS release
 WORKDIR /app
 
 # Copy built artifacts
