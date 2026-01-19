@@ -1,5 +1,6 @@
 import type { ILogger } from '@platform/platform-domain';
 import { PlatformApiClient, type AuthResponse } from '@platform/sdk';
+import * as p from '@clack/prompts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -17,9 +18,11 @@ export class AuthManager {
     private apiClient: PlatformApiClient;
     private logger: ILogger;
     private sessionFilePath: string;
+    private baseUrl: string;
 
     constructor(config: AuthManagerConfig) {
         this.logger = config.logger;
+        this.baseUrl = config.baseUrl;
         this.apiClient = new PlatformApiClient({
             baseUrl: config.baseUrl,
             logger: config.logger,
@@ -38,25 +41,54 @@ export class AuthManager {
 
     /**
      * Authenticate user with email and password
-     * Checks for existing session first, then prompts if needed
+     * Checks for existing session first, validates it, then prompts if needed
      */
     async login(): Promise<AuthResponse | null> {
         try {
             // Check if session already exists
             const existingSession = this.loadSession();
             if (existingSession) {
-                this.logger.info('Using existing session');
-                return existingSession;
+                // Validate session is still valid by making a test request
+                const isValid = await this.validateSession(existingSession.sessionToken);
+                if (isValid) {
+                    this.logger.info('Using existing session');
+                    return existingSession;
+                }
+                // Session expired, clear it
+                this.logger.info('Session expired, please sign in again');
+                this.clearSession();
             }
 
-            // Prompt for credentials
-            this.logger.info('Please enter your credentials:');
+            // Prompt for credentials using clack prompts
+            const email = await p.text({
+                message: 'Email',
+                placeholder: 'your@email.com',
+                validate: (value) => {
+                    if (!value) return 'Email is required';
+                    if (!value.includes('@')) return 'Invalid email';
+                },
+            });
 
-            const email = await this.promptForInput('Email: ');
-            const password = await this.promptForInput('Password: ', true);
+            if (p.isCancel(email)) {
+                return null;
+            }
+
+            const password = await p.password({
+                message: 'Password',
+                validate: (value) => {
+                    if (!value) return 'Password is required';
+                },
+            });
+
+            if (p.isCancel(password)) {
+                return null;
+            }
 
             // Call API to sign in
-            const authResponse = await this.apiClient.auth.signIn({ email, password });
+            const authResponse = await this.apiClient.auth.signIn({
+                email: email as string,
+                password: password as string
+            });
 
             // Save session to file
             this.saveSession(authResponse);
@@ -118,6 +150,25 @@ export class AuthManager {
     }
 
     /**
+     * Validate session token by making a test request to the API
+     */
+    private async validateSession(sessionToken: string): Promise<boolean> {
+        try {
+            // Create a temporary client with the session token
+            const testClient = new PlatformApiClient({
+                baseUrl: this.baseUrl,
+                sessionToken,
+                logger: this.logger,
+            });
+            // Try to fetch config - this requires authentication
+            await testClient.config.fetchAll();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
      * Load session from file
      */
     private loadSession(): AuthResponse | null {
@@ -151,46 +202,5 @@ export class AuthManager {
         } catch (error) {
             this.logger.debug('Could not clear session file');
         }
-    }
-
-    /**
-     * Prompt user for input in terminal
-     */
-    private async promptForInput(prompt: string, hidden = false): Promise<string> {
-        process.stdout.write(prompt);
-
-        return new Promise((resolve) => {
-            const { stdin } = process;
-            stdin.setRawMode(true);
-            stdin.resume();
-            stdin.setEncoding('utf8');
-
-            let input = '';
-
-            const onData = (key: string) => {
-                if (key === '\u0003') {
-                    // Ctrl+C
-                    process.exit();
-                } else if (key === '\r' || key === '\n') {
-                    // Enter
-                    stdin.setRawMode(false);
-                    stdin.pause();
-                    stdin.removeListener('data', onData);
-                    process.stdout.write('\n');
-                    resolve(input);
-                } else if (key === '\u007F') {
-                    // Backspace
-                    if (input.length > 0) {
-                        input = input.slice(0, -1);
-                        process.stdout.write('\b \b');
-                    }
-                } else {
-                    input += key;
-                    process.stdout.write(hidden ? '*' : key);
-                }
-            };
-
-            stdin.on('data', onData);
-        });
     }
 }
