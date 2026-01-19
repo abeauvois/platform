@@ -22,7 +22,8 @@ export interface ScrapedListing {
   title: string;
   price: string;
   location: string;
-  description: string;
+  description: string;         // Raw HTML of the listing item (style tags stripped)
+  externalCategory: string;    // Provider's category (e.g., "Emploi", "Véhicules")
   url: string;
   imageUrl?: string;
   postedAt?: string;
