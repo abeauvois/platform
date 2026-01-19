@@ -1,5 +1,7 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
-import type { BrowserScraperOptions, IScrapeStrategy } from './types';
+import type { BrowserScraperOptions, IScrapeStrategy, PaginationOptions } from './types';
+
+export interface ScrapeOptions extends PaginationOptions {}
 
 export class ChromeCdpAdapter {
   private browser: Browser | null = null;
@@ -28,7 +30,7 @@ export class ChromeCdpAdapter {
     return this.browser !== null && this.browser.connected;
   }
 
-  async scrape<T>(url: string, strategy: IScrapeStrategy<T>): Promise<T> {
+  async scrape<T>(url: string, strategy: IScrapeStrategy<T>, options?: ScrapeOptions): Promise<T> {
     if (!this.browser) {
       throw new Error('Not connected');
     }
@@ -38,7 +40,7 @@ export class ChromeCdpAdapter {
 
     try {
       await page.goto(url, { waitUntil: 'networkidle2', timeout: this.defaultTimeout });
-      return await strategy.execute(page);
+      return await strategy.execute(page, options);
     } finally {
       await page.close();
     }

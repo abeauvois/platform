@@ -29,6 +29,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@platform/platform-domain": "workspace:*",
     "puppeteer-core": "^24.35.0"
   },
   "devDependencies": {

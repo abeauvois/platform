@@ -181,6 +181,7 @@
       "name": "@platform/browser-scraper",
       "version": "1.0.0",
       "dependencies": {
+        "@platform/platform-domain": "workspace:*",
         "puppeteer-core": "^24.35.0",
       },
       "devDependencies": {

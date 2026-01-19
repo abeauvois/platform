@@ -8,6 +8,7 @@ import { createCliContext } from '../../lib/cli-context.js';
  *
  * Usage:
  *   cli scrape leboncoin --url "https://www.leboncoin.fr/recherche?category=71"
+ *   cli scrape leboncoin --url "..." --pages 5 --delay 500
  */
 export const scrapeCommand = command(
   {
@@ -24,6 +25,18 @@ export const scrapeCommand = command(
         description: 'Chrome CDP endpoint',
         default: 'http://localhost:9222',
       },
+      pages: {
+        type: Number,
+        description: 'Number of pages to scrape',
+        alias: 'p',
+        default: 1,
+      },
+      delay: {
+        type: Number,
+        description: 'Delay in ms between pages (to avoid detection)',
+        alias: 'd',
+        default: 500,
+      },
       save: {
         type: Boolean,
         description: 'Save results to database',
@@ -39,6 +52,7 @@ export const scrapeCommand = command(
       description: 'Scrape data from protected websites using Chrome CDP',
       examples: [
         'scrape leboncoin --url "https://www.leboncoin.fr/recherche?category=71"',
+        'scrape leboncoin -u "https://..." --pages 5 --delay 500',
         'scrape leboncoin -u "https://..." --json',
         'scrape leboncoin -u "https://..." --save',
       ],
@@ -46,7 +60,7 @@ export const scrapeCommand = command(
   },
   async (argv) => {
     const source = argv._.source;
-    const { url, cdpEndpoint, save, json } = argv.flags;
+    const { url, cdpEndpoint, pages, delay, save, json } = argv.flags;
 
     if (!json) {
       p.intro('🔍 Browser Scraper');
@@ -121,10 +135,13 @@ export const scrapeCommand = command(
         await adapter.connect();
         spinner.stop('Connected to Chrome');
 
-        spinner.start(`Scraping ${targetUrl}`);
+        spinner.start(`Scraping ${targetUrl} (${pages} page${pages > 1 ? 's' : ''}, ${delay}ms delay)`);
         const strategy = new LeboncoinStrategy();
-        const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy);
-        spinner.stop(`Found ${results.length} listings`);
+        const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy, {
+          maxPages: pages,
+          delayBetweenPages: delay,
+        });
+        spinner.stop(`Found ${results.length} listings across ${pages} page(s)`);
 
         // Save to database if requested (ctx is pre-authenticated)
         if (save && ctx) {
@@ -161,7 +178,10 @@ export const scrapeCommand = command(
         // JSON output mode
         await adapter.connect();
         const strategy = new LeboncoinStrategy();
-        const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy);
+        const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy, {
+          maxPages: pages,
+          delayBetweenPages: delay,
+        });
 
         // Save to database if requested (ctx is pre-authenticated)
         let savedId: string | undefined;
