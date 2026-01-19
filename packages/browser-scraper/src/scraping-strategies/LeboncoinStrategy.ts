@@ -2,8 +2,8 @@ import type { Page } from 'puppeteer-core';
 import type { ILogger, IScrapeStrategy, PaginationOptions, ScrapedListing } from '../types';
 
 /**
- * Strip style tags and inline style attributes from HTML
- * Preserves data-* attributes and other structural elements
+ * Strip styling and unwanted elements from HTML, keeping only content and structure.
+ * Removes: style tags, SVGs, save ad buttons, pro store logos, h3 tags, inline styles, and class attributes.
  */
 export function stripHtmlStylesAndTags(html: string): string {
   if (!html) return '';
@@ -11,8 +11,23 @@ export function stripHtmlStylesAndTags(html: string): string {
   // Remove <style>...</style> tags and their contents
   let result = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
+  // Remove save/favorite ad buttons (contains heart SVG)
+  result = result.replace(/<button[^>]*data-qa-id="listitem_save_ad"[^>]*>[\s\S]*?<\/button>/gi, '');
+
+  // Remove <svg>...</svg> elements and their contents
+  result = result.replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '');
+
+  // Remove <h3>...</h3> elements (title is already extracted separately)
+  result = result.replace(/<h3[^>]*>[\s\S]*?<\/h3>/gi, '');
+
+  // Remove pro store logo images
+  result = result.replace(/<img[^>]*data-test-id="pro-store-logo"[^>]*\/?>/gi, '');
+
   // Remove inline style attributes (style="...")
   result = result.replace(/\s*style="[^"]*"/gi, '');
+
+  // Remove class attributes (class="...")
+  result = result.replace(/\s*class="[^"]*"/gi, '');
 
   return result;
 }
@@ -202,14 +217,24 @@ export class LeboncoinStrategy implements IScrapeStrategy<Array<ScrapedListing>>
           }).catch(() => '');
         }
 
-        // Extract raw HTML of the listing item (with style tags/attributes stripped)
+        // Extract raw HTML of the listing item (with unwanted elements stripped)
         const rawHtml = await listing.evaluate((element) => {
           // Clone to avoid modifying the DOM
           const clone = element.cloneNode(true) as HTMLElement;
           // Remove style tags
           clone.querySelectorAll('style').forEach(s => s.remove());
+          // Remove save/favorite ad button (contains heart SVG)
+          clone.querySelectorAll('[data-qa-id="listitem_save_ad"]').forEach(s => s.remove());
+          // Remove all SVG elements (icons, etc.)
+          clone.querySelectorAll('svg').forEach(s => s.remove());
+          // Remove h3 elements (title is already extracted separately)
+          clone.querySelectorAll('h3').forEach(s => s.remove());
+          // Remove pro store logo images
+          clone.querySelectorAll('img[data-test-id="pro-store-logo"]').forEach(s => s.remove());
           // Remove inline styles
-          clone.querySelectorAll('[style]').forEach(styledEl => styledEl.removeAttribute('style'));
+          clone.querySelectorAll('[style]').forEach(el => el.removeAttribute('style'));
+          // Remove all class attributes (no styling info needed)
+          clone.querySelectorAll('[class]').forEach(el => el.removeAttribute('class'));
           return clone.outerHTML;
         }).catch(() => '');
 

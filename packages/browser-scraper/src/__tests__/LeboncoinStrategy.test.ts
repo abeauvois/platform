@@ -3,6 +3,7 @@ import { LeboncoinStrategy, extractCategoryFromH1, stripHtmlStylesAndTags } from
 import {
   leboncoinListingWithStyleHtml,
   leboncoinPageContext,
+  leboncoinRealEstateListingHtml,
 } from './fixtures';
 import type { ILogger, ScrapedListing } from '../types';
 
@@ -84,12 +85,35 @@ describe('LeboncoinStrategy - HTML stripping', () => {
     expect(result).toContain('<p>Content</p>');
   });
 
-  test('should preserve data attributes', () => {
-    const htmlWithDataAttr = '<div data-test-id="adcard-jobs"><p data-qa-id="title">Content</p></div>';
+  test('should preserve data attributes but remove class attributes', () => {
+    const htmlWithDataAttr = '<div data-test-id="adcard-jobs" class="some-class"><p data-qa-id="title" class="text-bold">Content</p></div>';
     const result = stripHtmlStylesAndTags(htmlWithDataAttr);
 
     expect(result).toContain('data-test-id="adcard-jobs"');
     expect(result).toContain('data-qa-id="title"');
+    expect(result).not.toContain('class=');
+    expect(result).not.toContain('some-class');
+    expect(result).not.toContain('text-bold');
+  });
+
+  test('should remove all class attributes', () => {
+    const htmlWithClasses = '<div class="flex items-center"><p class="text-lg font-bold">Content</p></div>';
+    const result = stripHtmlStylesAndTags(htmlWithClasses);
+
+    expect(result).not.toContain('class=');
+    expect(result).not.toContain('flex');
+    expect(result).not.toContain('text-lg');
+    expect(result).toContain('<p>Content</p>');
+  });
+
+  test('should remove h3 elements', () => {
+    const htmlWithH3 = '<div><h3>Title</h3><p>Content</p></div>';
+    const result = stripHtmlStylesAndTags(htmlWithH3);
+
+    expect(result).not.toContain('<h3>');
+    expect(result).not.toContain('</h3>');
+    expect(result).not.toContain('Title');
+    expect(result).toContain('<p>Content</p>');
   });
 
   test('should handle fixture HTML with style tag', () => {
@@ -99,6 +123,94 @@ describe('LeboncoinStrategy - HTML stripping', () => {
     expect(result).not.toContain('.test-style');
     expect(result).not.toContain('style="color: blue;"');
     expect(result).toContain('data-test-id="adcard-title"');
+  });
+
+  test('should remove SVG elements from HTML', () => {
+    const htmlWithSvg = '<div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L2 7"/></svg><p>Content</p></div>';
+    const result = stripHtmlStylesAndTags(htmlWithSvg);
+
+    expect(result).not.toContain('<svg');
+    expect(result).not.toContain('</svg>');
+    expect(result).not.toContain('viewBox');
+    expect(result).not.toContain('<path');
+    expect(result).toContain('<p>Content</p>');
+  });
+
+  test('should remove multiple SVG elements', () => {
+    const htmlWithMultipleSvg = '<div><svg><circle/></svg><span>Text</span><svg><rect/></svg></div>';
+    const result = stripHtmlStylesAndTags(htmlWithMultipleSvg);
+
+    expect(result).not.toContain('<svg');
+    expect(result).not.toContain('</svg>');
+    expect(result).toContain('<span>Text</span>');
+  });
+
+  test('should remove nested SVG content', () => {
+    const htmlWithNestedSvg = '<div><svg><g><path d="M0 0"/><circle cx="10" cy="10" r="5"/></g></svg><p>Preserved</p></div>';
+    const result = stripHtmlStylesAndTags(htmlWithNestedSvg);
+
+    expect(result).not.toContain('<svg');
+    expect(result).not.toContain('<g>');
+    expect(result).not.toContain('<path');
+    expect(result).not.toContain('<circle');
+    expect(result).toContain('<p>Preserved</p>');
+  });
+
+  test('should remove pro store logo images', () => {
+    const htmlWithProLogo = '<div><img data-test-id="pro-store-logo" src="logo.png" alt="Pro"/><p>Content</p></div>';
+    const result = stripHtmlStylesAndTags(htmlWithProLogo);
+
+    expect(result).not.toContain('pro-store-logo');
+    expect(result).not.toContain('logo.png');
+    expect(result).toContain('<p>Content</p>');
+  });
+
+  test('should remove self-closing pro store logo images', () => {
+    const htmlWithProLogo = '<div><img data-test-id="pro-store-logo" src="logo.png"/><span>Text</span></div>';
+    const result = stripHtmlStylesAndTags(htmlWithProLogo);
+
+    expect(result).not.toContain('pro-store-logo');
+    expect(result).toContain('<span>Text</span>');
+  });
+
+  test('should remove save ad button with data-qa-id="listitem_save_ad"', () => {
+    const htmlWithSaveButton = '<div><button data-qa-id="listitem_save_ad"><svg data-title="SvgHeartOutline"></svg></button><p>Content</p></div>';
+    const result = stripHtmlStylesAndTags(htmlWithSaveButton);
+
+    expect(result).not.toContain('listitem_save_ad');
+    expect(result).not.toContain('SvgHeartOutline');
+    expect(result).toContain('<p>Content</p>');
+  });
+
+  test('should remove all unwanted elements from real estate listing fixture', () => {
+    const result = stripHtmlStylesAndTags(leboncoinRealEstateListingHtml);
+
+    // Should remove save ad button
+    expect(result).not.toContain('listitem_save_ad');
+    expect(result).not.toContain('adcard_favorite_button');
+
+    // Should remove all SVGs
+    expect(result).not.toContain('<svg');
+    expect(result).not.toContain('</svg>');
+    expect(result).not.toContain('SvgHeartOutline');
+    expect(result).not.toContain('ArrowVerticalLeft');
+    expect(result).not.toContain('ArrowVerticalRight');
+    expect(result).not.toContain('SvgLastFloorCriteria');
+    expect(result).not.toContain('SvgCaveCriteria');
+
+    // Should remove pro store logo
+    expect(result).not.toContain('pro-store-logo');
+
+    // Should remove h3 elements
+    expect(result).not.toContain('<h3>');
+    expect(result).not.toContain('</h3>');
+
+    // Should remove class attributes
+    expect(result).not.toContain('class=');
+
+    // Should preserve content (price and location are in p tags)
+    expect(result).toContain('725 000 €');
+    expect(result).toContain('Paris 75002');
   });
 });
 

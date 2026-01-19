@@ -15,11 +15,15 @@ export {
     ConfigClient,
     WorkflowClient,
     SourcesClient,
+    ScraperClient,
     type ApiClientConfig,
     type BaseClientConfig,
     type Bookmark,
     type GmailReadOptions,
     type SourceContentItem,
+    type ScrapedDataItem,
+    type SaveScrapedDataOptions,
+    type ListScrapedDataOptions,
 } from './clients/index.js';
 
 // Config Providers (browser-compatible only)

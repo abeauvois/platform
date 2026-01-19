@@ -63,6 +63,26 @@ export default function Header() {
               </Tooltip>
             )}
           </div>
+
+          <div className="flex items-center gap-1">
+            <Link
+              to="/scraped-data"
+              className="text-lg hover:text-primary transition-colors"
+              activeProps={{ className: 'font-bold text-primary' }}
+            >
+              Scraped Data
+            </Link>
+            {!session && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <ShieldAlert className="size-5 text-yellow-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Must sign in to access scraped data</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center">

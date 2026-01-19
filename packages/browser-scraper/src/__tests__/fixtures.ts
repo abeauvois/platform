@@ -118,3 +118,35 @@ export const leboncoinCategoryMap: Record<string, string> = {
   '17': 'Matériel professionnel',
   '27': 'Mode',
 };
+
+/**
+ * Real estate listing HTML with save ad button containing SVG heart icon
+ */
+export const leboncoinRealEstateListingHtml = `<article data-test-id="ad" data-qa-id="aditem_container" class="relative">
+  <h3>Appartement, 3 pièces</h3>
+  <div class="content">
+    <p data-test-id="price">725 000 €</p>
+    <p class="text-caption text-neutral">Paris 75002</p>
+    <div class="carousel">
+      <button data-spark-component="carousel-prev-button" type="button">
+        <svg viewBox="0 0 24 24" data-title="ArrowVerticalLeft" fill="currentColor"><path d="M16.7,2.28"></path></svg>
+      </button>
+      <button data-spark-component="carousel-next-button" type="button">
+        <svg viewBox="0 0 24 24" data-title="ArrowVerticalRight" fill="currentColor"><path d="M7.3,2.28"></path></svg>
+      </button>
+    </div>
+    <div class="criteria">
+      <svg viewBox="0 0 24 24" data-title="SvgLastFloorCriteria" fill="currentColor"><path d="M16.3884"></path></svg>
+      <svg viewBox="0 0 24 24" data-title="SvgCaveCriteria" fill="currentColor"><path d="M11.8436"></path></svg>
+    </div>
+    <div class="favorite">
+      <button data-spark-component="icon-button" type="button" data-test-id="adcard_favorite_button" data-qa-id="listitem_save_ad" aria-label="Ajouter l'annonce aux favoris">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-title="SvgHeartOutline" fill="currentColor">
+          <path d="M16.2833 3C14.5667"></path>
+        </svg>
+        <span role="status">Annonce retirée des favoris</span>
+      </button>
+    </div>
+    <img data-test-id="pro-store-logo" src="logo.png" alt="Pro Store">
+  </div>
+</article>`;

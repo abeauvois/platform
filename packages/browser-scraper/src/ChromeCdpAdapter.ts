@@ -35,14 +35,18 @@ export class ChromeCdpAdapter {
       throw new Error('Not connected');
     }
 
-    const pages = await this.browser.pages();
-    const page = pages[0] || await this.browser.newPage();
+    // Always create a new page to avoid DevTools or internal Chrome pages
+    const page = await this.browser.newPage();
 
     try {
       await page.goto(url, { waitUntil: 'networkidle2', timeout: this.defaultTimeout });
       return await strategy.execute(page, options);
     } finally {
-      await page.close();
+      try {
+        await page.close();
+      } catch {
+        // Page may already be closed or invalid - ignore
+      }
     }
   }
 }
