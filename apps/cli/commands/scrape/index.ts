@@ -96,6 +96,22 @@ export const scrapeCommand = command(
       process.exit(1);
     }
 
+    // Pre-authenticate if --save is requested (before scraping to avoid losing data)
+    let ctx: Awaited<ReturnType<typeof createCliContext>> | undefined;
+    if (save) {
+      try {
+        ctx = await createCliContext({ skipConfig: true });
+      } catch (authError) {
+        if (!json) {
+          p.log.error('Authentication required to save data');
+          p.outro('❌ Please sign in first');
+        } else {
+          console.log(JSON.stringify({ error: 'Authentication required' }));
+        }
+        process.exit(1);
+      }
+    }
+
     const adapter = new ChromeCdpAdapter({ cdpEndpoint });
 
     try {
@@ -110,11 +126,10 @@ export const scrapeCommand = command(
         const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy);
         spinner.stop(`Found ${results.length} listings`);
 
-        // Save to database if requested
-        if (save) {
+        // Save to database if requested (ctx is pre-authenticated)
+        if (save && ctx) {
           spinner.start('Saving to database...');
           try {
-            const ctx = await createCliContext({ skipConfig: true });
             const { id } = await ctx.apiClient.scraper.save({
               source,
               sourceUrl: targetUrl,
@@ -148,11 +163,10 @@ export const scrapeCommand = command(
         const strategy = new LeboncoinStrategy();
         const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy);
 
-        // Save to database if requested
+        // Save to database if requested (ctx is pre-authenticated)
         let savedId: string | undefined;
-        if (save) {
+        if (save && ctx) {
           try {
-            const ctx = await createCliContext({ skipConfig: true });
             const { id } = await ctx.apiClient.scraper.save({
               source,
               sourceUrl: targetUrl,
