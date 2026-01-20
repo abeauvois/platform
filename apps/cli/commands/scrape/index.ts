@@ -1,6 +1,6 @@
 import { command } from 'cleye';
 import * as p from '@clack/prompts';
-import { ChromeCdpAdapter, LeboncoinStrategy, type ScrapedListing } from '@platform/browser-scraper';
+import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy, type ScrapedListing } from '@platform/browser-scraper';
 import { createCliContext } from '../../lib/cli-context.js';
 
 /**
@@ -67,9 +67,9 @@ export const scrapeCommand = command(
     }
 
     // Validate source
-    if (source !== 'leboncoin') {
+    if (source !== 'leboncoin' && source !== 'autoscout24') {
       if (!json) {
-        p.log.error(`Unknown source: ${source}. Supported: leboncoin`);
+        p.log.error(`Unknown source: ${source}. Supported: leboncoin, autoscout24`);
         p.outro('❌ Scrape failed');
       } else {
         console.log(JSON.stringify({ error: `Unknown source: ${source}` }));
@@ -136,7 +136,7 @@ export const scrapeCommand = command(
         spinner.stop('Connected to Chrome');
 
         spinner.start(`Scraping ${targetUrl} (${pages} page${pages > 1 ? 's' : ''}, ${delay}ms delay)`);
-        const strategy = new LeboncoinStrategy();
+        const strategy = source === 'autoscout24' ? new AutoScout24Strategy() : new LeboncoinStrategy();
         const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy, {
           maxPages: pages,
           delayBetweenPages: delay,
@@ -177,7 +177,7 @@ export const scrapeCommand = command(
       } else {
         // JSON output mode
         await adapter.connect();
-        const strategy = new LeboncoinStrategy();
+        const strategy = source === 'autoscout24' ? new AutoScout24Strategy() : new LeboncoinStrategy();
         const results = await adapter.scrape<Array<ScrapedListing>>(targetUrl, strategy, {
           maxPages: pages,
           delayBetweenPages: delay,

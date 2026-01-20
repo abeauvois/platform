@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import type { HonoEnv } from '../types';
 import { authMiddleware } from '@/middlewares/auth.middleware';
-import { ChromeCdpAdapter, LeboncoinStrategy } from '@platform/browser-scraper';
+import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy } from '@platform/browser-scraper';
 import { db } from '@platform/db';
 import { scrapedData } from '@platform/db/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -61,6 +61,8 @@ export const scraper = new Hono<HonoEnv>()
             let scrapeStrategy;
             if (source === 'leboncoin') {
                 scrapeStrategy = new LeboncoinStrategy();
+            } else if (source === 'autoscout24') {
+                scrapeStrategy = new AutoScout24Strategy();
             } else {
                 return c.json({ error: `Unknown source: ${source}` }, 400);
             }

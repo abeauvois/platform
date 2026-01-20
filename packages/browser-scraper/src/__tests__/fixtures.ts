@@ -150,3 +150,105 @@ export const leboncoinRealEstateListingHtml = `<article data-test-id="ad" data-q
     <img data-test-id="pro-store-logo" src="logo.png" alt="Pro Store">
   </div>
 </article>`;
+
+// ============================================================================
+// AutoScout24 Test Fixtures
+// ============================================================================
+
+/**
+ * Test fixtures for AutoScout24Strategy
+ *
+ * These fixtures contain HTML patterns from autoscout24.fr for deterministic testing.
+ */
+
+/**
+ * Real HTML from an AutoScout24 dealer listing card
+ */
+export const autoscout24DealerListingHtml = `<article data-testid="decluttered-list-item" class="list-page-item">
+  <style>.ListItemTitle_heading__G2W_N { font-size: 16px; }</style>
+  <div class="ListItem_wrapper__TxHWu">
+    <a class="ListItemTitle_anchor__4TrfR" href="/voiture/ferrari-roma/ferrari-roma-3-9-v8-biturbo-620-dct-noir-occasion-fr-23b4f5">
+      <h2 class="ListItemTitle_heading__G2W_N">Ferrari Roma 3.9 V8 Biturbo 620 DCT</h2>
+    </a>
+    <div class="ListItemPrice_container__DWNWE">
+      <p class="CurrentPrice_price__Ekflz">289 900 €</p>
+    </div>
+    <div class="ListItemSpecs_container__3M2B5">
+      <span>01/2021</span>
+      <span>22 500 km</span>
+      <span>456 kW (620 ch)</span>
+      <span>Essence</span>
+    </div>
+    <div class="ListItemSeller_container__c8wDH" data-testid="dealer-address">
+      <span class="ListItemSeller_address__Fqhiu">FR-75008 Paris</span>
+      <span class="ListItemSeller_name__xH5RZ">Luxury Cars Paris</span>
+    </div>
+    <picture>
+      <img data-testid="decluttered-list-item-image" src="https://prod.pictures.autoscout24.net/listing-images/ferrari-roma-123.jpg" alt="Ferrari Roma"/>
+    </picture>
+    <button data-testid="watchlist-add-button" class="WatchlistButton_button__abc">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32"></path></svg>
+    </button>
+  </div>
+</article>`;
+
+/**
+ * Real HTML from an AutoScout24 private seller listing card
+ */
+export const autoscout24PrivateListingHtml = `<article data-testid="decluttered-list-item" class="list-page-item">
+  <div class="ListItem_wrapper__TxHWu">
+    <a class="ListItemTitle_anchor__4TrfR" href="/voiture/ferrari-roma/ferrari-roma-2020-occasion-fr-abc123">
+      <h2 class="ListItemTitle_heading__G2W_N">Ferrari Roma 2020</h2>
+    </a>
+    <div class="ListItemPrice_container__DWNWE">
+      <p class="CurrentPrice_price__Ekflz">275 000 €</p>
+    </div>
+    <div class="ListItemSpecs_container__3M2B5">
+      <span>06/2020</span>
+      <span>15 000 km</span>
+      <span>456 kW (620 ch)</span>
+      <span>Essence</span>
+    </div>
+    <div class="ListItemSeller_container__c8wDH">
+      <span class="ListItemSeller_address__Fqhiu">FR-69001 Lyon</span>
+      <span class="ListItemSeller_type__xyz">Particulier</span>
+    </div>
+    <picture>
+      <img data-testid="decluttered-list-item-image" src="https://prod.pictures.autoscout24.net/listing-images/ferrari-roma-456.jpg" alt="Ferrari Roma"/>
+    </picture>
+  </div>
+</article>`;
+
+/**
+ * Expected extraction results from the dealer listing fixture
+ */
+export const autoscout24DealerListingExpected = {
+  title: 'Ferrari Roma 3.9 V8 Biturbo 620 DCT',
+  price: '289 900 €',
+  location: 'FR-75008 Paris',
+  url: 'https://www.autoscout24.fr/voiture/ferrari-roma/ferrari-roma-3-9-v8-biturbo-620-dct-noir-occasion-fr-23b4f5',
+  imageUrl: 'https://prod.pictures.autoscout24.net/listing-images/ferrari-roma-123.jpg',
+  externalCategory: 'Ferrari Roma',
+};
+
+/**
+ * Page context for extracting category from AutoScout24
+ */
+export const autoscout24PageContext = {
+  h1Text: '50 offres pour Ferrari Roma',
+  title: 'Ferrari Roma occasion - France | AutoScout24',
+  url: 'https://www.autoscout24.fr/lst/ferrari/roma?cy=F',
+  expectedCategory: 'Ferrari Roma',
+};
+
+/**
+ * AutoScout24 h1 format variations
+ */
+export const autoscout24H1Variations = [
+  { h1: '50 offres pour Ferrari Roma', expected: 'Ferrari Roma' },
+  { h1: '125 offres pour Porsche 911', expected: 'Porsche 911' },
+  { h1: '1 offre pour BMW M3', expected: 'BMW M3' },
+  { h1: '1.234 offres pour Mercedes-Benz Classe A', expected: 'Mercedes-Benz Classe A' },
+  { h1: 'Résultats de recherche', expected: '' },
+  { h1: '', expected: '' },
+];
