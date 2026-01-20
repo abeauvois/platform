@@ -252,3 +252,124 @@ export const autoscout24H1Variations = [
   { h1: 'Résultats de recherche', expected: '' },
   { h1: '', expected: '' },
 ];
+
+// ============================================================================
+// Malt Test Fixtures
+// ============================================================================
+
+/**
+ * Test fixtures for MaltStrategy
+ *
+ * These fixtures contain HTML patterns from malt.fr for deterministic testing.
+ * Malt is a French/European freelancer marketplace.
+ */
+
+/**
+ * Real HTML from a Malt freelancer profile card
+ */
+export const maltFreelancerListingHtml = `<a class="profile-card" href="/profile/hugobonifay?q=developpeur+web+fullstack+react+hono&as=t">
+  <style>.profile-card { border-radius: 8px; }</style>
+  <div class="profile-card__content">
+    <div class="profile-card__header">
+      <img alt="photo" src="https://dam.malt.com/production/photos/hugobonifay-12345.jpg" class="profile-photo"/>
+      <button data-testid="profile-card-favorite-btn" class="favorite-button-v2" aria-label="Ajouter aux favoris">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32"></path></svg>
+      </button>
+    </div>
+    <div class="profile-card__body">
+      <span class="profile-name">Hugo</span>
+      <h2 class="profile-headline">Développeur Web | React.js | Next.js</h2>
+      <div class="profile-card-price">
+        <span class="profile-card-price__label"><strong>475 €</strong> /jour</span>
+      </div>
+      <div class="profile-location">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13"></path></svg>
+        <span class="profile-location__text">Paris</span>
+      </div>
+      <div class="joy-availability">Disponibilité confirmée</div>
+      <div class="profile-rating">5 (2)</div>
+      <ul class="profile-skills">
+        <li><span class="joy-tag">Typescript</span></li>
+        <li><span class="joy-tag">React.js</span></li>
+        <li><span class="joy-tag">Node.js</span></li>
+      </ul>
+    </div>
+  </div>
+</a>`;
+
+/**
+ * Real HTML from another Malt freelancer profile card (different structure)
+ */
+export const maltFreelancerListingHtml2 = `<a class="profile-card" href="/profile/mariedupont?q=developpeur+web+fullstack+react+hono&as=t">
+  <div class="profile-card__content">
+    <div class="profile-card__header">
+      <img alt="photo" src="https://dam.malt.com/production/photos/mariedupont-67890.jpg" class="profile-photo"/>
+      <button data-testid="profile-card-favorite-btn" class="favorite-button-v2">
+        <svg viewBox="0 0 24 24"><path d="M12 21"></path></svg>
+      </button>
+    </div>
+    <div class="profile-card__body">
+      <span class="profile-name">Marie</span>
+      <h2 class="profile-headline">Lead Developer Full Stack</h2>
+      <div class="profile-card-price">
+        <span class="profile-card-price__label"><strong>650 €</strong> /jour</span>
+      </div>
+      <div class="profile-location">
+        <span class="profile-location__text">Lyon</span>
+      </div>
+      <ul class="profile-skills">
+        <li><span class="joy-tag">Python</span></li>
+        <li><span class="joy-tag">Django</span></li>
+      </ul>
+    </div>
+  </div>
+</a>`;
+
+/**
+ * Expected extraction results from the freelancer listing fixture
+ */
+export const maltFreelancerExpected = {
+  title: 'Hugo - Développeur Web | React.js | Next.js',
+  price: '475 €/jour',
+  location: 'Paris',
+  url: 'https://www.malt.fr/profile/hugobonifay',
+  imageUrl: 'https://dam.malt.com/production/photos/hugobonifay-12345.jpg',
+  externalCategory: 'developpeur web fullstack react hono',
+  postedAt: 'Typescript, React.js, Node.js',
+};
+
+/**
+ * Expected extraction results from the second freelancer listing
+ */
+export const maltFreelancerExpected2 = {
+  title: 'Marie - Lead Developer Full Stack',
+  price: '650 €/jour',
+  location: 'Lyon',
+  url: 'https://www.malt.fr/profile/mariedupont',
+  imageUrl: 'https://dam.malt.com/production/photos/mariedupont-67890.jpg',
+  externalCategory: 'developpeur web fullstack react hono',
+  postedAt: 'Python, Django',
+};
+
+/**
+ * Page context for extracting category from Malt
+ */
+export const maltPageContext = {
+  h1Text: '17 freelances "developpeur web fullstack react hono" disponibles',
+  title: 'Freelance developpeur web fullstack react hono | Malt',
+  url: 'https://www.malt.fr/s?q=developpeur+web+fullstack+react+hono&as=t',
+  expectedCategory: 'developpeur web fullstack react hono',
+};
+
+/**
+ * Malt h1 format variations for testing category extraction
+ */
+export const maltH1Variations = [
+  { h1: '17 freelances "developpeur web fullstack react hono" disponibles', expected: 'developpeur web fullstack react hono' },
+  { h1: '1 freelance "react developer" disponible', expected: 'react developer' },
+  { h1: '125 freelances "data scientist" disponibles', expected: 'data scientist' },
+  { h1: '2345 freelances "ux designer" disponibles', expected: 'ux designer' },
+  { h1: 'Résultats de recherche', expected: '' },
+  { h1: '', expected: '' },
+  { h1: 'Freelances disponibles', expected: '' },
+];
