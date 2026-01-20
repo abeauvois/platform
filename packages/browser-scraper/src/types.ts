@@ -26,7 +26,8 @@ export interface ScrapedListing {
   externalCategory: string;    // Provider's category (e.g., "Emploi", "Véhicules")
   url: string;
   imageUrl?: string;
-  postedAt?: string;
+  postedAt?: string;           // Date/time or condition info (e.g., "Très bon état", "01/2021")
+  tags?: string;               // Skills or tags (e.g., "React.js, Node.js, TypeScript")
 }
 
 export type { Page };

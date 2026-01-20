@@ -259,13 +259,21 @@ export class MaltStrategy implements IScrapeStrategy<Array<ScrapedListing>> {
           ).catch(() => undefined);
         }
 
-        // Extract skills list and join them (store in postedAt field)
+        // Extract skills list and join them
         const skills = await listing.evaluate((el) => {
-          const skillElements = el.querySelectorAll('.profile-skills li .joy-tag, ul.profile-skills li');
-          return Array.from(skillElements)
-            .map(s => s.textContent?.trim())
-            .filter(Boolean)
-            .join(', ');
+          // Use only .joy-tag to avoid duplicates (li and span both match otherwise)
+          let skillElements = el.querySelectorAll('.profile-skills .joy-tag');
+          if (skillElements.length === 0) {
+            // Fallback: try li elements directly
+            skillElements = el.querySelectorAll('.profile-skills li');
+          }
+          // Use Set to deduplicate in case of any remaining duplicates
+          const uniqueSkills = new Set(
+            Array.from(skillElements)
+              .map(s => s.textContent?.trim())
+              .filter(Boolean) as Array<string>
+          );
+          return Array.from(uniqueSkills).join(', ');
         }).catch(() => '');
 
         scrapedListings.push({
@@ -276,7 +284,7 @@ export class MaltStrategy implements IScrapeStrategy<Array<ScrapedListing>> {
           externalCategory,
           url,
           imageUrl,
-          postedAt: skills || undefined,
+          tags: skills || undefined,
         });
       } catch (error) {
         // Skip listings that fail to parse

@@ -335,7 +335,7 @@ export const maltFreelancerExpected = {
   url: 'https://www.malt.fr/profile/hugobonifay',
   imageUrl: 'https://dam.malt.com/production/photos/hugobonifay-12345.jpg',
   externalCategory: 'developpeur web fullstack react hono',
-  postedAt: 'Typescript, React.js, Node.js',
+  tags: 'Typescript, React.js, Node.js',
 };
 
 /**
@@ -348,7 +348,7 @@ export const maltFreelancerExpected2 = {
   url: 'https://www.malt.fr/profile/mariedupont',
   imageUrl: 'https://dam.malt.com/production/photos/mariedupont-67890.jpg',
   externalCategory: 'developpeur web fullstack react hono',
-  postedAt: 'Python, Django',
+  tags: 'Python, Django',
 };
 
 /**

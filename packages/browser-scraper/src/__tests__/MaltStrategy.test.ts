@@ -69,7 +69,7 @@ describe('MaltStrategy - ScrapedListing interface', () => {
     expect(listing.externalCategory).toBe('developpeur web fullstack react hono');
   });
 
-  test('should include skills in postedAt field', () => {
+  test('should include skills in tags field', () => {
     const listing: ScrapedListing = {
       title: 'Hugo - Développeur Web | React.js | Next.js',
       price: '475 €/jour',
@@ -77,10 +77,10 @@ describe('MaltStrategy - ScrapedListing interface', () => {
       description: '<a class="profile-card">HTML content</a>',
       externalCategory: 'developpeur web fullstack react hono',
       url: 'https://www.malt.fr/profile/hugobonifay',
-      postedAt: 'Typescript, React.js, Node.js',
+      tags: 'Typescript, React.js, Node.js',
     };
 
-    expect(listing.postedAt).toBe('Typescript, React.js, Node.js');
+    expect(listing.tags).toBe('Typescript, React.js, Node.js');
   });
 });
 
