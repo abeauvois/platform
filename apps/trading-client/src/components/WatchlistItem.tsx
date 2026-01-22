@@ -76,18 +76,20 @@ export function WatchlistItem({
   }
 
   const renderReferenceChange = () => {
-    if (!hasReference || referencePriceChangePercent === null || referencePriceChangePercent === undefined) {
+    // Always show reference change since backend calculates it (even with default reference)
+    if (referencePriceChangePercent === null || referencePriceChangePercent === undefined) {
       return null
     }
     const isPositive = referencePriceChangePercent >= 0
     const colorClass = isPositive ? 'text-blue-400' : 'text-blue-600'
     const sign = isPositive ? '+' : ''
-    const timeAgo = formatTimeSinceReference(referenceTimestamp)
+    // Show time ago only if explicit reference is set
+    const timeAgo = hasReference ? formatTimeSinceReference(referenceTimestamp!) : null
     return (
-      <span className={`text-xs ${colorClass}`} title={`From ${timeAgo}`}>
+      <span className={`text-xs ${colorClass}`} title={timeAgo ? `From ${timeAgo}` : 'Default reference (10 candles back)'}>
         {sign}
         {referencePriceChangePercent.toFixed(2)}%
-        <span className="text-blue-400/60 ml-1">({timeAgo})</span>
+        {timeAgo && <span className="text-blue-400/60 ml-1">({timeAgo})</span>}
       </span>
     )
   }

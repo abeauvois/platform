@@ -349,8 +349,9 @@ export function createWatchlistOpenApiRoutes(
                 const priceMap = new Map(prices.map((p) => [p.symbol, p]));
 
                 // Fetch klines for reference price calculation (in parallel)
+                // Use 100 klines to cover longer reference periods (up to ~4 days for 1h interval)
                 const klinesPromises = symbols.map((symbol) =>
-                    exchangeClient.getKlines(symbol, '1h', 24).catch(() => [])
+                    exchangeClient.getKlines(symbol, '1h', 100).catch(() => [])
                 );
                 const klinesResults = await Promise.all(klinesPromises);
                 const klinesMap = new Map(symbols.map((s, i) => [s, klinesResults[i]]));
