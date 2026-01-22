@@ -33,9 +33,9 @@ export function useGlobalReference(isAuthenticated: boolean): UseGlobalReference
   const queryClient = useQueryClient()
   const [localTimestamp, setLocalTimestamp] = useState<number | null>(null)
 
-  // Fetch user settings from server
+  // Fetch user settings from platform API
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['userTradingSettings'],
+    queryKey: ['userSettings'],
     queryFn: fetchUserSettings,
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -46,29 +46,29 @@ export function useGlobalReference(isAuthenticated: boolean): UseGlobalReference
     mutationFn: updateUserSettings,
     onMutate: async (newData) => {
       // Optimistically update local state immediately
-      if ('globalReferenceTimestamp' in newData) {
-        setLocalTimestamp(newData.globalReferenceTimestamp ?? null)
+      if ('tradingReferenceTimestamp' in newData) {
+        setLocalTimestamp(newData.tradingReferenceTimestamp ?? null)
       }
     },
     onSuccess: () => {
       // Invalidate queries to refetch fresh data
-      queryClient.invalidateQueries({ queryKey: ['userTradingSettings'] })
+      queryClient.invalidateQueries({ queryKey: ['userSettings'] })
       queryClient.invalidateQueries({ queryKey: tradingKeys.watchlist() })
     },
     onError: (_err, _newData, _context) => {
       // On error, sync back from server settings
-      if (settings?.globalReferenceTimestamp !== undefined) {
-        setLocalTimestamp(settings.globalReferenceTimestamp)
+      if (settings?.tradingReferenceTimestamp !== undefined) {
+        setLocalTimestamp(settings.tradingReferenceTimestamp)
       }
     },
   })
 
   // Sync local state with server settings when loaded
   useEffect(() => {
-    if (settings?.globalReferenceTimestamp !== undefined) {
-      setLocalTimestamp(settings.globalReferenceTimestamp)
+    if (settings?.tradingReferenceTimestamp !== undefined) {
+      setLocalTimestamp(settings.tradingReferenceTimestamp)
     }
-  }, [settings?.globalReferenceTimestamp])
+  }, [settings?.tradingReferenceTimestamp])
 
   // Set global reference and persist to server
   const setGlobalReference = useCallback(
@@ -77,7 +77,7 @@ export function useGlobalReference(isAuthenticated: boolean): UseGlobalReference
       setLocalTimestamp(timestamp)
       // Persist to server if authenticated
       if (isAuthenticated) {
-        updateMutation.mutate({ globalReferenceTimestamp: timestamp })
+        updateMutation.mutate({ tradingReferenceTimestamp: timestamp })
       }
     },
     [isAuthenticated, updateMutation]

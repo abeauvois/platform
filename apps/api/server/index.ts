@@ -11,6 +11,7 @@ import { config } from './routes/config.routes';
 import { workflows } from './routes/workflow.routes';
 import { sources } from './routes/sources.routes';
 import { scraper } from './routes/scraper.routes';
+import { settings } from './routes/settings.routes';
 import { registerAllWorkers } from './tasks/workers';
 import { QUEUE_NAMES } from './tasks/types';
 import { DrizzleBackgroundTaskRepository } from './infrastructure/DrizzleBackgroundTaskRepository';
@@ -84,7 +85,8 @@ const router = app
   .route('/api/config', config)
   .route('/api/workflows', workflows)
   .route('/api/sources', sources)
-  .route('/api/scraper', scraper);
+  .route('/api/scraper', scraper)
+  .route('/api/settings', settings);
 
 export type AppType = typeof router;
 

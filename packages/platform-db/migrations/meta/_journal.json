@@ -22,6 +22,13 @@
       "when": 1769102747017,
       "tag": "0002_past_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769109101748,
+      "tag": "0003_medical_taskmaster",
+      "breakpoints": true
     }
   ]
 }

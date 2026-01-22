@@ -4,6 +4,7 @@
  * All types are re-exported from @platform/trading-domain for consistency.
  */
 import { tradingClient } from './trading-client';
+import { settingsClient } from './platform-client';
 import type {
   Candlestick,
   BalanceResponse,
@@ -12,9 +13,9 @@ import type {
   SymbolPrice,
   KlinesResponse,
   WatchlistItemResponse,
-  UserTradingSettingsResponse,
   SymbolSearchResult,
 } from '@platform/trading-domain';
+import type { UserSettings, UserSettingsUpdate, AccountMode } from '@platform/sdk';
 
 // Re-export types for backward compatibility with existing imports
 export type {
@@ -25,12 +26,12 @@ export type {
   SymbolPrice,
   KlinesResponse,
   WatchlistItemResponse,
-  UserTradingSettingsResponse,
   SymbolSearchResult,
+  UserSettings,
+  UserSettingsUpdate,
 };
 
-/** Account mode for trading orders */
-export type AccountMode = 'spot' | 'margin';
+export type { AccountMode };
 
 // ============================================
 // Balance Functions
@@ -102,18 +103,15 @@ export async function updateWatchlistReference(symbol: string, timestamp: number
 }
 
 // ============================================
-// User Settings Functions
+// User Settings Functions (via Platform API)
 // ============================================
 
-/** Fetch user trading settings */
-export async function fetchUserSettings(): Promise<UserTradingSettingsResponse> {
-  return tradingClient.getUserSettings();
+/** Fetch user settings from platform API */
+export async function fetchUserSettings(): Promise<UserSettings> {
+  return settingsClient.getUserSettings();
 }
 
-/** Update user trading settings */
-export async function updateUserSettings(data: {
-  defaultAccountMode?: AccountMode;
-  globalReferenceTimestamp?: number | null;
-}): Promise<UserTradingSettingsResponse> {
-  return tradingClient.updateUserSettings(data);
+/** Update user settings via platform API */
+export async function updateUserSettings(data: UserSettingsUpdate): Promise<UserSettings> {
+  return settingsClient.updateUserSettings(data);
 }

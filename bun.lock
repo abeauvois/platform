@@ -123,6 +123,7 @@
     "apps/trading-client": {
       "name": "trading-client",
       "dependencies": {
+        "@platform/sdk": "workspace:*",
         "@platform/trading-domain": "workspace:*",
         "@platform/trading-sdk": "workspace:*",
         "@platform/ui": "workspace:*",

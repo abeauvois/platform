@@ -26,6 +26,7 @@ export * from './domain/ports/IPendingContentRepository'
 export * from './domain/ports/IBookmarkEnricher'
 export * from './domain/ports/IWebScraper'
 export * from './domain/ports/IBrowserScraper'
+export * from './domain/ports/IUserSettingsRepository'
 
 // Application Services
 export * from './application/services/GetBookmarksByUserIdService'

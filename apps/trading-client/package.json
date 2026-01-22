@@ -14,6 +14,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@platform/sdk": "workspace:*",
     "@platform/trading-domain": "workspace:*",
     "@platform/trading-sdk": "workspace:*",
     "@platform/ui": "workspace:*",

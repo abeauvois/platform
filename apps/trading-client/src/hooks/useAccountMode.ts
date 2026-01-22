@@ -32,9 +32,9 @@ export function useAccountMode(isAuthenticated: boolean): UseAccountModeReturn {
   const queryClient = useQueryClient()
   const [accountMode, setLocalAccountMode] = useState<AccountMode>('spot')
 
-  // Fetch user settings from server
+  // Fetch user settings from platform API
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['userTradingSettings'],
+    queryKey: ['userSettings'],
     queryFn: fetchUserSettings,
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -44,16 +44,16 @@ export function useAccountMode(isAuthenticated: boolean): UseAccountModeReturn {
   const updateMutation = useMutation({
     mutationFn: updateUserSettings,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userTradingSettings'] })
+      queryClient.invalidateQueries({ queryKey: ['userSettings'] })
     },
   })
 
   // Sync local state with server settings when loaded
   useEffect(() => {
-    if (settings?.defaultAccountMode) {
-      setLocalAccountMode(settings.defaultAccountMode)
+    if (settings?.tradingAccountMode) {
+      setLocalAccountMode(settings.tradingAccountMode)
     }
-  }, [settings?.defaultAccountMode])
+  }, [settings?.tradingAccountMode])
 
   // Set account mode and persist to server
   const setAccountMode = useCallback(
@@ -61,7 +61,7 @@ export function useAccountMode(isAuthenticated: boolean): UseAccountModeReturn {
       setLocalAccountMode(mode)
       // Only persist to server if authenticated
       if (isAuthenticated) {
-        updateMutation.mutate({ defaultAccountMode: mode })
+        updateMutation.mutate({ tradingAccountMode: mode })
       }
     },
     [isAuthenticated, updateMutation]
