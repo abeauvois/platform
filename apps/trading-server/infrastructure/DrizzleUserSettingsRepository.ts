@@ -22,12 +22,18 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
 
         if (existing) {
             // Update existing settings
+            // Only update globalReferenceTimestamp if explicitly provided (including null)
+            const updateData: Record<string, unknown> = {
+                defaultAccountMode: data.defaultAccountMode ?? existing.defaultAccountMode,
+                updatedAt: new Date(),
+            };
+            if ('globalReferenceTimestamp' in data) {
+                updateData.globalReferenceTimestamp = data.globalReferenceTimestamp;
+            }
+
             const [result] = await db
                 .update(userTradingSettings)
-                .set({
-                    defaultAccountMode: data.defaultAccountMode ?? existing.defaultAccountMode,
-                    updatedAt: new Date(),
-                })
+                .set(updateData)
                 .where(eq(userTradingSettings.userId, userId))
                 .returning();
 
@@ -39,6 +45,7 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
                 .values({
                     userId,
                     defaultAccountMode: data.defaultAccountMode ?? 'spot',
+                    globalReferenceTimestamp: data.globalReferenceTimestamp ?? null,
                 })
                 .returning();
 
@@ -50,6 +57,7 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
         return {
             userId: row.userId,
             defaultAccountMode: row.defaultAccountMode as AccountMode,
+            globalReferenceTimestamp: row.globalReferenceTimestamp ?? null,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
         };

@@ -6,10 +6,11 @@ import { forwardRef, useCallback, useImperativeHandle } from 'react'
 import { useChartData } from '../../hooks/chart/useChartData'
 import { useChartInstance } from '../../hooks/chart/useChartInstance'
 import { useCrosshairInfo } from '../../hooks/chart/useCrosshairInfo'
-import { useOrderHistorySeries } from '../../hooks/chart/useOrderHistorySeries'
 import { useOrderLines } from '../../hooks/chart/useOrderLines'
 import { usePreviewLine } from '../../hooks/chart/usePreviewLine'
+import { useReferenceMarker } from '../../hooks/chart/useReferenceMarker'
 import { useTrendLines } from '../../hooks/chart/useTrendLines'
+import { useVerticalPreviewLine } from '../../hooks/chart/useVerticalPreviewLine'
 import { AssetSearch } from '../AssetSearch'
 import { CrosshairOverlay } from './CrosshairOverlay'
 
@@ -25,6 +26,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             orderHistory = [],
             currentPrice = 0,
             isInWatchlist = false,
+            referenceTimestamp = null,
             onAddToWatchlist,
             onAssetSelect,
             onIntervalChange,
@@ -70,18 +72,25 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             priceLinesRef,
         })
 
-        // Order history visualization (as markers on candlestick series)
-        useOrderHistorySeries({
+        // Reference marker and order history visualization (as markers on candlestick series)
+        const { setReferenceMarker } = useReferenceMarker({
+            referenceTimestamp,
             orderHistory,
             klinesData,
             candlestickSeriesRef,
         })
 
-        // Preview line for drag operations
+        // Preview line for drag operations (horizontal, for orders)
         const { showPreviewLine, hidePreviewLine } = usePreviewLine({
             currentPrice,
             candlestickSeriesRef,
             previewLineRef,
+        })
+
+        // Vertical preview line for reference date drag operations
+        const { showVerticalPreviewLine, hideVerticalPreviewLine, getTimeAtX } = useVerticalPreviewLine({
+            chartRef,
+            chartContainerRef,
         })
 
         // Crosshair info for variation display
@@ -122,6 +131,10 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 removeOrderLine: (orderId: string) => removeOrderLine(orderId),
                 showPreviewLine,
                 hidePreviewLine,
+                getTimeAtX,
+                showVerticalPreviewLine,
+                hideVerticalPreviewLine,
+                setReferenceMarker,
             }),
             [
                 chartContainerRef,
@@ -130,6 +143,10 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 removeOrderLine,
                 showPreviewLine,
                 hidePreviewLine,
+                getTimeAtX,
+                showVerticalPreviewLine,
+                hideVerticalPreviewLine,
+                setReferenceMarker,
             ]
         )
 
@@ -191,7 +208,7 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
                 <CardContent className="relative">
                     <div
                         ref={setRefs}
-                        className={`w-full transition-all ${isOver ? 'opacity-90' : ''}`}
+                        className={`w-full relative transition-all ${isOver ? 'opacity-90' : ''}`}
                     />
                     <CrosshairOverlay crosshairInfo={crosshairInfo} />
                     {isOver && (

@@ -377,6 +377,12 @@ export interface WatchlistItemResponse {
     price: number;
     priceChangePercent24h: number | null;
     addedAt: string;
+    /** Stored reference timestamp for price variation (Unix ms) */
+    referenceTimestamp: number | null;
+    /** Price at reference point (calculated from kline data) */
+    referencePrice: number | null;
+    /** Price change percentage from reference point to current */
+    referencePriceChangePercent: number | null;
 }
 
 /**
@@ -384,6 +390,8 @@ export interface WatchlistItemResponse {
  */
 export interface UserTradingSettingsResponse {
     defaultAccountMode: 'spot' | 'margin';
+    /** Global reference timestamp for watchlist price variation (Unix ms) */
+    globalReferenceTimestamp: number | null;
     createdAt: string;
     updatedAt: string;
 }

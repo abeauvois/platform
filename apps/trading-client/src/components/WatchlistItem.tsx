@@ -1,5 +1,5 @@
 import { formatPrice } from '@platform/trading-domain'
-import { X } from 'lucide-react'
+import { X, RotateCcw } from 'lucide-react'
 import { Skeleton } from '@platform/ui'
 
 import { extractBaseAsset } from '../utils/symbol'
@@ -8,22 +8,50 @@ export interface WatchlistItemProps {
   symbol: string
   price: number
   priceChangePercent: number | null
+  /** Reference timestamp in Unix ms (global, same for all items) */
+  referenceTimestamp?: number | null
+  /** Price change from reference point */
+  referencePriceChangePercent?: number | null
   isLoading?: boolean
   isSelected?: boolean
   onSelect: (symbol: string) => void
   onRemove: (symbol: string) => void
+  /** Callback to clear the global reference timestamp (applies to all items) */
+  onClearReference?: () => void
+}
+
+/**
+ * Format how long ago the reference was set
+ */
+function formatTimeSinceReference(timestamp: number): string {
+  const now = Date.now()
+  const diffMs = now - timestamp
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffDays > 0) {
+    return `${diffDays}d ago`
+  }
+  if (diffHours > 0) {
+    return `${diffHours}h ago`
+  }
+  return 'now'
 }
 
 export function WatchlistItem({
   symbol,
   price,
   priceChangePercent,
+  referenceTimestamp,
+  referencePriceChangePercent,
   isLoading = false,
   isSelected = false,
   onSelect,
   onRemove,
+  onClearReference,
 }: Readonly<WatchlistItemProps>) {
   const baseAsset = extractBaseAsset(symbol)
+  const hasReference = referenceTimestamp !== null && referenceTimestamp !== undefined
 
   const renderPrice = () => {
     if (isLoading) {
@@ -47,6 +75,23 @@ export function WatchlistItem({
     )
   }
 
+  const renderReferenceChange = () => {
+    if (!hasReference || referencePriceChangePercent === null || referencePriceChangePercent === undefined) {
+      return null
+    }
+    const isPositive = referencePriceChangePercent >= 0
+    const colorClass = isPositive ? 'text-blue-400' : 'text-blue-600'
+    const sign = isPositive ? '+' : ''
+    const timeAgo = formatTimeSinceReference(referenceTimestamp)
+    return (
+      <span className={`text-xs ${colorClass}`} title={`From ${timeAgo}`}>
+        {sign}
+        {referencePriceChangePercent.toFixed(2)}%
+        <span className="text-blue-400/60 ml-1">({timeAgo})</span>
+      </span>
+    )
+  }
+
   const handleSelect = () => {
     onSelect(symbol)
   }
@@ -54,6 +99,11 @@ export function WatchlistItem({
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation()
     onRemove(symbol)
+  }
+
+  const handleClearReference = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onClearReference?.()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -82,16 +132,31 @@ export function WatchlistItem({
       <div className="flex items-center gap-2">
         <div className="text-right">
           <div className="font-bold text-sm text-primary">{renderPrice()}</div>
-          {renderPriceChange()}
+          <div className="flex flex-col items-end">
+            {renderPriceChange()}
+            {renderReferenceChange()}
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleRemove}
-          className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-error/20 transition-opacity"
-          title="Remove from watchlist"
-        >
-          <X className="w-3 h-3 text-error" />
-        </button>
+        <div className="flex flex-col gap-0.5">
+          {hasReference && onClearReference && (
+            <button
+              type="button"
+              onClick={handleClearReference}
+              className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-blue-500/20 transition-opacity"
+              title="Clear reference"
+            >
+              <RotateCcw className="w-3 h-3 text-blue-400" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-error/20 transition-opacity"
+            title="Remove from watchlist"
+          >
+            <X className="w-3 h-3 text-error" />
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -90,7 +90,8 @@ app.route('/api/trading/symbols', createSymbolsOpenApiRoutes(publicExchangeClien
 app.route('/api/trading/watchlist', createWatchlistOpenApiRoutes(
   watchlistRepository,
   publicExchangeClient,
-  idGenerator
+  idGenerator,
+  userSettingsRepository
 ));
 
 // User settings route (requires user auth)

@@ -16,6 +16,10 @@ const AccountModeSchema = z.enum(['spot', 'margin']).openapi({
 
 const UserTradingSettingsSchema = z.object({
     defaultAccountMode: AccountModeSchema,
+    globalReferenceTimestamp: z.number().nullable().openapi({
+        example: 1705320000000,
+        description: 'Global reference timestamp for watchlist price variation (Unix ms)',
+    }),
     createdAt: z.string().datetime().openapi({
         example: '2024-01-15T12:00:00.000Z',
         description: 'When settings were created',
@@ -30,6 +34,10 @@ const UpdateSettingsRequestSchema = z.object({
     defaultAccountMode: AccountModeSchema.optional().openapi({
         example: 'margin',
         description: 'Default account mode for new orders',
+    }),
+    globalReferenceTimestamp: z.number().nullable().optional().openapi({
+        example: 1705320000000,
+        description: 'Global reference timestamp for watchlist price variation (Unix ms), or null to clear',
     }),
 }).openapi('UpdateSettingsRequest');
 
@@ -151,6 +159,7 @@ export function createSettingsOpenApiRoutes(settingsRepo: IUserSettingsRepositor
                     const now = new Date().toISOString();
                     return c.json({
                         defaultAccountMode: 'spot' as const,
+                        globalReferenceTimestamp: null,
                         createdAt: now,
                         updatedAt: now,
                     }, 200);
@@ -158,6 +167,7 @@ export function createSettingsOpenApiRoutes(settingsRepo: IUserSettingsRepositor
 
                 return c.json({
                     defaultAccountMode: settings.defaultAccountMode,
+                    globalReferenceTimestamp: settings.globalReferenceTimestamp,
                     createdAt: settings.createdAt.toISOString(),
                     updatedAt: settings.updatedAt.toISOString(),
                 }, 200);
@@ -176,6 +186,7 @@ export function createSettingsOpenApiRoutes(settingsRepo: IUserSettingsRepositor
 
                 return c.json({
                     defaultAccountMode: settings.defaultAccountMode,
+                    globalReferenceTimestamp: settings.globalReferenceTimestamp,
                     createdAt: settings.createdAt.toISOString(),
                     updatedAt: settings.updatedAt.toISOString(),
                 }, 200);

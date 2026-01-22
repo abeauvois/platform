@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
-import type { IExchangeClient, IWatchlistRepository, IIdGenerator } from '@platform/trading-domain';
+import type { IExchangeClient, IWatchlistRepository, IIdGenerator, IUserSettingsRepository } from '@platform/trading-domain';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 // OpenAPI schemas
@@ -19,6 +19,18 @@ const WatchlistItemSchema = z.object({
     addedAt: z.string().datetime().openapi({
         example: '2024-01-15T12:00:00.000Z',
         description: 'When symbol was added to watchlist',
+    }),
+    referenceTimestamp: z.number().nullable().openapi({
+        example: 1705320000000,
+        description: 'Reference timestamp for price variation (Unix ms)',
+    }),
+    referencePrice: z.number().nullable().openapi({
+        example: 88000.0,
+        description: 'Price at reference point (calculated from kline data)',
+    }),
+    referencePriceChangePercent: z.number().nullable().openapi({
+        example: 4.55,
+        description: 'Price change percentage from reference to current',
     }),
 }).openapi('WatchlistItem');
 
@@ -46,6 +58,21 @@ const ErrorSchema = z.object({
 const UnauthorizedSchema = z.object({
     error: z.string().openapi({ example: 'Unauthorized', description: 'Authentication required' }),
 }).openapi('UnauthorizedError');
+
+const UpdateReferenceRequestSchema = z.object({
+    timestamp: z.number().nullable().openapi({
+        example: 1705320000000,
+        description: 'Reference timestamp in Unix ms, or null to clear',
+    }),
+}).openapi('UpdateReferenceRequest');
+
+const UpdateReferenceResponseSchema = z.object({
+    symbol: z.string().openapi({ example: 'BTCUSDT', description: 'Symbol updated' }),
+    referenceTimestamp: z.number().nullable().openapi({
+        example: 1705320000000,
+        description: 'New reference timestamp',
+    }),
+}).openapi('UpdateReferenceResponse');
 
 // Route definitions
 const getWatchlistRoute = createRoute({
@@ -178,17 +205,122 @@ const removeSymbolRoute = createRoute({
     },
 });
 
+const updateReferenceRoute = createRoute({
+    method: 'patch',
+    path: '/{symbol}/reference',
+    tags: ['Watchlist'],
+    summary: 'Update reference timestamp for a symbol',
+    description: 'Set or clear the reference timestamp for price variation calculation. Requires authentication.',
+    security: [{ session: [] }],
+    request: {
+        params: z.object({
+            symbol: z.string().openapi({ example: 'BTCUSDT', description: 'Symbol to update' }),
+        }),
+        body: {
+            content: {
+                'application/json': {
+                    schema: UpdateReferenceRequestSchema,
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'Reference updated successfully',
+            content: {
+                'application/json': {
+                    schema: UpdateReferenceResponseSchema,
+                },
+            },
+        },
+        401: {
+            description: 'Unauthorized - authentication required',
+            content: {
+                'application/json': {
+                    schema: UnauthorizedSchema,
+                },
+            },
+        },
+        404: {
+            description: 'Symbol not found in watchlist',
+            content: {
+                'application/json': {
+                    schema: ErrorSchema,
+                },
+            },
+        },
+        500: {
+            description: 'Server error',
+            content: {
+                'application/json': {
+                    schema: ErrorSchema,
+                },
+            },
+        },
+    },
+});
+
+/** Default number of klines back to use when no reference is set */
+const DEFAULT_REFERENCE_KLINES_BACK = 10;
+
+/**
+ * Calculate reference price from klines data
+ * @param klines - Array of candlesticks
+ * @param referenceTimestamp - Timestamp to find price for, or null for default (10 klines back)
+ * @param currentPrice - Current price for calculating variation
+ * @returns Reference price data or nulls if not calculable
+ */
+function calculateReferencePrice(
+    klines: Array<{ openTime: number; close: number }>,
+    referenceTimestamp: number | null,
+    currentPrice: number
+): { referencePrice: number | null; referencePriceChangePercent: number | null } {
+    if (klines.length === 0) {
+        return { referencePrice: null, referencePriceChangePercent: null };
+    }
+
+    let referencePrice: number | null = null;
+
+    if (referenceTimestamp === null) {
+        // Use default: 10 klines back (or first available if less)
+        const backIndex = Math.max(0, klines.length - DEFAULT_REFERENCE_KLINES_BACK);
+        referencePrice = klines[backIndex].close;
+    } else {
+        // Find kline containing the reference timestamp
+        for (const kline of klines) {
+            if (kline.openTime <= referenceTimestamp) {
+                referencePrice = kline.close;
+            } else {
+                break;
+            }
+        }
+        // If timestamp is before all klines, use first kline
+        if (referencePrice === null && klines.length > 0) {
+            referencePrice = klines[0].close;
+        }
+    }
+
+    if (referencePrice === null || referencePrice === 0) {
+        return { referencePrice: null, referencePriceChangePercent: null };
+    }
+
+    const referencePriceChangePercent = ((currentPrice - referencePrice) / referencePrice) * 100;
+    return { referencePrice, referencePriceChangePercent };
+}
+
 /**
  * Create watchlist OpenAPI routes with dependency injection
  * @param watchlistRepo - Watchlist repository instance (injected)
  * @param exchangeClient - Exchange client for fetching prices (injected)
  * @param idGenerator - ID generator for creating watchlist item IDs (injected)
+ * @param settingsRepo - User settings repository for fetching global reference timestamp (injected)
  * @returns OpenAPIHono app with watchlist routes
  */
 export function createWatchlistOpenApiRoutes(
     watchlistRepo: IWatchlistRepository,
     exchangeClient: IExchangeClient,
-    idGenerator: IIdGenerator
+    idGenerator: IIdGenerator,
+    settingsRepo: IUserSettingsRepository
 ) {
     const app = new OpenAPIHono<HonoEnv>();
 
@@ -205,6 +337,10 @@ export function createWatchlistOpenApiRoutes(
                     return c.json([], 200);
                 }
 
+                // Fetch global reference timestamp from user settings
+                const settings = await settingsRepo.findByUserId(user.id);
+                const globalReferenceTimestamp = settings?.globalReferenceTimestamp ?? null;
+
                 // Batch fetch prices for all symbols
                 const symbols = items.map((item) => item.symbol);
                 const prices = await exchangeClient.getTickers(symbols);
@@ -212,13 +348,34 @@ export function createWatchlistOpenApiRoutes(
                 // Create price lookup map
                 const priceMap = new Map(prices.map((p) => [p.symbol, p]));
 
-                // Combine watchlist with price data
-                const result = items.map((item) => ({
-                    symbol: item.symbol,
-                    price: priceMap.get(item.symbol)?.price ?? 0,
-                    priceChangePercent24h: priceMap.get(item.symbol)?.priceChangePercent24h ?? null,
-                    addedAt: item.createdAt.toISOString(),
-                }));
+                // Fetch klines for reference price calculation (in parallel)
+                const klinesPromises = symbols.map((symbol) =>
+                    exchangeClient.getKlines(symbol, '1h', 24).catch(() => [])
+                );
+                const klinesResults = await Promise.all(klinesPromises);
+                const klinesMap = new Map(symbols.map((s, i) => [s, klinesResults[i]]));
+
+                // Combine watchlist with price data and reference calculations
+                // Use global reference timestamp for ALL items
+                const result = items.map((item) => {
+                    const currentPrice = priceMap.get(item.symbol)?.price ?? 0;
+                    const klines = klinesMap.get(item.symbol) ?? [];
+                    const { referencePrice, referencePriceChangePercent } = calculateReferencePrice(
+                        klines,
+                        globalReferenceTimestamp,
+                        currentPrice
+                    );
+
+                    return {
+                        symbol: item.symbol,
+                        price: currentPrice,
+                        priceChangePercent24h: priceMap.get(item.symbol)?.priceChangePercent24h ?? null,
+                        addedAt: item.createdAt.toISOString(),
+                        referenceTimestamp: globalReferenceTimestamp,
+                        referencePrice,
+                        referencePriceChangePercent,
+                    };
+                });
 
                 return c.json(result, 200);
             } catch (error) {
@@ -272,6 +429,29 @@ export function createWatchlistOpenApiRoutes(
             } catch (error) {
                 console.error('Failed to remove symbol:', error);
                 const message = error instanceof Error ? error.message : 'Failed to remove symbol from watchlist';
+                return c.json({ error: message }, 500);
+            }
+        })
+        .openapi(updateReferenceRoute, async (c) => {
+            try {
+                const user = c.get('user');
+                const { symbol } = c.req.valid('param');
+                const { timestamp } = c.req.valid('json');
+                const normalizedSymbol = symbol.toUpperCase();
+
+                const updated = await watchlistRepo.updateReference(user.id, normalizedSymbol, timestamp);
+
+                if (!updated) {
+                    return c.json({ error: 'Symbol not found in watchlist' }, 404);
+                }
+
+                return c.json({
+                    symbol: normalizedSymbol,
+                    referenceTimestamp: timestamp,
+                }, 200);
+            } catch (error) {
+                console.error('Failed to update reference:', error);
+                const message = error instanceof Error ? error.message : 'Failed to update reference';
                 return c.json({ error: message }, 500);
             }
         });

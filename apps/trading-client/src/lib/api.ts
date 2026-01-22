@@ -96,6 +96,11 @@ export async function removeFromWatchlist(symbol: string): Promise<void> {
   return tradingClient.removeFromWatchlist(symbol);
 }
 
+/** Update reference timestamp for a watchlist symbol */
+export async function updateWatchlistReference(symbol: string, timestamp: number | null): Promise<void> {
+  return tradingClient.updateWatchlistReference(symbol, timestamp);
+}
+
 // ============================================
 // User Settings Functions
 // ============================================
@@ -108,6 +113,7 @@ export async function fetchUserSettings(): Promise<UserTradingSettingsResponse> 
 /** Update user trading settings */
 export async function updateUserSettings(data: {
   defaultAccountMode?: AccountMode;
+  globalReferenceTimestamp?: number | null;
 }): Promise<UserTradingSettingsResponse> {
   return tradingClient.updateUserSettings(data);
 }

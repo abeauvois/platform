@@ -14,6 +14,8 @@ export type AccountMode = 'spot' | 'margin';
 export interface UserTradingSettings {
     userId: string;
     defaultAccountMode: AccountMode;
+    /** Global reference timestamp for watchlist price variation (Unix ms) */
+    globalReferenceTimestamp: number | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -23,6 +25,8 @@ export interface UserTradingSettings {
  */
 export interface UserTradingSettingsUpdate {
     defaultAccountMode?: AccountMode;
+    /** Global reference timestamp for watchlist price variation (Unix ms), or null to clear */
+    globalReferenceTimestamp?: number | null;
 }
 
 /**

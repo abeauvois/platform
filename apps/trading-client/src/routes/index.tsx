@@ -15,6 +15,7 @@ import { WatchlistCard } from '../components/WatchlistCard'
 import { useAccountMode } from '../hooks/useAccountMode'
 import { useCurrentPrice } from '../hooks/useCurrentPrice'
 import { useDragOrder } from '../hooks/useDragOrder'
+import { useDragReferenceDate, SET_REFERENCE_DRAG_ID } from '../hooks/useDragReferenceDate'
 import { useMarginAvailability } from '../hooks/useMarginAvailability'
 import { useFetchOrderHistory } from '../hooks/useFetchOrderHistory'
 import { useOrderAmounts } from '../hooks/useOrderAmounts'
@@ -24,7 +25,9 @@ import { useSelectedAsset } from '../hooks/useSelectedAsset'
 import { useTradingBalances } from '../hooks/useTradingBalances'
 import { useTradingData } from '../hooks/useTradingData'
 import { useWatchlistActions } from '../hooks/useWatchlistActions'
+import { useWatchlistMutations } from '../hooks/useWatchlistMutations'
 
+import type { DragEndEvent, DragMoveEvent, DragStartEvent } from '@dnd-kit/core'
 import type { TradingChartHandle } from '../components/TradingChart'
 
 export const Route = createFileRoute('/')({
@@ -119,6 +122,27 @@ function HomePage() {
     handleWatchlistRemove,
   } = useWatchlistActions(tradingSymbol, isAuthenticated, handleAssetSelect)
 
+  // Watchlist mutations (for updating global reference)
+  const { updateGlobalReference } = useWatchlistMutations()
+
+  // Handle global reference update from drag-drop
+  const handleUpdateReference = useCallback(
+    (timestamp: number | null) => {
+      updateGlobalReference.mutate(timestamp)
+    },
+    [updateGlobalReference]
+  )
+
+  // Handle clearing global reference (applies to all watchlist items)
+  const handleClearReference = useCallback(() => {
+    updateGlobalReference.mutate(null)
+  }, [updateGlobalReference])
+
+  // Get global reference timestamp (same for all watchlist items)
+  const globalReferenceTimestamp = watchlistData.length > 0
+    ? watchlistData[0].referenceTimestamp
+    : null
+
   // Transform order history data for the chart
   const orderHistory = useMemo(() => {
     if (!orderHistoryData) return []
@@ -178,7 +202,13 @@ function HomePage() {
   }, [orderMode])
 
   // Drag-and-drop order placement
-  const { sensors, activeDragId, handleDragStart, handleDragMove, handleDragEnd } = useDragOrder({
+  const {
+    sensors,
+    activeDragId: orderDragId,
+    handleDragStart: handleOrderDragStart,
+    handleDragMove: handleOrderDragMove,
+    handleDragEnd: handleOrderDragEnd,
+  } = useDragOrder({
     chartRef,
     tradingSymbol,
     baseAsset,
@@ -196,6 +226,52 @@ function HomePage() {
     maxBorrowableQuote,
     createOrder,
   })
+
+  // Drag-and-drop reference date selection (global reference for all watchlist items)
+  const {
+    activeDragId: refDragId,
+    isReferenceDragActive,
+    handleReferenceDragStart,
+    handleReferenceDragMove,
+    handleReferenceDragEnd,
+  } = useDragReferenceDate({
+    chartRef,
+    onUpdateReference: handleUpdateReference,
+  })
+
+  // Combined active drag ID for overlay
+  const activeDragId = orderDragId || refDragId
+
+  // Combined drag handlers
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      handleOrderDragStart(event)
+      handleReferenceDragStart(event)
+    },
+    [handleOrderDragStart, handleReferenceDragStart]
+  )
+
+  const handleDragMove = useCallback(
+    (event: DragMoveEvent) => {
+      if (String(event.active.id) === SET_REFERENCE_DRAG_ID) {
+        handleReferenceDragMove(event)
+      } else {
+        handleOrderDragMove(event)
+      }
+    },
+    [handleOrderDragMove, handleReferenceDragMove]
+  )
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      if (String(event.active.id) === SET_REFERENCE_DRAG_ID) {
+        handleReferenceDragEnd(event)
+      } else {
+        handleOrderDragEnd(event)
+      }
+    },
+    [handleOrderDragEnd, handleReferenceDragEnd]
+  )
 
   return (
     <DndContext
@@ -259,6 +335,7 @@ function HomePage() {
               )
               .map((o) => ({ id: o.id, side: o.side, price: o.price, quantity: o.quantity }))}
             orderHistory={orderHistory}
+            referenceTimestamp={globalReferenceTimestamp}
             isInWatchlist={isInWatchlist}
             onAddToWatchlist={isAuthenticated ? handleAddToWatchlist : undefined}
             onAssetSelect={handleAssetSelect}
@@ -292,7 +369,7 @@ function HomePage() {
         </div>
 
         {/* Right Column - Watchlist */}
-        <div className="w-64 flex flex-col gap-3">
+        <div className="w-80 flex flex-col gap-3">
           <WatchlistCard
             watchlist={watchlistData}
             isLoading={isWatchlistLoading}
@@ -301,14 +378,20 @@ function HomePage() {
             selectedSymbol={assetSource === 'watchlist' ? tradingSymbol : undefined}
             onSymbolSelect={handleWatchlistSelect}
             onRemoveSymbol={handleWatchlistRemove}
+            onClearReference={handleClearReference}
           />
         </div>
       </section>
 
       {/* Drag overlay for visual feedback */}
       <DragOverlay>
-        {activeDragId && (
+        {activeDragId && !isReferenceDragActive && (
           <DragOverlayBadge side={activeDragId === 'drag-buy' ? 'buy' : 'sell'} />
+        )}
+        {isReferenceDragActive && (
+          <div className="px-3 py-1.5 rounded-lg bg-blue-500/90 text-white text-sm font-medium shadow-lg">
+            Set Reference
+          </div>
         )}
       </DragOverlay>
 

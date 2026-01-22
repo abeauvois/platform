@@ -541,6 +541,33 @@ export class TradingApiClient extends BaseClient {
         }
     }
 
+    /**
+     * Update reference timestamp for a watchlist symbol
+     * Requires user authentication
+     * @param symbol - Trading pair symbol
+     * @param timestamp - Reference timestamp in Unix ms, or null to clear
+     */
+    async updateWatchlistReference(symbol: string, timestamp: number | null): Promise<void> {
+        try {
+            this.logger.info(`Updating reference for ${symbol}...`);
+
+            await this.authenticatedRequest<void>(
+                `/api/trading/watchlist/${encodeURIComponent(symbol)}/reference`,
+                {
+                    method: 'PATCH',
+                    body: JSON.stringify({ timestamp }),
+                }
+            );
+
+            this.logger.info(`Reference updated for ${symbol}`);
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error updating watchlist reference: ${errorMessage}`);
+            throw error;
+        }
+    }
+
     // ============================================
     // User Settings Methods (User Authenticated)
     // ============================================
@@ -572,7 +599,10 @@ export class TradingApiClient extends BaseClient {
      * Update user trading settings
      * Requires user authentication
      */
-    async updateUserSettings(data: { defaultAccountMode?: 'spot' | 'margin' }): Promise<UserTradingSettingsResponse> {
+    async updateUserSettings(data: {
+        defaultAccountMode?: 'spot' | 'margin';
+        globalReferenceTimestamp?: number | null;
+    }): Promise<UserTradingSettingsResponse> {
         try {
             this.logger.info('Updating user settings...');
 

@@ -8,6 +8,20 @@
       "when": 1768770295160,
       "tag": "0000_furry_the_enforcers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769101100566,
+      "tag": "0001_chilly_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769102747017,
+      "tag": "0002_past_wallflower",
+      "breakpoints": true
     }
   ]
 }
