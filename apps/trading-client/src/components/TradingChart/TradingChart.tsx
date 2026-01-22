@@ -72,12 +72,14 @@ export const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(
             priceLinesRef,
         })
 
-        // Reference marker and order history visualization (as markers on candlestick series)
+        // Reference marker (vertical line) and order history visualization
         const { setReferenceMarker } = useReferenceMarker({
             referenceTimestamp,
             orderHistory,
             klinesData,
             candlestickSeriesRef,
+            chartRef,
+            chartContainerRef,
         })
 
         // Preview line for drag operations (horizontal, for orders)
