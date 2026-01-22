@@ -10,23 +10,6 @@ import {
 import { user } from './auth';
 
 /**
- * User trading settings table
- * Stores user preferences for trading (e.g., default account mode)
- */
-export const userTradingSettings = pgTable('user_trading_settings', {
-    userId: text('user_id')
-        .primaryKey()
-        .references(() => user.id, { onDelete: 'cascade' }),
-    defaultAccountMode: varchar('default_account_mode', { length: 10 })
-        .notNull()
-        .default('spot'), // 'spot' | 'margin'
-    /** Global reference timestamp for watchlist price variation (Unix ms) */
-    globalReferenceTimestamp: bigint('global_reference_timestamp', { mode: 'number' }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
-/**
  * Watchlist table
  * Stores user watchlist symbols for the trading app
  */

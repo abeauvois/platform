@@ -29,6 +29,13 @@
       "when": 1769109101748,
       "tag": "0003_medical_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769112465500,
+      "tag": "0004_naive_daimon_hellstrom",
+      "breakpoints": true
     }
   ]
 }

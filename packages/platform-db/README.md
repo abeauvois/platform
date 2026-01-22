@@ -10,7 +10,8 @@ packages/platform-db/
 │   ├── schema/
 │   │   ├── auth.ts      # Authentication tables (user, session, account, verification)
 │   │   ├── api.ts       # Application tables (todos, bookmarks, tasks)
-│   │   ├── trading.ts   # Trading tables (watchlist, settings)
+│   │   ├── trading.ts   # Trading tables (watchlist)
+│   │   ├── settings.ts  # User settings table
 │   │   └── index.ts     # Re-exports all schemas
 │   ├── db.ts            # Database connection (node-postgres Pool)
 │   └── index.ts         # Package exports
@@ -122,12 +123,17 @@ APP_ENV=development  # or 'production'
 | `pendingContent` | Content awaiting processing |
 | `backgroundTasks` | Background job tracking |
 
+### Settings
+
+| Table | Description |
+|-------|-------------|
+| `userSettings` | Unified user preferences (theme, locale, trading settings) |
+
 ### Trading Application
 
 | Table | Description |
 |-------|-------------|
-| `watchlistItems` | User watchlist items |
-| `userTradingSettings` | User trading preferences |
+| `watchlist` | User watchlist items |
 
 ## Adding New Tables
 

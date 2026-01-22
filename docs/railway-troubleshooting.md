@@ -437,9 +437,12 @@ railway run --service=platform bun run db:migrate
 # or
 
 railway run --service=platform psql $DATABASE_URL -c "
-  CREATE TABLE IF NOT EXISTS user_trading_settings (
+  CREATE TABLE IF NOT EXISTS user_settings (
       user_id TEXT PRIMARY KEY REFERENCES \"user\"(id) ON DELETE CASCADE,
-      default_account_mode VARCHAR(10) NOT NULL DEFAULT 'spot',
+      theme VARCHAR(10) NOT NULL DEFAULT 'system',
+      locale VARCHAR(10) NOT NULL DEFAULT 'en',
+      trading_account_mode VARCHAR(10) DEFAULT 'spot',
+      trading_reference_timestamp BIGINT,
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
   );

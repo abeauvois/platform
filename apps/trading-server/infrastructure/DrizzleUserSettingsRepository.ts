@@ -1,4 +1,4 @@
-import { db, userTradingSettings, eq } from '@platform/db';
+import { db, userSettings, eq } from '@platform/db';
 import type {
     IUserSettingsRepository,
     UserTradingSettings,
@@ -10,8 +10,8 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
     async findByUserId(userId: string): Promise<UserTradingSettings | null> {
         const [result] = await db
             .select()
-            .from(userTradingSettings)
-            .where(eq(userTradingSettings.userId, userId))
+            .from(userSettings)
+            .where(eq(userSettings.userId, userId))
             .limit(1);
 
         return result ? this.toDomain(result) : null;
@@ -24,28 +24,28 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
             // Update existing settings
             // Only update globalReferenceTimestamp if explicitly provided (including null)
             const updateData: Record<string, unknown> = {
-                defaultAccountMode: data.defaultAccountMode ?? existing.defaultAccountMode,
+                tradingAccountMode: data.defaultAccountMode ?? existing.defaultAccountMode,
                 updatedAt: new Date(),
             };
             if ('globalReferenceTimestamp' in data) {
-                updateData.globalReferenceTimestamp = data.globalReferenceTimestamp;
+                updateData.tradingReferenceTimestamp = data.globalReferenceTimestamp;
             }
 
             const [result] = await db
-                .update(userTradingSettings)
+                .update(userSettings)
                 .set(updateData)
-                .where(eq(userTradingSettings.userId, userId))
+                .where(eq(userSettings.userId, userId))
                 .returning();
 
             return this.toDomain(result);
         } else {
             // Create new settings
             const [result] = await db
-                .insert(userTradingSettings)
+                .insert(userSettings)
                 .values({
                     userId,
-                    defaultAccountMode: data.defaultAccountMode ?? 'spot',
-                    globalReferenceTimestamp: data.globalReferenceTimestamp ?? null,
+                    tradingAccountMode: data.defaultAccountMode ?? 'spot',
+                    tradingReferenceTimestamp: data.globalReferenceTimestamp ?? null,
                 })
                 .returning();
 
@@ -53,11 +53,11 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
         }
     }
 
-    private toDomain(row: typeof userTradingSettings.$inferSelect): UserTradingSettings {
+    private toDomain(row: typeof userSettings.$inferSelect): UserTradingSettings {
         return {
             userId: row.userId,
-            defaultAccountMode: row.defaultAccountMode as AccountMode,
-            globalReferenceTimestamp: row.globalReferenceTimestamp ?? null,
+            defaultAccountMode: (row.tradingAccountMode ?? 'spot') as AccountMode,
+            globalReferenceTimestamp: row.tradingReferenceTimestamp ?? null,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
         };
