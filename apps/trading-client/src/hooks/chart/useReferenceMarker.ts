@@ -92,16 +92,9 @@ export function useReferenceMarker({
 
     // Update markers when reference timestamp or klines data changes
     // klinesData is included to ensure markers are re-applied when symbol changes
-    // Use requestAnimationFrame to ensure chart data is rendered before setting markers
     useEffect(() => {
         currentRefTimestamp.current = referenceTimestamp
-
-        // Defer marker update to next frame to ensure chart series has data
-        const rafId = requestAnimationFrame(() => {
-            updateMarkers()
-        })
-
-        return () => cancelAnimationFrame(rafId)
+        updateMarkers()
     }, [referenceTimestamp, klinesData, updateMarkers])
 
     // Imperative function to set reference marker

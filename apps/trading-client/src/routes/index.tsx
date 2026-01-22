@@ -16,6 +16,7 @@ import { useAccountMode } from '../hooks/useAccountMode'
 import { useCurrentPrice } from '../hooks/useCurrentPrice'
 import { useDragOrder } from '../hooks/useDragOrder'
 import { useDragReferenceDate, SET_REFERENCE_DRAG_ID } from '../hooks/useDragReferenceDate'
+import { useGlobalReference } from '../hooks/useGlobalReference'
 import { useMarginAvailability } from '../hooks/useMarginAvailability'
 import { useFetchOrderHistory } from '../hooks/useFetchOrderHistory'
 import { useOrderAmounts } from '../hooks/useOrderAmounts'
@@ -25,7 +26,6 @@ import { useSelectedAsset } from '../hooks/useSelectedAsset'
 import { useTradingBalances } from '../hooks/useTradingBalances'
 import { useTradingData } from '../hooks/useTradingData'
 import { useWatchlistActions } from '../hooks/useWatchlistActions'
-import { useWatchlistMutations } from '../hooks/useWatchlistMutations'
 
 import type { DragEndEvent, DragMoveEvent, DragStartEvent } from '@dnd-kit/core'
 import type { TradingChartHandle } from '../components/TradingChart'
@@ -122,26 +122,12 @@ function HomePage() {
     handleWatchlistRemove,
   } = useWatchlistActions(tradingSymbol, isAuthenticated, handleAssetSelect)
 
-  // Watchlist mutations (for updating global reference)
-  const { updateGlobalReference } = useWatchlistMutations()
-
-  // Handle global reference update from drag-drop
-  const handleUpdateReference = useCallback(
-    (timestamp: number | null) => {
-      updateGlobalReference.mutate(timestamp)
-    },
-    [updateGlobalReference]
-  )
-
-  // Handle clearing global reference (applies to all watchlist items)
-  const handleClearReference = useCallback(() => {
-    updateGlobalReference.mutate(null)
-  }, [updateGlobalReference])
-
-  // Get global reference timestamp (same for all watchlist items)
-  const globalReferenceTimestamp = watchlistData.length > 0
-    ? watchlistData[0].referenceTimestamp
-    : null
+  // Global reference timestamp - stored in user settings, persists across sessions
+  const {
+    globalReferenceTimestamp,
+    setGlobalReference,
+    clearGlobalReference,
+  } = useGlobalReference(isAuthenticated)
 
   // Transform order history data for the chart
   const orderHistory = useMemo(() => {
@@ -236,7 +222,7 @@ function HomePage() {
     handleReferenceDragEnd,
   } = useDragReferenceDate({
     chartRef,
-    onUpdateReference: handleUpdateReference,
+    onUpdateReference: setGlobalReference,
   })
 
   // Combined active drag ID for overlay
@@ -378,7 +364,7 @@ function HomePage() {
             selectedSymbol={assetSource === 'watchlist' ? tradingSymbol : undefined}
             onSymbolSelect={handleWatchlistSelect}
             onRemoveSymbol={handleWatchlistRemove}
-            onClearReference={handleClearReference}
+            onClearReference={clearGlobalReference}
           />
         </div>
       </section>
