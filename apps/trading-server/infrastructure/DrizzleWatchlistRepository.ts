@@ -53,12 +53,28 @@ export class DrizzleWatchlistRepository implements IWatchlistRepository {
         return !!result;
     }
 
+    async updateReference(userId: string, symbol: string, timestamp: number | null): Promise<boolean> {
+        const result = await db
+            .update(watchlist)
+            .set({ referenceTimestamp: timestamp })
+            .where(
+                and(
+                    eq(watchlist.userId, userId),
+                    eq(watchlist.symbol, symbol.toUpperCase())
+                )
+            )
+            .returning();
+
+        return result.length > 0;
+    }
+
     private toDomain(row: typeof watchlist.$inferSelect): WatchlistItem {
         return {
             id: row.id,
             userId: row.userId,
             symbol: row.symbol,
             createdAt: row.createdAt,
+            referenceTimestamp: row.referenceTimestamp,
         };
     }
 }

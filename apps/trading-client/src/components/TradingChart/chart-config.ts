@@ -11,6 +11,8 @@ export const CHART_COLORS = {
     up: '#22c55e',
     down: '#ef4444',
     ema: '#f59e0b',
+    reference: '#3b82f6', // Blue for reference marker
+    verticalPreview: '#8b5cf6', // Purple for vertical preview line
 } as const
 
 /**

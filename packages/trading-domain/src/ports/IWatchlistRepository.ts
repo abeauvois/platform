@@ -11,6 +11,8 @@ export interface WatchlistItem {
     userId: string;
     symbol: string;
     createdAt: Date;
+    /** Reference timestamp for price variation calculation (Unix ms) */
+    referenceTimestamp: number | null;
 }
 
 /**
@@ -57,4 +59,13 @@ export interface IWatchlistRepository {
      * @returns true if exists, false otherwise
      */
     exists(userId: string, symbol: string): Promise<boolean>;
+
+    /**
+     * Update reference timestamp for a watchlist item
+     * @param userId - User ID
+     * @param symbol - Trading pair symbol
+     * @param timestamp - Reference timestamp in Unix ms, or null to clear
+     * @returns true if updated, false if symbol not found
+     */
+    updateReference(userId: string, symbol: string, timestamp: number | null): Promise<boolean>;
 }

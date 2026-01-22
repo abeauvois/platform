@@ -31,6 +31,14 @@ export interface TradingChartHandle {
     removeOrderLine: (orderId: string) => void
     showPreviewLine: (price: number, side: 'buy' | 'sell') => void
     hidePreviewLine: () => void
+    /** Convert X pixel coordinate to timestamp */
+    getTimeAtX: (x: number) => number | null
+    /** Show vertical preview line at given timestamp during drag */
+    showVerticalPreviewLine: (time: number) => void
+    /** Hide vertical preview line */
+    hideVerticalPreviewLine: () => void
+    /** Set or clear reference marker at given timestamp */
+    setReferenceMarker: (time: number | null) => void
 }
 
 /**
@@ -44,6 +52,8 @@ export interface TradingChartProps {
     orderHistory?: Array<OrderHistoryItem>
     currentPrice?: number
     isInWatchlist?: boolean
+    /** Reference timestamp for marker display (Unix ms) */
+    referenceTimestamp?: number | null
     onAddToWatchlist?: () => void
     onAssetSelect?: (baseAsset: string) => void
     onIntervalChange?: (interval: string) => void
