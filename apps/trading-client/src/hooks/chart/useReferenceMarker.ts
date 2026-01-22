@@ -17,11 +17,15 @@ export interface UseReferenceMarkerReturn {
     setReferenceMarker: (time: number | null) => void
 }
 
+/** Default number of candles back for reference point when none is set */
+const DEFAULT_REFERENCE_OFFSET = 10
+
 /**
  * Hook to manage reference marker on the candlestick series
  *
  * Handles:
- * - Displaying blue triangle marker at reference point
+ * - Displaying blue circle marker at reference point
+ * - Default reference point 10 candles back when none is set
  * - Merging with order history markers
  * - Updating when reference changes
  */
@@ -41,10 +45,11 @@ export function useReferenceMarker({
         }
 
         const series = candlestickSeriesRef.current
+        const klines = klinesData.klines
 
         // Get the visible time range from klines data
-        const firstKline = klinesData.klines[0]
-        const lastKline = klinesData.klines.at(-1)
+        const firstKline = klines[0]
+        const lastKline = klines.at(-1)
         if (!lastKline) return
 
         const chartStartTime = Math.floor(firstKline.openTime / 1000)
@@ -65,22 +70,33 @@ export function useReferenceMarker({
                 size: 1,
             }))
 
-        // Build reference marker if set
+        // Build reference marker
         const markers: Array<SeriesMarker<Time>> = [...orderMarkers]
 
+        // Determine reference time: use explicit timestamp or default to 10 candles back
+        let refTimeSeconds: number
+        let isDefaultRef = false
+
         if (currentRefTimestamp.current !== null) {
-            const refTimeSeconds = Math.floor(currentRefTimestamp.current / 1000)
-            // Only show if within visible range
-            if (refTimeSeconds >= chartStartTime && refTimeSeconds <= chartEndTime) {
-                markers.push({
-                    time: refTimeSeconds as Time,
-                    position: 'aboveBar' as const,
-                    color: CHART_COLORS.reference,
-                    shape: 'circle' as const,
-                    text: 'REF',
-                    size: 2,
-                })
-            }
+            refTimeSeconds = Math.floor(currentRefTimestamp.current / 1000)
+        } else {
+            // Default: 10 candles back from the last candle
+            const defaultIndex = Math.max(0, klines.length - 1 - DEFAULT_REFERENCE_OFFSET)
+            const defaultKline = klines[defaultIndex]
+            refTimeSeconds = Math.floor(defaultKline.openTime / 1000)
+            isDefaultRef = true
+        }
+
+        // Only show if within visible range
+        if (refTimeSeconds >= chartStartTime && refTimeSeconds <= chartEndTime) {
+            markers.push({
+                time: refTimeSeconds as Time,
+                position: 'aboveBar' as const,
+                color: CHART_COLORS.reference,
+                shape: 'circle' as const,
+                text: isDefaultRef ? '' : 'REF',
+                size: isDefaultRef ? 1 : 2,
+            })
         }
 
         // Sort markers by time
