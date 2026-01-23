@@ -22,7 +22,8 @@ This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
 ├── platform-sdk/        # Platform API client SDK
 ├── trading-domain/      # Trading-specific domain models
 ├── trading-sdk/         # Trading API client SDK
-└── cached-http-client/  # HTTP client with caching, throttling, and retry
+├── cached-http-client/  # HTTP client with caching, throttling, and retry
+└── browser-scraper/     # Browser scraping with Puppeteer/CDP (⚠️ uses DOM types)
 
 /src
 └── utils/            # Legacy utilities (HtmlLinksParser.ts)
@@ -56,6 +57,14 @@ The API server (`/apps/api`) is the single source of truth for configuration. En
 - Shared types exported from `@platform/platform-domain`
 - Authentication handled by `@platform/auth` package
 - Database schema in `@platform/db` package
+
+### Package Type Categories
+
+**DOM-dependent packages** (require `lib: ["DOM"]` in consuming apps):
+- `@platform/browser-scraper` - Uses Puppeteer, `document`, `HTMLElement`
+
+**Server-only packages** (no DOM types needed):
+- `@platform/platform-domain`, `@platform/platform-task`, `@platform/cached-http-client`, etc.
 
 ### Task Abstraction Pattern
 
@@ -326,6 +335,30 @@ import someLegacyModule from "legacy-package"; // ⚠️ May not work in Bun
 3. Refactor with tests passing
 4. Never change behavior without explicit request
 
+### When Creating a New Package
+
+1. Create `tsconfig.json` with appropriate `lib` settings (see TypeScript Configuration section)
+2. If the package uses DOM APIs, include `"DOM"` and `"DOM.Iterable"` in `lib`
+3. For each app that will import this package:
+   - Add path mapping in app's `tsconfig.json`
+   - If package uses DOM, ensure app's `lib` includes DOM types
+4. Run `bun run ci:typecheck` to verify
+
+### When Adding a Workspace Dependency to an App
+
+1. Add the dependency to `package.json` with `workspace:*`
+2. Add path mapping in `tsconfig.json`: `"@platform/pkg": ["../../packages/pkg/src/index.ts"]`
+3. Check if the package uses DOM types - if so, add `"DOM"` to app's `lib`
+4. Run `bun run ci:typecheck` to verify
+
+### When Handling Dependency Upgrades (especially major versions)
+
+1. **First**: Run `bun run ci:local` to identify breaking changes
+2. Search for migration guide: `{package} v{old} to v{new} migration`
+3. Update all affected code to match new API
+4. Run `bun run ci:local` again to verify fixes
+5. Document significant API changes in commit message
+
 ## Custom Slash Commands
 
 Custom commands are stored in `.claude/commands/`. When a user invokes a command like `/ci-fix`, read the corresponding file `.claude/commands/ci-fix.md` and follow its instructions.
@@ -432,6 +465,7 @@ You MUST:
 2. Update `scripts/worktree.sh` to include the new port in the offset calculation
 3. Update CORS allowlists in relevant servers if the new app needs API access
 4. Update Dockerfile files that copy workspace `package.json` files (see below)
+5. Configure TypeScript properly (see TypeScript Configuration section below)
 
 ### Dockerfile Updates for Workspace Changes
 
@@ -454,6 +488,129 @@ COPY packages/cached-http-client/package.json ./packages/cached-http-client/
 ```
 
 Failure to update Dockerfiles will cause CI/CD builds to fail with "lockfile had changes" errors.
+
+### TypeScript Configuration for Workspace Packages
+
+**CRITICAL**: TypeScript path mappings and lib configurations must be properly set up when apps import workspace packages.
+
+#### Rule 1: Add Path Mappings for Workspace Dependencies
+
+When an app imports a workspace package (e.g., `@platform/browser-scraper`), you MUST add a path mapping in the app's `tsconfig.json`:
+
+```json
+// apps/api/tsconfig.json or apps/cli/tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"],
+      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"]
+      // ... other workspace packages
+    }
+  }
+}
+```
+
+**Why**: Without path mappings, TypeScript cannot resolve workspace package types during `tsc --noEmit` checks, causing "Cannot find module" errors.
+
+#### Rule 2: Match Library Types to Package Requirements
+
+If an app imports a package that uses DOM types (e.g., `browser-scraper` uses `document`, `HTMLElement`), the consuming app's tsconfig MUST include DOM in its `lib`:
+
+```json
+// apps/cli/tsconfig.json - CLI that imports browser-scraper
+{
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],  // DOM required!
+    "types": ["bun-types"]
+  }
+}
+```
+
+**Why**: When TypeScript resolves imports via path mappings, it type-checks the source files in the consuming app's context. If the package uses `document` or `HTMLElement` but the app doesn't have DOM types, you get "Cannot find name 'document'" errors.
+
+#### Rule 3: Package tsconfig Templates
+
+**For browser/DOM packages** (e.g., `browser-scraper`):
+```json
+{
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "strict": true
+  }
+}
+```
+
+**For Node/Bun server packages** (e.g., `platform-domain`, `cached-http-client`):
+```json
+{
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["bun-types"],
+    "moduleResolution": "bundler",
+    "strict": true
+  }
+}
+```
+
+**For apps that import DOM packages** (e.g., CLI importing browser-scraper):
+```json
+{
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["bun-types"],
+    "paths": {
+      "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
+    }
+  }
+}
+```
+
+#### Checklist When Adding Workspace Dependencies
+
+When adding `@platform/new-package` as a dependency to an app:
+
+- [ ] Add path mapping in app's `tsconfig.json`: `"@platform/new-package": ["../../packages/new-package/src/index.ts"]`
+- [ ] Check if the package uses DOM types (`document`, `window`, `HTMLElement`, etc.)
+- [ ] If package uses DOM, ensure app's `lib` includes `"DOM"` and `"DOM.Iterable"`
+- [ ] Run `bun run ci:typecheck` to verify resolution works
+
+## Dependency Version Upgrades
+
+### Major Version Upgrades
+
+When upgrading major versions of dependencies (e.g., `lightweight-charts` 4.x → 5.x), ALWAYS:
+
+1. **Check for migration guides**: Search for `{package-name} migration guide` or check the package's CHANGELOG
+2. **Look for breaking API changes**: Major versions often rename or restructure APIs
+3. **Update all affected files**: Breaking changes may affect multiple files across the codebase
+
+### Example: lightweight-charts v4 → v5 Migration
+
+The `lightweight-charts` package changed its API significantly in v5:
+
+```typescript
+// ❌ OLD (v4)
+import { createChart } from 'lightweight-charts'
+const chart = createChart(container)
+const series = chart.addCandlestickSeries(options)
+series.setMarkers(markers)
+
+// ✅ NEW (v5)
+import { createChart, CandlestickSeries, createSeriesMarkers } from 'lightweight-charts'
+const chart = createChart(container)
+const series = chart.addSeries(CandlestickSeries, options)
+const markersPrimitive = createSeriesMarkers(series, markers)
+// Later: markersPrimitive.setMarkers(newMarkers)
+```
+
+### Dependabot PRs
+
+When reviewing Dependabot PRs for major version bumps:
+1. Run `bun run ci:local` to check for type errors
+2. If errors occur, search for migration documentation
+3. Update code to match new API before merging
 
 ## Git Worktree for Parallel Development
 
