@@ -48,7 +48,7 @@
     "ci:local": "bun run ci:typecheck && bun run ci:lint && bun run ci:build && bun run test:unit",
     "ci:typecheck": "bun --bun tsc --noEmit --skipLibCheck -p packages/browser-scraper/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p packages/platform-task/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p packages/platform-domain/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p packages/platform-sdk/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p apps/api/tsconfig.json && bun --bun tsc --noEmit --skipLibCheck -p apps/cli/tsconfig.json",
     "ci:lint": "cd apps/dashboard && bun run lint",
-    "ci:build": "bun run build && cd apps/dashboard && bun run build && cd ../trading && bun run build && cd ../cli && bun run build"
+    "ci:build": "bun run build && cd apps/dashboard && bun run build && cd ../trading-client && bun run build && cd ../cli && bun run build"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",

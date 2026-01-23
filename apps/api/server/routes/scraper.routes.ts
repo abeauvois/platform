@@ -4,9 +4,8 @@ import { z } from 'zod';
 import type { HonoEnv } from '../types';
 import { authMiddleware } from '@/middlewares/auth.middleware';
 import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy, MaltStrategy } from '@platform/browser-scraper';
-import { db } from '@platform/db';
+import { db, eq, desc } from '@platform/db';
 import { scrapedData } from '@platform/db/schema';
-import { eq, desc } from 'drizzle-orm';
 
 // Request validation schemas
 const scrapeRequestSchema = z.object({
