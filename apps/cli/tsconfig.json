@@ -3,7 +3,7 @@
         "target": "ES2022",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "lib": ["ES2022"],
+        "lib": ["ES2022", "DOM"],
         "outDir": "./dist",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
@@ -15,7 +15,8 @@
         "baseUrl": ".",
         "paths": {
             "@platform/sdk": ["../../packages/platform-sdk/src/index.ts"],
-            "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"]
+            "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"],
+            "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
         }
     },
     "include": ["**/*.ts"],
