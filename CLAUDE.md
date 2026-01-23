@@ -326,6 +326,33 @@ import someLegacyModule from "legacy-package"; // ⚠️ May not work in Bun
 3. Refactor with tests passing
 4. Never change behavior without explicit request
 
+## Custom Slash Commands
+
+### /ci-fix
+
+When asked to run `/ci-fix`:
+
+1. Run `bun run ci:local` (typecheck → lint → build → unit tests)
+2. If all checks pass, report success and stop
+3. If errors occur:
+   - Analyze the error output to identify the root cause
+   - Fix the errors in the source code
+   - Run `bun run ci:local` again
+4. Repeat steps 2-3 until all checks pass (max 10 iterations)
+5. Summarize all fixes made
+
+**Error Priority:**
+- Fix TypeScript errors first (they often cause downstream failures)
+- Then fix lint errors
+- Then fix build errors
+- Finally fix test failures
+
+**Guidelines:**
+- Make minimal changes to fix errors
+- Don't refactor unrelated code
+- If a fix requires architectural decisions, ask before proceeding
+- If stuck after 3 attempts on the same error, ask for guidance
+
 ## When Modifying Existing Code
 
 ### Always Check Tests First
