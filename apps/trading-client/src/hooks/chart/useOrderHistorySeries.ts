@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { createSeriesMarkers } from 'lightweight-charts'
 
 import { getSideColor } from '../../components/TradingChart/chart-config'
 
 import type { OrderHistoryItem } from '../../components/TradingChart/types'
 import type { KlinesResponse } from '../../lib/api'
-import type { ISeriesApi, SeriesMarker, Time } from 'lightweight-charts'
+import type { ISeriesApi, ISeriesMarkersPluginApi, SeriesMarker, Time } from 'lightweight-charts'
 
 export interface UseOrderHistorySeriesParams {
     orderHistory: Array<OrderHistoryItem>
@@ -25,6 +26,8 @@ export function useOrderHistorySeries({
     klinesData,
     candlestickSeriesRef,
 }: UseOrderHistorySeriesParams): void {
+    const markersPrimitiveRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
+
     useEffect(() => {
         if (!candlestickSeriesRef.current || !klinesData?.klines.length) {
             return
@@ -57,7 +60,18 @@ export function useOrderHistorySeries({
             }))
             .sort((a, b) => (a.time as number) - (b.time as number))
 
-        // Set markers on the candlestick series
-        series.setMarkers(markers)
+        // Set markers on the candlestick series using primitive
+        if (markersPrimitiveRef.current) {
+            markersPrimitiveRef.current.setMarkers(markers)
+        } else {
+            markersPrimitiveRef.current = createSeriesMarkers(series, markers)
+        }
+
+        return () => {
+            if (markersPrimitiveRef.current) {
+                markersPrimitiveRef.current.detach()
+                markersPrimitiveRef.current = null
+            }
+        }
     }, [orderHistory, klinesData, candlestickSeriesRef])
 }

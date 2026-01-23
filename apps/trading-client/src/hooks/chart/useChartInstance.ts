@@ -1,4 +1,4 @@
-import { createChart } from 'lightweight-charts'
+import { createChart, CandlestickSeries, LineSeries } from 'lightweight-charts'
 import { useEffect, useRef } from 'react'
 
 import {
@@ -60,12 +60,13 @@ export function useChartInstance({
         const chart = createChart(container, getChartOptions(container.clientWidth))
 
         // Add candlestick series
-        const candlestickSeries = chart.addCandlestickSeries(
+        const candlestickSeries = chart.addSeries(
+            CandlestickSeries,
             getCandlestickSeriesOptions()
         )
 
         // Add EMA series
-        const ema20Series = chart.addLineSeries(getEmaSeriesOptions())
+        const ema20Series = chart.addSeries(LineSeries, getEmaSeriesOptions())
 
         // Store refs
         chartRef.current = chart

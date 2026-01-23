@@ -156,7 +156,7 @@
         "@tanstack/react-router-devtools": "^1.130.2",
         "@tanstack/router-plugin": "^1.121.2",
         "better-auth": "^1.2.8",
-        "lightweight-charts": "^4.2.2",
+        "lightweight-charts": "^5.1.0",
         "lucide-react": "^0.536.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
@@ -1622,7 +1622,7 @@
 
     "lightningcss-win32-x64-msvc": ["lightningcss-win32-x64-msvc@1.30.2", "", { "os": "win32", "cpu": "x64" }, "sha512-5g1yc73p+iAkid5phb4oVFMB45417DkRevRbt/El/gKXJk4jid+vPFF/AXbxn05Aky8PapwzZrdJShv5C0avjw=="],
 
-    "lightweight-charts": ["lightweight-charts@4.2.3", "", { "dependencies": { "fancy-canvas": "2.1.0" } }, "sha512-5kS/2hY3wNYNzhnS8Gb+GAS07DX8GPF2YVDnd2NMC85gJVQ6RLU6YrXNgNJ6eg0AnWPwCnvaGtYmGky3HiLQEw=="],
+    "lightweight-charts": ["lightweight-charts@5.1.0", "", { "dependencies": { "fancy-canvas": "2.1.0" } }, "sha512-jEAYR4ODYeyNZcWUigsoLTl52rbPmgXnvd5FLIv/ZoA/2sSDw63YKnef8n4yhzum7W926yHeFwlm7ididKb7YQ=="],
 
     "lines-and-columns": ["lines-and-columns@1.2.4", "", {}, "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg=="],
 
