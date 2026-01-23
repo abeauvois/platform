@@ -54,7 +54,7 @@ jobs:
           bun build ./index.ts --compile --target=bun-${{ matrix.target }} --outfile ./bin/${{ matrix.binary }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.binary }}
           path: apps/cli/bin/${{ matrix.binary }}
