@@ -15,8 +15,12 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/cli/package.json ./apps/cli/
 COPY apps/cli-landing/package.json ./apps/cli-landing/
 COPY apps/dashboard/package.json ./apps/dashboard/
+COPY apps/gamification-api/package.json ./apps/gamification-api/
 
+COPY packages/browser-scraper/package.json ./packages/browser-scraper/
 COPY packages/cached-http-client/package.json ./packages/cached-http-client/
+COPY packages/gamification-domain/package.json ./packages/gamification-domain/
+COPY packages/gamification-sdk/package.json ./packages/gamification-sdk/
 COPY packages/platform-auth/package.json ./packages/platform-auth/
 COPY packages/platform-db/package.json ./packages/platform-db/
 COPY packages/platform-domain/package.json ./packages/platform-domain/
