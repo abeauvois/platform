@@ -41,6 +41,7 @@ COPY . .
 RUN cd packages/cached-http-client && bun run build || true
 RUN cd packages/platform-task && bun run build || true
 RUN cd packages/platform-utils && bun run build || true
+RUN cd packages/browser-scraper && bun run build || true
 
 # Build API
 WORKDIR /app/apps/api

@@ -1,6 +1,7 @@
 import { Badge, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@platform/ui'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
+import DOMPurify from 'dompurify'
 import { Calendar, CircleX, ExternalLink, MapPin } from 'lucide-react'
 
 import { platformClient } from '../../platformClient'
@@ -219,7 +220,7 @@ function ListingCard({ listing }: { listing: ScrapedListing }) {
         {listing.description && (
           <div
             className="mt-3 text-sm prose prose-sm max-w-none max-h-48 overflow-y-auto border-t pt-3"
-            dangerouslySetInnerHTML={{ __html: listing.description }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(listing.description) }}
           />
         )}
       </div>
