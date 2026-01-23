@@ -17,9 +17,9 @@
 #   ./scripts/worktree.sh remove feature-auth
 #
 # Port Offset Scheme:
-#   Offset 0:   API=3000, Dashboard=5000, Trading Server=3001, Trading Client=5001
-#   Offset 100: API=3100, Dashboard=5100, Trading Server=3101, Trading Client=5101
-#   Offset 200: API=3200, Dashboard=5200, Trading Server=3201, Trading Client=5201
+#   Offset 0:   API=3000, Dashboard=5000, Trading Server=3001, Trading Client=5001, Gamification API=3002
+#   Offset 100: API=3100, Dashboard=5100, Trading Server=3101, Trading Client=5101, Gamification API=3102
+#   Offset 200: API=3200, Dashboard=5200, Trading Server=3201, Trading Client=5201, Gamification API=3202
 
 set -e
 
@@ -48,12 +48,14 @@ create_worktree() {
     local BASE_DASHBOARD_PORT=5000
     local BASE_TRADING_SERVER_PORT=3001
     local BASE_TRADING_CLIENT_PORT=5001
+    local BASE_GAMIFICATION_API_PORT=3002
 
     # Calculate offset ports
     local API_PORT=$((BASE_API_PORT + OFFSET))
     local DASHBOARD_PORT=$((BASE_DASHBOARD_PORT + OFFSET))
     local TRADING_SERVER_PORT=$((BASE_TRADING_SERVER_PORT + OFFSET))
     local TRADING_CLIENT_PORT=$((BASE_TRADING_CLIENT_PORT + OFFSET))
+    local GAMIFICATION_API_PORT=$((BASE_GAMIFICATION_API_PORT + OFFSET))
 
     local WORKTREE_PATH="$WORKTREES_DIR/$NAME"
 
@@ -64,10 +66,11 @@ create_worktree() {
     echo "Port offset: $OFFSET"
     echo ""
     echo "Ports:"
-    echo "  API:            $API_PORT"
-    echo "  Dashboard:      $DASHBOARD_PORT"
-    echo "  Trading Server: $TRADING_SERVER_PORT"
-    echo "  Trading Client: $TRADING_CLIENT_PORT"
+    echo "  API:              $API_PORT"
+    echo "  Dashboard:        $DASHBOARD_PORT"
+    echo "  Trading Server:   $TRADING_SERVER_PORT"
+    echo "  Trading Client:   $TRADING_CLIENT_PORT"
+    echo "  Gamification API: $GAMIFICATION_API_PORT"
     echo ""
 
     # Create worktrees directory if needed
@@ -108,6 +111,8 @@ TRADING_SERVER_PORT=$TRADING_SERVER_PORT
 TRADING_SERVER_URL=http://localhost:$TRADING_SERVER_PORT
 TRADING_CLIENT_PORT=$TRADING_CLIENT_PORT
 TRADING_CLIENT_URL=http://localhost:$TRADING_CLIENT_PORT
+GAMIFICATION_API_PORT=$GAMIFICATION_API_PORT
+GAMIFICATION_API_URL=http://localhost:$GAMIFICATION_API_PORT
 EOF
 
     # Update PORT in apps/api/.env if it exists
@@ -143,10 +148,11 @@ EOF
     echo "  bun run dev"
     echo ""
     echo "Your services will be available at:"
-    echo "  API:            http://localhost:$API_PORT"
-    echo "  Dashboard:      http://localhost:$DASHBOARD_PORT"
-    echo "  Trading Server: http://localhost:$TRADING_SERVER_PORT"
-    echo "  Trading Client: http://localhost:$TRADING_CLIENT_PORT"
+    echo "  API:              http://localhost:$API_PORT"
+    echo "  Dashboard:        http://localhost:$DASHBOARD_PORT"
+    echo "  Trading Server:   http://localhost:$TRADING_SERVER_PORT"
+    echo "  Trading Client:   http://localhost:$TRADING_CLIENT_PORT"
+    echo "  Gamification API: http://localhost:$GAMIFICATION_API_PORT"
     echo ""
 }
 
@@ -211,11 +217,11 @@ show_help() {
     echo "  $0 remove feature-auth       # Remove worktree"
     echo ""
     echo "Port Offset Scheme:"
-    echo "  Offset | API  | Dashboard | Trading Server | Trading Client"
-    echo "  -------|------|-----------|----------------|---------------"
-    echo "       0 | 3000 | 5000      | 3001           | 5001"
-    echo "     100 | 3100 | 5100      | 3101           | 5101"
-    echo "     200 | 3200 | 5200      | 3201           | 5201"
+    echo "  Offset | API  | Dashboard | Trading Server | Trading Client | Gamification API"
+    echo "  -------|------|-----------|----------------|----------------|------------------"
+    echo "       0 | 3000 | 5000      | 3001           | 5001           | 3002"
+    echo "     100 | 3100 | 5100      | 3101           | 5101           | 3102"
+    echo "     200 | 3200 | 5200      | 3201           | 5201           | 3202"
 }
 
 # Main command dispatch

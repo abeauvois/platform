@@ -36,6 +36,13 @@
       "when": 1769112465500,
       "tag": "0004_naive_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1769116968479,
+      "tag": "0005_black_the_leader",
+      "breakpoints": true
     }
   ]
 }

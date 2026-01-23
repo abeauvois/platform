@@ -20,6 +20,7 @@
     "@platform/env": "workspace:*",
     "@platform/db": "workspace:*",
     "@platform/trading-domain": "workspace:*",
+    "@platform/gamification-sdk": "workspace:*",
     "@scalar/hono-api-reference": "^0.9.25",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.8.12",

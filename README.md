@@ -2,6 +2,10 @@
 
 A modular platform for building real-world applications with Bun, TypeScript, and hexagonal architecture.
 
+## Naming in the furture
+
+ideas: commodity, katapult, viite.io, ...
+
 ## System Architecture Overview
 
 ```

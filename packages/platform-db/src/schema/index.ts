@@ -4,3 +4,4 @@ export * from './api';
 export * from './trading';
 export * from './scraper';
 export * from './settings';
+export * from './gamification';

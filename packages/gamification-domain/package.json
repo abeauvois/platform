@@ -1,0 +1,22 @@
+{
+    "name": "@platform/gamification-domain",
+    "private": true,
+    "version": "1.0.0",
+    "description": "Gamification domain layer (entities, ports, services) for credits system",
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "exports": {
+        ".": {
+            "types": "./src/index.ts",
+            "import": "./src/index.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "test": "bun test"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    }
+}

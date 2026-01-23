@@ -1,14 +1,15 @@
 /**
- * Trading Server Environment Configuration
+ * Gamification API Environment Configuration
  *
- * Defines and validates all required environment variables for the Trading server.
+ * Defines and validates all required environment variables for the Gamification server.
  * This file should be imported at the very start of the server entry point.
  */
 
-import { createEnvConfig, validators, type EnvSchema } from '@platform/env';
+import { createEnvConfig, validators } from '@platform/env';
+import type { EnvSchema } from '@platform/env';
 
 const envSchema = {
-    // Database (required for auth session validation)
+    // Database (required for auth session validation and gamification data)
     DATABASE_URL: {
         description: 'PostgreSQL connection string',
         validate: validators.notEmpty,
@@ -21,18 +22,18 @@ const envSchema = {
 
     // Server
     PORT: {
-        description: 'Trading server port',
-        default: '3001',
+        description: 'Gamification server port',
+        default: '3002',
         validate: validators.port,
     },
-    TRADING_SERVER_PORT: {
-        description: 'Trading server port (alias)',
-        default: '3001',
+    GAMIFICATION_API_PORT: {
+        description: 'Gamification server port (alias)',
+        default: '3002',
         validate: validators.port,
     },
-    TRADING_SERVER_URL: {
-        description: 'Trading server URL',
-        default: 'http://localhost:3001',
+    GAMIFICATION_API_URL: {
+        description: 'Gamification server URL',
+        default: 'http://localhost:3002',
     },
 
     // Auth (must match API server for session sharing)
@@ -54,23 +55,13 @@ const envSchema = {
         description: 'Trading client URL',
         default: 'http://localhost:5001',
     },
-    TRADING_CLIENT_PORT: {
-        description: 'Trading client port',
-        default: '5001',
-        validate: validators.port,
-    },
     API_URL: {
         description: 'API server URL',
         default: 'http://localhost:3000',
     },
-    API_PORT: {
-        description: 'API server port',
-        default: '3000',
-        validate: validators.port,
-    },
-    GAMIFICATION_API_URL: {
-        description: 'Gamification API URL for credit checks',
-        default: 'http://localhost:3002',
+    TRADING_SERVER_URL: {
+        description: 'Trading server URL',
+        default: 'http://localhost:3001',
     },
     CLIENT_URLS: {
         description: 'Additional allowed client URLs (comma-separated)',
@@ -78,33 +69,24 @@ const envSchema = {
         default: '',
     },
 
-    // Binance API (optional - authenticated trading routes disabled if not set)
-    BINANCE_API_KEY: {
-        description: 'Binance API key for trading operations',
-        required: false,
-        default: '',
+    // Stripe (required for payment processing)
+    STRIPE_SECRET_KEY: {
+        description: 'Stripe secret key for payment processing',
+        validate: validators.notEmpty,
     },
-    BINANCE_API_SECRET: {
-        description: 'Binance API secret for trading operations',
-        required: false,
-        default: '',
+    STRIPE_WEBHOOK_SECRET: {
+        description: 'Stripe webhook signing secret',
+        validate: validators.notEmpty,
     },
 } satisfies EnvSchema;
 
 /**
- * Validated environment configuration for the Trading server.
+ * Validated environment configuration for the Gamification server.
  * Throws on startup if required variables are missing.
  */
 export const env = createEnvConfig(envSchema, {
-    appName: 'Trading Server',
+    appName: 'Gamification API',
 });
 
-/**
- * Check if Binance credentials are configured
- */
-export function hasBinanceCredentials(): boolean {
-    return Boolean(env.BINANCE_API_KEY && env.BINANCE_API_SECRET);
-}
-
 // Re-export for type inference
-export type TradingEnv = typeof env;
+export type GamificationEnv = typeof env;

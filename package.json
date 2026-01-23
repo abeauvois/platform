@@ -28,6 +28,7 @@
     "trading": "bunx concurrently -k \"bun run trading:server\" \"sleep 2 && bun run trading:client\"",
     "trading:server": "cd apps/trading-server && bun run dev",
     "trading:client": "cd apps/trading-client && bun run dev",
+    "gamification:api": "cd apps/gamification-api && bun run dev",
     "cli-landing": "cd apps/cli-landing && bun run dev",
     "dev": "concurrently \"bun run api\" \"bun run dashboard\"",
     "dev:all": "concurrently \"bun run api\" \"bun run dashboard\" \"bun run trading:server\" \"bun run trading:client\"",
