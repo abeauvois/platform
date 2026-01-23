@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { createSeriesMarkers } from 'lightweight-charts'
 
 import { CHART_COLORS, getSideColor } from '../../components/TradingChart/chart-config'
 
 import type { OrderHistoryItem } from '../../components/TradingChart/types'
 import type { KlinesResponse } from '../../lib/api'
-import type { IChartApi, ISeriesApi, SeriesMarker, Time } from 'lightweight-charts'
+import type { IChartApi, ISeriesApi, ISeriesMarkersPluginApi, SeriesMarker, Time } from 'lightweight-charts'
 
 export interface UseReferenceMarkerParams {
     referenceTimestamp: number | null
@@ -43,6 +44,8 @@ export function useReferenceMarker({
     const currentRefTimestamp = useRef<number | null>(referenceTimestamp)
     // Track the vertical reference line element
     const referenceLineElement = useRef<HTMLDivElement | null>(null)
+    // Track the markers primitive
+    const markersPrimitiveRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
 
     // Function to update the vertical reference line position
     const updateReferenceLine = useCallback(() => {
@@ -133,8 +136,12 @@ export function useReferenceMarker({
         // Sort markers by time
         orderMarkers.sort((a, b) => (a.time as number) - (b.time as number))
 
-        // Set order markers on the series
-        series.setMarkers(orderMarkers)
+        // Set order markers on the series using primitive
+        if (markersPrimitiveRef.current) {
+            markersPrimitiveRef.current.setMarkers(orderMarkers)
+        } else {
+            markersPrimitiveRef.current = createSeriesMarkers(series, orderMarkers)
+        }
     }, [orderHistory, klinesData, candlestickSeriesRef])
 
     // Update reference line and order markers when data changes
@@ -159,12 +166,16 @@ export function useReferenceMarker({
         }
     }, [chartRef, updateReferenceLine])
 
-    // Cleanup reference line element on unmount
+    // Cleanup reference line element and markers primitive on unmount
     useEffect(() => {
         return () => {
             if (referenceLineElement.current) {
                 referenceLineElement.current.remove()
                 referenceLineElement.current = null
+            }
+            if (markersPrimitiveRef.current) {
+                markersPrimitiveRef.current.detach()
+                markersPrimitiveRef.current = null
             }
         }
     }, [])

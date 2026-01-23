@@ -11,6 +11,8 @@ import {
 } from '../../components/TradingChart/trendline-config'
 
 import type { KlinesResponse } from '../../lib/api'
+import { LineSeries } from 'lightweight-charts'
+
 import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts'
 
 export interface UseTrendLinesParams {
@@ -101,7 +103,8 @@ export function useTrendLines({
 
             // Create new series if it doesn't exist
             if (!series) {
-                series = chart.addLineSeries(
+                series = chart.addSeries(
+                    LineSeries,
                     getTrendLineSeriesOptions(line.type, line.isBroken)
                 )
                 trendLineSeriesRef.current.set(line.id, series)
