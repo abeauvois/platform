@@ -53,6 +53,10 @@ jobs:
           bun --bun tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/browser-scraper/tsconfig.json
+
+      - name: Build packages (required for app typecheck)
+        run: bun run build:lib
 
       - name: Type checking (apps)
         run: |
