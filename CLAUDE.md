@@ -359,6 +359,7 @@ import someLegacyModule from "legacy-package"; // ⚠️ May not work in Bun
 4. Run `bun run ci:local` again to verify fixes
 5. Document significant API changes in commit message
 
+
 ## Custom Slash Commands
 
 Custom commands are stored in `.claude/commands/`. When a user invokes a command like `/ci-fix`, read the corresponding file `.claude/commands/ci-fix.md` and follow its instructions.
