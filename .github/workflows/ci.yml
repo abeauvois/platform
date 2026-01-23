@@ -145,6 +145,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build packages first (required by apps)
+        if: matrix.path != '.'
+        run: bun run build:lib
+
       - name: Build ${{ matrix.name }}
         run: |
           if [ "${{ matrix.path }}" = "." ]; then
