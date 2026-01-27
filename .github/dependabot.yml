@@ -63,34 +63,9 @@ updates:
       - "dependencies"
       - "dashboard"
 
-  # Trading app
-  - package-ecosystem: "npm"
-    directory: "/apps/trading"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    rebase-strategy: "auto"
-    commit-message:
-      prefix: "chore(deps-trading):"
-    labels:
-      - "dependencies"
-      - "trading"
-
   # Docker images
   - package-ecosystem: "docker"
     directory: "/apps/api"
-    schedule:
-      interval: "weekly"
-    rebase-strategy: "auto"
-    commit-message:
-      prefix: "chore(docker):"
-    labels:
-      - "dependencies"
-      - "docker"
-
-  - package-ecosystem: "docker"
-    directory: "/apps/trading"
     schedule:
       interval: "weekly"
     rebase-strategy: "auto"

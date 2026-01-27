@@ -114,11 +114,7 @@ jobs:
             path: apps/api
           - name: dashboard
             path: apps/dashboard
-          - name: trading-server
-            path: apps/trading-server
-          - name: trading-client
-            path: apps/trading-client
-          - name: cli
+- name: cli
             path: apps/cli
           - name: packages
             path: .
@@ -176,17 +172,9 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     strategy:
       matrix:
-        app: [api, trading-server]
+        app: [api]
     steps:
       - uses: actions/checkout@v6
-
-      - name: Debug - List packages
-        run: |
-          echo "=== Listing packages directory ==="
-          ls -la packages/
-          echo "=== Checking trading-sdk ==="
-          ls -la packages/trading-sdk/ || echo "trading-sdk not found"
-          cat packages/trading-sdk/package.json || echo "package.json not found"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

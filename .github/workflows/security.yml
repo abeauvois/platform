@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: [api, trading-server]
+        app: [api]
     steps:
       - uses: actions/checkout@v6
 

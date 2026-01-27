@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/figtree";
 
-/* Tell Tailwind to scan @platform/ui components for class names */
+/* Tell Tailwind to scan @abeauvois/platform-ui components for class names */
 @source "../components/**/*.tsx";
 
 @custom-variant dark (&:is(.dark *));

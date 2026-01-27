@@ -16,17 +16,7 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignore": ["src/**/*.test.{ts,tsx}"]
     },
-    "apps/trading": {
-      "entry": ["server/index.ts", "server/routes/*.ts"],
-      "project": ["server/**/*.ts"],
-      "ignore": ["**/*.test.ts", "server/adapters/__tests__/**"]
-    },
-    "apps/trading/client": {
-      "entry": ["src/main.tsx", "src/routes/**/*.tsx"],
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignore": ["src/**/*.test.{ts,tsx}", "src/test/**"]
-    },
-    "apps/cli-landing": {
+"apps/cli-landing": {
       "entry": ["src/main.tsx"],
       "project": ["src/**/*.{ts,tsx}"]
     },
@@ -64,16 +54,7 @@
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/trading-domain": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts"],
-      "ignore": ["src/**/*.test.ts"]
-    },
-    "packages/trading-sdk": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "packages/cached-http-client": {
+"packages/cached-http-client": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
     },
