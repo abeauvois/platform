@@ -1,5 +1,6 @@
 import type { Page } from 'puppeteer-core';
-import type { ILogger, IScrapeStrategy, PaginationOptions, ScrapedListing } from '../types';
+import type { ILogger, ScrapedListing } from '../types';
+import { BasePaginatedStrategy } from './BasePaginatedStrategy';
 
 /**
  * Strip styling and unwanted elements from AutoScout24 HTML, keeping only content and structure.
@@ -46,122 +47,42 @@ export function extractCategoryFromAutoScout24H1(h1Text: string): string {
   return '';
 }
 
-export class AutoScout24Strategy implements IScrapeStrategy<Array<ScrapedListing>> {
+export class AutoScout24Strategy extends BasePaginatedStrategy {
   public readonly name = 'autoscout24';
+  protected readonly listingSelector = 'article[data-testid="decluttered-list-item"], article.list-page-item';
 
-  constructor(private readonly logger?: ILogger) {}
+  constructor(logger?: ILogger) {
+    super(logger);
+  }
 
-  async execute(page: Page, options?: PaginationOptions): Promise<Array<ScrapedListing>> {
-    const maxPages = options?.maxPages ?? 1;
-    const delayBetweenPages = options?.delayBetweenPages ?? 500;
-
-    // Handle cookie consent popup if present
-    await this.dismissCookieConsent(page);
-
-    const allListings: Array<ScrapedListing> = [];
-    const baseUrl = page.url();
-
-    for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-      this.logger?.info(`Scraping page ${pageNum} of ${maxPages}`);
-
-      // Navigate to the page (skip for first page - already there)
-      if (pageNum > 1) {
-        // Add delay between pages to avoid detection
-        this.logger?.debug(`Waiting ${delayBetweenPages}ms before next page`);
-        await this.delay(delayBetweenPages);
-
-        // Build URL with page parameter
-        const pageUrl = this.buildPageUrl(baseUrl, pageNum);
-        await page.goto(pageUrl, { waitUntil: 'networkidle2' });
+  protected async dismissCookieConsentInPage(page: Page): Promise<boolean> {
+    return page.evaluate(() => {
+      // Look for the AutoScout24 cookie accept button by data-testid
+      const acceptButton = document.querySelector('[data-testid="as24-cmp-accept-all-button"]') as HTMLButtonElement;
+      if (acceptButton) {
+        acceptButton.click();
+        return true;
       }
 
-      // Wait for listings to load
-      try {
-        await page.waitForSelector('article[data-testid="decluttered-list-item"], article.list-page-item', { timeout: 10000 });
-      } catch {
-        // No listings found on this page - we've reached the end
-        this.logger?.info(`No more listings found on page ${pageNum}, stopping pagination`);
-        break;
+      // Fallback: look for buttons containing "Accepter tout" text
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const acceptAllButton = buttons.find(btn =>
+        btn.textContent?.includes('Accepter tout') || btn.textContent?.includes('Accept all')
+      );
+      if (acceptAllButton) {
+        acceptAllButton.click();
+        return true;
       }
 
-      // Extract category from page h1 (once per page)
-      const externalCategory = await this.extractCategoryFromPage(page);
-
-      // Extract all listing cards from this page
-      const pageListings = await this.extractListingsFromPage(page, externalCategory);
-
-      if (pageListings.length === 0) {
-        // No more listings - stop pagination
-        this.logger?.info(`No listings extracted from page ${pageNum}, stopping pagination`);
-        break;
-      }
-
-      this.logger?.info(`Extracted ${pageListings.length} listings from page ${pageNum}`);
-      allListings.push(...pageListings);
-    }
-
-    this.logger?.info(`Total listings scraped: ${allListings.length}`);
-    return allListings;
+      return false;
+    });
   }
 
-  private buildPageUrl(baseUrl: string, pageNum: number): string {
-    const url = new URL(baseUrl);
-    url.searchParams.set('page', String(pageNum));
-    return url.toString();
+  protected parseCategoryFromH1(h1Text: string): string {
+    return extractCategoryFromAutoScout24H1(h1Text);
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  private async dismissCookieConsent(page: Page): Promise<void> {
-    try {
-      // Wait briefly for the consent dialog to appear
-      await this.delay(1000);
-
-      // Try to find and click the accept button
-      const clicked = await page.evaluate(() => {
-        // Look for the AutoScout24 cookie accept button by data-testid
-        const acceptButton = document.querySelector('[data-testid="as24-cmp-accept-all-button"]') as HTMLButtonElement;
-        if (acceptButton) {
-          acceptButton.click();
-          return true;
-        }
-
-        // Fallback: look for buttons containing "Accepter tout" text
-        const buttons = Array.from(document.querySelectorAll('button'));
-        const acceptAllButton = buttons.find(btn =>
-          btn.textContent?.includes('Accepter tout') || btn.textContent?.includes('Accept all')
-        );
-        if (acceptAllButton) {
-          acceptAllButton.click();
-          return true;
-        }
-
-        return false;
-      });
-
-      if (clicked) {
-        // Wait for the dialog to close
-        await this.delay(500);
-        this.logger?.debug('Cookie consent dismissed');
-      }
-    } catch (error) {
-      // Cookie consent already dismissed or not present - continue
-      this.logger?.debug(`Cookie consent handling: ${error instanceof Error ? error.message : 'skipped'}`);
-    }
-  }
-
-  private async extractCategoryFromPage(page: Page): Promise<string> {
-    try {
-      const h1Text = await page.$eval('h1', (el) => el.textContent ?? '').catch(() => '');
-      return extractCategoryFromAutoScout24H1(h1Text);
-    } catch {
-      return '';
-    }
-  }
-
-  private async extractListingsFromPage(page: Page, externalCategory: string): Promise<Array<ScrapedListing>> {
+  protected async extractListingsFromPage(page: Page, externalCategory: string): Promise<Array<ScrapedListing>> {
     const listings = await page.$$('article[data-testid="decluttered-list-item"], article.list-page-item');
     const scrapedListings: Array<ScrapedListing> = [];
 

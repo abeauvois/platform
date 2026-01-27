@@ -26,6 +26,7 @@ export default defineConfig({
       '@abeauvois/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
       '@abeauvois/platform-ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
       '@abeauvois/platform-ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
+      '@abeauvois/platform-task': resolve(__dirname, '../../packages/platform-task/src/index.ts'),
     },
   },
   optimizeDeps: {
