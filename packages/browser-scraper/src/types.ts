@@ -1,5 +1,5 @@
 import type { Page } from 'puppeteer-core';
-import type { ILogger } from '@abeauvois/platform-domain';
+import type { ILogger } from '@abeauvois/platform-core';
 
 export type { ILogger };
 

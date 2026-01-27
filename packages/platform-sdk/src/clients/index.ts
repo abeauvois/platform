@@ -6,4 +6,4 @@ export { ConfigClient } from './ConfigClient.js';
 export { WorkflowClient } from './WorkflowClient.js';
 export { SourcesClient, type GmailReadOptions, type SourceContentItem } from './SourcesClient.js';
 export { ScraperClient, type ScrapedDataItem, type SaveScrapedDataOptions, type ListScrapedDataOptions } from './ScraperClient.js';
-export { SettingsClient, type UserSettings, type UserSettingsUpdate, type Theme, type AccountMode } from './SettingsClient.js';
+export { SettingsClient, type UserSettings, type UserSettingsUpdate, type Theme } from './SettingsClient.js';

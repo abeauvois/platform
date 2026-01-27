@@ -22,6 +22,7 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
       // Resolve workspace packages from source for build
       '@abeauvois/platform-sdk': resolve(__dirname, '../../packages/platform-sdk/src/index.ts'),
+      '@abeauvois/platform-core': resolve(__dirname, '../../packages/platform-core/src/index.ts'),
       '@abeauvois/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
       '@abeauvois/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
       '@abeauvois/platform-ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),

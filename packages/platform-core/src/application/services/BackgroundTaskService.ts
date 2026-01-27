@@ -1,6 +1,6 @@
 import type { IBackgroundTaskRunner, BackgroundTaskOptions, IIdGenerator } from '@abeauvois/platform-task';
-import type { IBackgroundTaskRepository } from '../../domain/ports/IBackgroundTaskRepository.js';
-import type { BackgroundTask } from '../../domain/entities/BackgroundTask.js';
+import type { IBackgroundTaskRepository } from '../../domain/ports/IBackgroundTaskRepository.ts';
+import type { BackgroundTask } from '../../domain/entities/BackgroundTask.ts';
 
 export interface TaskRequest {
     preset: string;

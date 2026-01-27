@@ -3,7 +3,6 @@
  */
 
 export type Theme = 'light' | 'dark' | 'system';
-export type AccountMode = 'spot' | 'margin';
 
 /**
  * User settings domain entity
@@ -12,8 +11,7 @@ export interface UserSettings {
     userId: string;
     theme: Theme;
     locale: string;
-    tradingAccountMode: AccountMode;
-    tradingReferenceTimestamp: number | null;
+    preferences: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -24,8 +22,7 @@ export interface UserSettings {
 export interface UserSettingsUpdate {
     theme?: Theme;
     locale?: string;
-    tradingAccountMode?: AccountMode;
-    tradingReferenceTimestamp?: number | null;
+    preferences?: Record<string, unknown>;
 }
 
 /**

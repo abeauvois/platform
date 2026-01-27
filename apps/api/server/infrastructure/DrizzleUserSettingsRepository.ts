@@ -4,7 +4,6 @@ import type {
     UserSettings,
     UserSettingsUpdate,
     Theme,
-    AccountMode,
 } from '@abeauvois/platform-domain';
 
 export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
@@ -24,16 +23,12 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
                 userId,
                 theme: data.theme ?? 'system',
                 locale: data.locale ?? 'en',
-                tradingAccountMode: data.tradingAccountMode ?? 'spot',
-                tradingReferenceTimestamp: data.tradingReferenceTimestamp ?? null,
             })
             .onConflictDoUpdate({
                 target: userSettings.userId,
                 set: {
                     ...(data.theme !== undefined && { theme: data.theme }),
                     ...(data.locale !== undefined && { locale: data.locale }),
-                    ...(data.tradingAccountMode !== undefined && { tradingAccountMode: data.tradingAccountMode }),
-                    ...(data.tradingReferenceTimestamp !== undefined && { tradingReferenceTimestamp: data.tradingReferenceTimestamp }),
                     updatedAt: new Date(),
                 },
             })
@@ -47,8 +42,7 @@ export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
             userId: row.userId,
             theme: row.theme as Theme,
             locale: row.locale,
-            tradingAccountMode: (row.tradingAccountMode ?? 'spot') as AccountMode,
-            tradingReferenceTimestamp: row.tradingReferenceTimestamp,
+            preferences: {},
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
         };

@@ -13,6 +13,7 @@
     "paths": {
       "@/*": ["./server/*"],
       "@abeauvois/platform-auth": ["../../packages/platform-auth/src/index.ts"],
+      "@abeauvois/platform-core": ["../../packages/platform-core/src/index.ts"],
       "@abeauvois/platform-domain": ["../../packages/platform-domain/src/index.ts"],
       "@abeauvois/platform-cached-http-client": ["../../packages/cached-http-client/src/index.ts"],
       "@abeauvois/platform-browser-scraper": ["../../packages/browser-scraper/src/index.ts"],

@@ -145,7 +145,7 @@
       "name": "@abeauvois/platform-browser-scraper",
       "version": "1.0.0",
       "dependencies": {
-        "@abeauvois/platform-domain": "workspace:*",
+        "@abeauvois/platform-core": "workspace:*",
         "puppeteer-core": "^24.35.0",
       },
       "devDependencies": {
@@ -192,6 +192,16 @@
         "@types/bun": "latest",
       },
     },
+    "packages/platform-core": {
+      "name": "@abeauvois/platform-core",
+      "version": "1.0.0",
+      "dependencies": {
+        "@abeauvois/platform-task": "^0.0.1",
+      },
+      "devDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
     "packages/platform-db": {
       "name": "@abeauvois/platform-db",
       "version": "1.0.0",
@@ -208,7 +218,7 @@
       "name": "@abeauvois/platform-domain",
       "version": "1.0.0",
       "dependencies": {
-        "@abeauvois/platform-task": "^0.0.1",
+        "@abeauvois/platform-core": "workspace:*",
         "puppeteer-core": "^24.35.0",
       },
       "devDependencies": {
@@ -300,6 +310,8 @@
     "@abeauvois/platform-browser-scraper": ["@abeauvois/platform-browser-scraper@workspace:packages/browser-scraper"],
 
     "@abeauvois/platform-cached-http-client": ["@abeauvois/platform-cached-http-client@workspace:packages/cached-http-client"],
+
+    "@abeauvois/platform-core": ["@abeauvois/platform-core@workspace:packages/platform-core"],
 
     "@abeauvois/platform-db": ["@abeauvois/platform-db@workspace:packages/platform-db"],
 

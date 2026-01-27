@@ -11,8 +11,7 @@ const repository = new DrizzleUserSettingsRepository();
 const updateSettingsSchema = z.object({
     theme: z.enum(['light', 'dark', 'system']).optional(),
     locale: z.string().max(10).optional(),
-    tradingAccountMode: z.enum(['spot', 'margin']).optional(),
-    tradingReferenceTimestamp: z.number().nullable().optional(),
+    preferences: z.record(z.string(), z.unknown()).optional(),
 });
 
 const updateSettingsValidator = zValidator('json', updateSettingsSchema, (result, c) => {

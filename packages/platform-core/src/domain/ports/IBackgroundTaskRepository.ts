@@ -1,4 +1,4 @@
-import type { BackgroundTask, BackgroundTaskCreate, TaskResult } from '../entities/BackgroundTask.js';
+import type { BackgroundTask, BackgroundTaskCreate, TaskResult } from '../entities/BackgroundTask.ts';
 import type { TaskStatus, TaskProgress } from '@abeauvois/platform-task';
 
 /**

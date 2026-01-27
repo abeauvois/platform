@@ -28,7 +28,6 @@ export {
     type UserSettings,
     type UserSettingsUpdate,
     type Theme,
-    type AccountMode,
 } from './clients/index.js';
 
 // Config Providers (browser-compatible only)

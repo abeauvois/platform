@@ -8,6 +8,6 @@ export * from './domain/entities/BaseContent';
 export * from './domain/entities/Bookmark';
 export * from './domain/entities/SourceAdapter';
 
-// Core ports (interfaces only, no implementations)
-export * from './domain/ports/IConfigProvider';
-export * from './domain/ports/ILogger';
+// Core ports (interfaces only, no implementations or Node.js deps)
+export type { IConfigProvider } from '@abeauvois/platform-core';
+export type { ILogger } from '@abeauvois/platform-core';

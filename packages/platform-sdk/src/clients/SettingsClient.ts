@@ -2,7 +2,6 @@ import { BaseClient } from './BaseClient.js';
 import type { BaseClientConfig } from './BaseClient.js';
 
 export type Theme = 'light' | 'dark' | 'system';
-export type AccountMode = 'spot' | 'margin';
 
 /**
  * User settings type for API responses
@@ -11,8 +10,7 @@ export interface UserSettings {
     userId: string;
     theme: Theme;
     locale: string;
-    tradingAccountMode: AccountMode;
-    tradingReferenceTimestamp: number | null;
+    preferences: Record<string, unknown>;
     createdAt: string;
     updatedAt: string;
 }
@@ -23,8 +21,7 @@ export interface UserSettings {
 export interface UserSettingsUpdate {
     theme?: Theme;
     locale?: string;
-    tradingAccountMode?: AccountMode;
-    tradingReferenceTimestamp?: number | null;
+    preferences?: Record<string, unknown>;
 }
 
 /**

@@ -15,6 +15,7 @@
         "baseUrl": ".",
         "paths": {
             "@abeauvois/platform-sdk": ["../../packages/platform-sdk/src/index.ts"],
+            "@abeauvois/platform-core": ["../../packages/platform-core/src/index.ts"],
             "@abeauvois/platform-domain": ["../../packages/platform-domain/src/index.ts"],
             "@abeauvois/platform-browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
         }
