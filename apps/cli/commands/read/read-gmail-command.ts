@@ -1,6 +1,6 @@
 import { command } from 'cleye';
 import * as p from '@clack/prompts';
-import { truncateText } from '@platform/utils';
+import { truncateText } from '@abeauvois/platform-utils';
 import { createCliContext, getDefaultEmail } from '../../lib/cli-context.js';
 import { ClackProgressReporter } from '../../lib/progress-reporter.js';
 import {

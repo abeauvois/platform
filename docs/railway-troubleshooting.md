@@ -571,7 +571,7 @@ Use **bearer tokens** for cross-service authentication:
 
 **Implementation:**
 
-1. Add bearer plugin to `@platform/auth`:
+1. Add bearer plugin to `@abeauvois/platform-auth`:
 
 ```typescript
 import { bearer } from "better-auth/plugins";

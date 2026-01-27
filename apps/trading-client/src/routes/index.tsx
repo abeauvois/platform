@@ -2,7 +2,7 @@ import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { detectStopOrderCategory } from '@platform/trading-domain'
+import { detectStopOrderCategory } from '@abeauvois/platform-trading-domain'
 import { DragOrderPanel } from '../components/DragOrderPanel'
 import { DragOverlayBadge } from '../components/DragOverlayBadge'
 import { MarginAccountCard } from '../components/MarginAccountCard'

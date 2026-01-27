@@ -2,7 +2,7 @@ import {
     detectTrendLines,
     getPriceAtTime,
     type TrendLineConfig,
-} from '@platform/trading-domain'
+} from '@abeauvois/platform-trading-domain'
 import { useEffect, useMemo } from 'react'
 
 import {

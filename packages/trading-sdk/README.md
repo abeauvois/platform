@@ -1,4 +1,4 @@
-# @platform/trading-sdk
+# @abeauvois/platform-trading-sdk
 
 TypeScript SDK for trading operations with cross-service authentication support.
 
@@ -15,7 +15,7 @@ TypeScript SDK for trading operations with cross-service authentication support.
 ## Installation
 
 ```bash
-bun add @platform/trading-sdk
+bun add @abeauvois/platform-trading-sdk
 ```
 
 ## Usage
@@ -25,7 +25,7 @@ bun add @platform/trading-sdk
 For cross-origin authentication (e.g., trading-client → trading-server):
 
 ```typescript
-import { TradingApiClient } from '@platform/trading-sdk';
+import { TradingApiClient } from '@abeauvois/platform-trading-sdk';
 
 const client = new TradingApiClient({
   baseUrl: 'https://trading-server.example.com',
@@ -39,7 +39,7 @@ const watchlist = await client.getWatchlist();
 ### Browser with Cookies (Same-Origin)
 
 ```typescript
-import { TradingApiClient } from '@platform/trading-sdk';
+import { TradingApiClient } from '@abeauvois/platform-trading-sdk';
 
 const client = new TradingApiClient({
   baseUrl: 'http://localhost:3001',
@@ -50,7 +50,7 @@ const client = new TradingApiClient({
 ### With Custom Logger
 
 ```typescript
-import { TradingApiClient } from '@platform/trading-sdk';
+import { TradingApiClient } from '@abeauvois/platform-trading-sdk';
 
 const client = new TradingApiClient({
   baseUrl: 'https://api.example.com',
@@ -237,7 +237,7 @@ export const authClient = createAuthClient({
 });
 
 // trading-client.ts
-import { TradingApiClient } from '@platform/trading-sdk';
+import { TradingApiClient } from '@abeauvois/platform-trading-sdk';
 import { getAuthToken } from './auth-token';
 
 export const tradingClient = new TradingApiClient({
@@ -248,12 +248,12 @@ export const tradingClient = new TradingApiClient({
 
 ## Dependencies
 
-- `@platform/sdk` - Base client with auth infrastructure
-- `@platform/platform-domain` - Shared domain types
-- `@platform/trading-domain` - Trading-specific types
+- `@abeauvois/platform-sdk` - Base client with auth infrastructure
+- `@abeauvois/platform-domain` - Shared domain types
+- `@abeauvois/platform-trading-domain` - Trading-specific types
 
 ## Related Packages
 
-- [@platform/sdk](../platform-sdk) - Platform API client
-- [@platform/auth](../platform-auth) - Authentication package
-- [@platform/trading-domain](../trading-domain) - Trading domain types
+- [@abeauvois/platform-sdk](../platform-sdk) - Platform API client
+- [@abeauvois/platform-auth](../platform-auth) - Authentication package
+- [@abeauvois/platform-trading-domain](../trading-domain) - Trading domain types

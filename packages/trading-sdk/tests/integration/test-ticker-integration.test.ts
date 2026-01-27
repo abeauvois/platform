@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
 import { TradingApiClient } from '../../src/TradingApiClient.js';
-import type { ILogger } from '@platform/platform-domain';
+import type { ILogger } from '@abeauvois/platform-domain';
 
 /**
  * Integration Test for getTicker

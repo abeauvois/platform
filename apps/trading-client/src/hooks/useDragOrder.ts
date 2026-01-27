@@ -16,7 +16,7 @@ import {
   validateBalance,
   validateOrderValue,
 } from '../utils/order'
-import { detectStopOrderCategory } from '@platform/trading-domain'
+import { detectStopOrderCategory } from '@abeauvois/platform-trading-domain'
 
 // Maximum order value in USD
 const MAX_ORDER_VALUE = 500

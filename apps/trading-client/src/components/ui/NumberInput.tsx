@@ -1,5 +1,5 @@
-import { Input, cn } from '@platform/ui'
-import { calculatePricePrecision, formatPrice, getMinMove } from '@platform/trading-domain'
+import { Input, cn } from '@abeauvois/platform-ui'
+import { calculatePricePrecision, formatPrice, getMinMove } from '@abeauvois/platform-trading-domain'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 interface NumberInputProps {

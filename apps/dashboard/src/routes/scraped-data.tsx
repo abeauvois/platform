@@ -1,4 +1,4 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@platform/ui'
+import { Badge, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@abeauvois/platform-ui'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import DOMPurify from 'dompurify'
@@ -6,7 +6,7 @@ import { Calendar, CircleX, ExternalLink, MapPin } from 'lucide-react'
 
 import { platformClient } from '../../platformClient'
 
-import type { ScrapedDataItem } from '@platform/sdk'
+import type { ScrapedDataItem } from '@abeauvois/platform-sdk'
 import { authClient } from '@/lib/auth-client'
 
 /**

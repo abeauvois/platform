@@ -1,6 +1,6 @@
 import { describe, test, expect, mock } from 'bun:test';
 import { reportProgress } from '../progress';
-import type { WorkflowContext, BaseContent } from '@platform/platform-domain';
+import type { WorkflowContext, BaseContent } from '@abeauvois/platform-domain';
 
 describe('reportProgress', () => {
     const createMockContext = (onItemProcessed?: WorkflowContext<BaseContent>['onItemProcessed']): WorkflowContext<BaseContent> => ({

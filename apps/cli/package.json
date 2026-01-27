@@ -26,10 +26,10 @@
     },
     "dependencies": {
         "@clack/prompts": "^0.11.0",
-        "@platform/browser-scraper": "workspace:*",
-        "@platform/sdk": "workspace:*",
-        "@platform/platform-domain": "workspace:*",
-        "@platform/utils": "workspace:*",
+        "@abeauvois/platform-browser-scraper": "workspace:*",
+        "@abeauvois/platform-sdk": "workspace:*",
+        "@abeauvois/platform-domain": "workspace:*",
+        "@abeauvois/platform-utils": "workspace:*",
         "cleye": "^2.0.0",
         "puppeteer-core": "^24.35.0"
     },

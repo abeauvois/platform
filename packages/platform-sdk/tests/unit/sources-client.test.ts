@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, mock, afterEach } from 'bun:test';
-import type { ILogger } from '@platform/platform-domain';
+import type { ILogger } from '@abeauvois/platform-domain';
 
 // Store original fetch
 const originalFetch = globalThis.fetch;

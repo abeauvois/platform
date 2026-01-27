@@ -5,8 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
-import type { IExchangeClient } from '@platform/trading-domain';
-import { validateOrderValue } from '@platform/trading-domain';
+import type { IExchangeClient } from '@abeauvois/platform-trading-domain';
+import { validateOrderValue } from '@abeauvois/platform-trading-domain';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 // Order types enum

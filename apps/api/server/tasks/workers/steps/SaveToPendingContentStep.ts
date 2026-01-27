@@ -2,7 +2,7 @@ import { toPendingContent } from './utils';
 import { BaseWorkflowStep } from './BaseWorkflowStep';
 import type {
     BaseContent, IPendingContentRepository, StepResult, WorkflowContext
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 
 /**

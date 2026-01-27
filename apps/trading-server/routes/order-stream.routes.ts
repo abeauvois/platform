@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import type { HonoEnv } from '../types';
-import type { IExchangeClient } from '@platform/trading-domain';
+import type { IExchangeClient } from '@abeauvois/platform-trading-domain';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 /**

@@ -32,7 +32,7 @@ export {
 } from './clients/index.js';
 
 // Config Providers (browser-compatible only)
-// Note: EnvConfigProvider is Bun-specific, import from '@platform/sdk/server' for server-side code
+// Note: EnvConfigProvider is Bun-specific, import from '@abeauvois/platform-sdk/server' for server-side code
 export { ApiConfigProvider } from './config/ApiConfigProvider.js';
 
 // Session Storage Port

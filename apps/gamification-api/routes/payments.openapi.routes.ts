@@ -5,8 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
-import type { PaymentService } from '@platform/gamification-domain';
-import { CREDITS_PER_EUR, TIER2_MIN_PURCHASE } from '@platform/gamification-domain';
+import type { PaymentService } from '@abeauvois/platform-gamification-domain';
+import { CREDITS_PER_EUR, TIER2_MIN_PURCHASE } from '@abeauvois/platform-gamification-domain';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 // OpenAPI schemas

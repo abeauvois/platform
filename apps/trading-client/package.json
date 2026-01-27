@@ -14,10 +14,10 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
-    "@platform/sdk": "workspace:*",
-    "@platform/trading-domain": "workspace:*",
-    "@platform/trading-sdk": "workspace:*",
-    "@platform/ui": "workspace:*",
+    "@abeauvois/platform-sdk": "workspace:*",
+    "@abeauvois/platform-trading-domain": "workspace:*",
+    "@abeauvois/platform-trading-sdk": "workspace:*",
+    "@abeauvois/platform-ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-form": "^0.36.0",
     "better-auth": "^1.2.8",

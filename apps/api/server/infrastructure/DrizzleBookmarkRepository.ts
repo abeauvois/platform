@@ -1,5 +1,5 @@
-import { db, bookmarks, eq, and, gte, inArray } from '@platform/db';
-import { Bookmark, type ILinkRepository, type SourceAdapter, type FileType } from '@platform/platform-domain';
+import { db, bookmarks, eq, and, gte, inArray } from '@abeauvois/platform-db';
+import { Bookmark, type ILinkRepository, type SourceAdapter, type FileType } from '@abeauvois/platform-domain';
 
 export class DrizzleBookmarkRepository implements ILinkRepository {
     async exists(url: string): Promise<boolean> {

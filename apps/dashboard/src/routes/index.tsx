@@ -1,4 +1,4 @@
-import { Button } from '@platform/ui'
+import { Button } from '@abeauvois/platform-ui'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Calendar, CheckCircle2, Plus, User } from 'lucide-react'
 

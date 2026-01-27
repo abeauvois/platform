@@ -8,7 +8,7 @@
  */
 
 import { describe, test, expect, beforeAll } from 'bun:test';
-import type { Candlestick } from '@platform/trading-domain';
+import type { Candlestick } from '@abeauvois/platform-trading-domain';
 
 // Import will fail initially - that's expected in TDD
 import { BinanceTestnetClient } from '../BinanceTestnetClient';

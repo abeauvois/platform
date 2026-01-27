@@ -2,7 +2,7 @@ import {
     type WorkflowContext,
     type StepResult,
     BaseContent,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 import type { IContentAnalyser, IRateLimitedClient } from './ports';
 import { BaseWorkflowStep } from './BaseWorkflowStep';

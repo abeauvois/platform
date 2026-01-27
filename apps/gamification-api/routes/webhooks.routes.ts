@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import type { PaymentService } from '@platform/gamification-domain';
+import type { PaymentService } from '@abeauvois/platform-gamification-domain';
 import Stripe from 'stripe';
 
 /**

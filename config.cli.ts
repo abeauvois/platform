@@ -34,7 +34,7 @@ export interface CliConfig {
  * This allows tests to use either .env or explicit config
  */
 export async function loadCliConfig(): Promise<CliConfig> {
-    const { EnvConfigProvider } = await import('@platform/sdk');
+    const { EnvConfigProvider } = await import('@abeauvois/platform-sdk');
     const configProvider = new EnvConfigProvider();
 
     // Resolve .env path relative to this config file (project root)

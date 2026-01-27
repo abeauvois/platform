@@ -1,11 +1,11 @@
 /**
- * @platform/cached-http-client
+ * @abeauvois/platform-cached-http-client
  * 
  * Generic HTTP client with caching, throttling, and retry logic
  * 
  * @example
  * ```typescript
- * import { CachedHttpClient, type ILogger } from '@platform/cached-http-client';
+ * import { CachedHttpClient, type ILogger } from '@abeauvois/platform-cached-http-client';
  * 
  * const logger: ILogger = {
  *   info: (msg) => console.log(msg),

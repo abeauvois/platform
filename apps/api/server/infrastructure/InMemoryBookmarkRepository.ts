@@ -1,5 +1,5 @@
-import { Bookmark } from '@platform/platform-domain'
-import type { ILinkRepository } from '@platform/platform-domain';
+import { Bookmark } from '@abeauvois/platform-domain'
+import type { ILinkRepository } from '@abeauvois/platform-domain';
 
 /**
  * In-Memory Implementation of ILinkRepository for Bookmark entities

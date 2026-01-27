@@ -14,7 +14,7 @@ import {
     type ISourceReader,
     type SourceReaderConfig,
     type WorkflowContext,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import { ReadStep } from '../steps/ReadStep';
 import type { StepFactoryConfig } from '../presets';
 

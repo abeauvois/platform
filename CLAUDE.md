@@ -37,7 +37,7 @@ IMPORTANT: key hexagonal architecture principle: the application layer should ex
 
 ### Client-Server Architecture
 
-- **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, workflows, and background tasks (via @platform/task)
+- **Central API Server** (`/apps/api`): Handles auth, todos, bookmarks, config, workflows, and background tasks (via @abeauvois/platform-task)
 - **Dashboard Client** (`/apps/dashboard`): React frontend for the platform
 - **Trading Server** (`/apps/trading-server`): Trading-specific APIs with Binance integration and OpenAPI docs at `/api/docs`
 - **Trading Client** (`/apps/trading-client`): Hybrid - connects to both API server (auth) and trading server (trading APIs)
@@ -48,30 +48,30 @@ IMPORTANT: key hexagonal architecture principle: the application layer should ex
 The API server (`/apps/api`) is the single source of truth for configuration. Environment variables (API keys, tokens, etc.) are stored in `/apps/api/.env` and served via the `/api/config` endpoint.
 
 - CLI and other clients fetch config from the API (requires authentication)
-- Use `ApiConfigProvider` from `@platform/sdk` to load config from the API
-- Use `EnvConfigProvider` from `@platform/sdk` for direct `.env` file access (API server only)
+- Use `ApiConfigProvider` from `@abeauvois/platform-sdk` to load config from the API
+- Use `EnvConfigProvider` from `@abeauvois/platform-sdk` for direct `.env` file access (API server only)
 
 ### Key Patterns
 
 - Workspace packages use `workspace:*` protocol for dependencies
-- Shared types exported from `@platform/platform-domain`
-- Authentication handled by `@platform/auth` package
-- Database schema in `@platform/db` package
+- Shared types exported from `@abeauvois/platform-domain`
+- Authentication handled by `@abeauvois/platform-auth` package
+- Database schema in `@abeauvois/platform-db` package
 
 ### Package Type Categories
 
 **DOM-dependent packages** (require `lib: ["DOM"]` in consuming apps):
-- `@platform/browser-scraper` - Uses Puppeteer, `document`, `HTMLElement`
+- `@abeauvois/platform-browser-scraper` - Uses Puppeteer, `document`, `HTMLElement`
 
 **Server-only packages** (no DOM types needed):
-- `@platform/platform-domain`, `@platform/platform-task`, `@platform/cached-http-client`, etc.
+- `@abeauvois/platform-domain`, `@abeauvois/platform-task`, `@abeauvois/platform-cached-http-client`, etc.
 
 ### Task Abstraction Pattern
 
 Background tasks follow hexagonal architecture with a unified "Task" concept:
 
 - **Domain**: Uses `taskId`, `TaskStatus`, `BackgroundTask` (not "job" terminology)
-- **Ports**: `IBackgroundTaskRunner`, `IIdGenerator` in `@platform/task`
+- **Ports**: `IBackgroundTaskRunner`, `IIdGenerator` in `@abeauvois/platform-task`
 - **Adapters**: `PgBossTaskRunner`, `TimestampIdGenerator` implement the ports
 - **Infrastructure mapping**: Repository maps domain (`taskId`) ↔ database (`id`, `pgBossJobId`)
 
@@ -154,7 +154,7 @@ When creating new features:
 ```typescript
 // ✅ GOOD: Use .ts extension for imports (Bun resolves these automatically)
 import { MyService } from './MyService.ts'
-import { utils } from '@platform/domain'
+import { utils } from '@abeauvois/platform-domain'
 
 // ❌ NEVER: Use .js extension in imports or create .js files
 import { MyService } from './MyService.js'  // WRONG
@@ -347,7 +347,7 @@ import someLegacyModule from "legacy-package"; // ⚠️ May not work in Bun
 ### When Adding a Workspace Dependency to an App
 
 1. Add the dependency to `package.json` with `workspace:*`
-2. Add path mapping in `tsconfig.json`: `"@platform/pkg": ["../../packages/pkg/src/index.ts"]`
+2. Add path mapping in `tsconfig.json`: `"@abeauvois/platform-pkg": ["../../packages/pkg/src/index.ts"]`
 3. Check if the package uses DOM types - if so, add `"DOM"` to app's `lib`
 4. Run `bun run ci:typecheck` to verify
 
@@ -452,7 +452,7 @@ bun run it:twitter    # Integration tests for Twitter
 - **State**: TanStack React Query
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: better-auth
-- **Job Queue**: pg-boss (v12+, via @platform/task)
+- **Job Queue**: pg-boss (v12+, via @abeauvois/platform-task)
 - **CLI**: cleye
 
 ## Creating New Apps or Packages
@@ -496,7 +496,7 @@ Failure to update Dockerfiles will cause CI/CD builds to fail with "lockfile had
 
 #### Rule 1: Add Path Mappings for Workspace Dependencies
 
-When an app imports a workspace package (e.g., `@platform/browser-scraper`), you MUST add a path mapping in the app's `tsconfig.json`:
+When an app imports a workspace package (e.g., `@abeauvois/platform-browser-scraper`), you MUST add a path mapping in the app's `tsconfig.json`:
 
 ```json
 // apps/api/tsconfig.json or apps/cli/tsconfig.json
@@ -504,8 +504,8 @@ When an app imports a workspace package (e.g., `@platform/browser-scraper`), you
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"],
-      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"]
+      "@abeauvois/platform-browser-scraper": ["../../packages/browser-scraper/src/index.ts"],
+      "@abeauvois/platform-domain": ["../../packages/platform-domain/src/index.ts"]
       // ... other workspace packages
     }
   }
@@ -562,7 +562,7 @@ If an app imports a package that uses DOM types (e.g., `browser-scraper` uses `d
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["bun-types"],
     "paths": {
-      "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
+      "@abeauvois/platform-browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
     }
   }
 }
@@ -570,9 +570,9 @@ If an app imports a package that uses DOM types (e.g., `browser-scraper` uses `d
 
 #### Checklist When Adding Workspace Dependencies
 
-When adding `@platform/new-package` as a dependency to an app:
+When adding `@abeauvois/platform-new-package` as a dependency to an app:
 
-- [ ] Add path mapping in app's `tsconfig.json`: `"@platform/new-package": ["../../packages/new-package/src/index.ts"]`
+- [ ] Add path mapping in app's `tsconfig.json`: `"@abeauvois/platform-new-package": ["../../packages/new-package/src/index.ts"]`
 - [ ] Check if the package uses DOM types (`document`, `window`, `HTMLElement`, etc.)
 - [ ] If package uses DOM, ensure app's `lib` includes `"DOM"` and `"DOM.Iterable"`
 - [ ] Run `bun run ci:typecheck` to verify resolution works

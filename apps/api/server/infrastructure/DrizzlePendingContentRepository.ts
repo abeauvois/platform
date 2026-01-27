@@ -1,11 +1,11 @@
-import { db, pendingContent, eq, and, inArray } from '@platform/db';
+import { db, pendingContent, eq, and, inArray } from '@abeauvois/platform-db';
 import {
     PendingContent,
     PendingContentStatus,
     type IPendingContentRepository,
     type SourceAdapter,
     type FileType,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 
 export class DrizzlePendingContentRepository implements IPendingContentRepository {
     async save(content: PendingContent): Promise<PendingContent> {

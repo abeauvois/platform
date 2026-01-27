@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
 import { authMiddleware } from '@/middlewares/auth.middleware';
 import { createGmailSourceReader } from '../infrastructure/source-readers/GmailSourceReader';
-import type { SourceReaderConfig } from '@platform/platform-domain';
+import type { SourceReaderConfig } from '@abeauvois/platform-domain';
 
 // Simple logger for source reading
 const createLogger = () => ({

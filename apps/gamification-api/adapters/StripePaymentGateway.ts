@@ -4,7 +4,7 @@
  */
 
 import Stripe from 'stripe';
-import type { IPaymentGateway, CreatePaymentIntentParams, PaymentIntent } from '@platform/gamification-domain';
+import type { IPaymentGateway, CreatePaymentIntentParams, PaymentIntent } from '@abeauvois/platform-gamification-domain';
 
 export class StripePaymentGateway implements IPaymentGateway {
     private stripe: Stripe;

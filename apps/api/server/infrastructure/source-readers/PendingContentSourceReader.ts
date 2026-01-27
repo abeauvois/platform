@@ -1,6 +1,6 @@
-import { BaseContent } from '@platform/platform-domain';
+import { BaseContent } from '@abeauvois/platform-domain';
 import { DrizzlePendingContentRepository } from '../DrizzlePendingContentRepository';
-import type { ILogger, ISourceReader, SourceReaderConfig } from '@platform/platform-domain';
+import type { ILogger, ISourceReader, SourceReaderConfig } from '@abeauvois/platform-domain';
 
 /**
  * Create a source reader that fetches all pending content from the database

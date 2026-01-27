@@ -23,7 +23,7 @@ export type {
     Payment,
     PaymentStatus,
     PaymentIntent,
-} from '@platform/gamification-domain';
+} from '@abeauvois/platform-gamification-domain';
 
 // Re-export constants from domain
 export {
@@ -33,4 +33,4 @@ export {
     TRADE_BASE_COST,
     TIER2_MIN_PURCHASE,
     ORDER_THRESHOLD_TIER2,
-} from '@platform/gamification-domain';
+} from '@abeauvois/platform-gamification-domain';

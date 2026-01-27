@@ -1,4 +1,4 @@
-# @platform/db
+# @abeauvois/platform-db
 
 Centralized database package for the platform monorepo. Contains all shared table schemas, migrations, and database connection logic.
 
@@ -24,15 +24,15 @@ packages/platform-db/
 ### Importing Tables
 
 ```typescript
-import { user, session, bookmarks, watchlistItems } from '@platform/db';
+import { user, session, bookmarks, watchlistItems } from '@abeauvois/platform-db';
 // or
-import * as schema from '@platform/db/schema';
+import * as schema from '@abeauvois/platform-db/schema';
 ```
 
 ### Importing Database Connection
 
 ```typescript
-import { db, pool, eq } from '@platform/db';
+import { db, pool, eq } from '@abeauvois/platform-db';
 
 // Query example
 const users = await db.select().from(user).where(eq(user.id, userId));
@@ -43,7 +43,7 @@ const users = await db.select().from(user).where(eq(user.id, userId));
 The package re-exports common Drizzle operators for convenience:
 
 ```typescript
-import { db, eq, desc, and, or, sql, asc, ne, gt, gte, lt, lte, isNull, isNotNull, inArray } from '@platform/db';
+import { db, eq, desc, and, or, sql, asc, ne, gt, gte, lt, lte, isNull, isNotNull, inArray } from '@abeauvois/platform-db';
 
 // Complex queries
 const results = await db

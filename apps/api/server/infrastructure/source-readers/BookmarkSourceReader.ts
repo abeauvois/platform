@@ -1,4 +1,4 @@
-import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@platform/platform-domain';
+import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@abeauvois/platform-domain';
 import { DrizzleBookmarkRepository } from '../DrizzleBookmarkRepository';
 import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository';
 

@@ -37,11 +37,11 @@ packages/platform-auth/         # NEW: Shared auth infrastructure
 
 apps/trading/
 ├── server/lib/auth.ts         # Uses createAuth factory
-└── package.json               # @platform/auth dependency
+└── package.json               # @abeauvois/platform-auth dependency
 
 apps/web/
 ├── server/lib/auth.ts         # Uses createAuth factory
-└── package.json               # @platform/auth dependency
+└── package.json               # @abeauvois/platform-auth dependency
 ```
 
 **Benefits:**
@@ -58,7 +58,7 @@ apps/web/
 Creates a configured better-auth instance with standardized settings.
 
 ```typescript
-import { createAuth } from "@platform/auth";
+import { createAuth } from "@abeauvois/platform-auth";
 import { db } from "./db/db";
 import * as schema from "./db/schema";
 
@@ -81,7 +81,7 @@ export const auth = createAuth({
 Creates Hono middleware for protecting routes.
 
 ```typescript
-import { createAuthMiddleware } from "@platform/auth";
+import { createAuthMiddleware } from "@abeauvois/platform-auth";
 import { auth } from "../lib/auth";
 
 export const authMiddleware = createAuthMiddleware(auth);
@@ -101,7 +101,7 @@ export const authMiddleware = createAuthMiddleware(auth);
 **`apps/trading/server/lib/auth.ts`:**
 
 ```typescript
-import { createAuth } from "@platform/auth";
+import { createAuth } from "@abeauvois/platform-auth";
 import { db } from "../db/db";
 import * as schema from "../db/schema";
 
@@ -116,7 +116,7 @@ export const auth = createAuth({
 **`apps/trading/server/middlewares/auth.middleware.ts`:**
 
 ```typescript
-import { createAuthMiddleware } from "@platform/auth";
+import { createAuthMiddleware } from "@abeauvois/platform-auth";
 import { auth } from "../lib/auth";
 
 export const authMiddleware = createAuthMiddleware(auth);
@@ -127,7 +127,7 @@ export const authMiddleware = createAuthMiddleware(auth);
 **`apps/web/server/lib/auth.ts`:**
 
 ```typescript
-import { createAuth } from "@platform/auth";
+import { createAuth } from "@abeauvois/platform-auth";
 import { db } from "../db/db";
 import * as schema from "../db/schema";
 
@@ -142,7 +142,7 @@ export const auth = createAuth({
 **`apps/web/server/middlewares/auth.middleware.ts`:**
 
 ```typescript
-import { createAuthMiddleware } from "@platform/auth";
+import { createAuthMiddleware } from "@abeauvois/platform-auth";
 import { auth } from "../lib/auth";
 
 export const authMiddleware = createAuthMiddleware(auth);
@@ -210,7 +210,7 @@ If you need to add a new app that requires authentication:
    ```json
    {
      "dependencies": {
-       "@platform/auth": "workspace:*"
+       "@abeauvois/platform-auth": "workspace:*"
      }
    }
    ```
@@ -218,7 +218,7 @@ If you need to add a new app that requires authentication:
 2. **Create auth instance** in `server/lib/auth.ts`:
 
    ```typescript
-   import { createAuth } from "@platform/auth";
+   import { createAuth } from "@abeauvois/platform-auth";
    import { db } from "../db/db";
    import * as schema from "../db/schema";
 
@@ -233,7 +233,7 @@ If you need to add a new app that requires authentication:
 3. **Create auth middleware** in `server/middlewares/auth.middleware.ts`:
 
    ```typescript
-   import { createAuthMiddleware } from "@platform/auth";
+   import { createAuthMiddleware } from "@abeauvois/platform-auth";
    import { auth } from "../lib/auth";
 
    export const authMiddleware = createAuthMiddleware(auth);

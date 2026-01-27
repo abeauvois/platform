@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully created a new `@platform/trading-sdk` package that extends the `@platform/sdk` authentication features and reuses base components from `@platform/domain`.
+Successfully created a new `@abeauvois/platform-trading-sdk` package that extends the `@abeauvois/platform-sdk` authentication features and reuses base components from `@abeauvois/platform-domain`.
 
 ## Package Structure
 
@@ -81,8 +81,8 @@ Created comprehensive TypeScript types:
 
 ### Workspace Dependencies
 
-- `@platform/domain` - Shared domain types (`ILogger`, `Bookmark`)
-- `@platform/sdk` - Platform SDK with authentication
+- `@abeauvois/platform-domain` - Shared domain types (`ILogger`, `Bookmark`)
+- `@abeauvois/platform-sdk` - Platform SDK with authentication
 
 ### Dev Dependencies
 
@@ -91,7 +91,7 @@ Created comprehensive TypeScript types:
 
 ## Changes to Platform SDK
 
-Made the following changes to `@platform/sdk` to enable inheritance:
+Made the following changes to `@abeauvois/platform-sdk` to enable inheritance:
 
 ### Modified Properties Access (Private → Protected)
 
@@ -134,8 +134,8 @@ bun run test:integration # Integration tests only
 ## Usage Example
 
 ```typescript
-import { TradingApiClient } from "@platform/trading-sdk";
-import type { ILogger } from "@platform/domain";
+import { TradingApiClient } from "@abeauvois/platform-trading-sdk";
+import type { ILogger } from "@abeauvois/platform-domain";
 
 const logger: ILogger = {
   info: (msg) => console.log(msg),

@@ -23,7 +23,7 @@ You are working in a Bun-based TypeScript monorepo with:
 - Trading client at `/apps/trading/client` (port 5001)
 - API server at `/apps/api` (port 3000)
 - Trading server at `/apps/trading/server` (port 3001)
-- SDK packages: `@platform/sdk` and `@platform/trading-sdk`
+- SDK packages: `@abeauvois/platform-sdk` and `@abeauvois/platform-trading-sdk`
 
 ## Core Principles
 

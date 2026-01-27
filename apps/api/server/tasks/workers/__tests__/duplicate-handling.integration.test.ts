@@ -16,7 +16,7 @@ import {
     type ILinkRepository,
     type WorkflowContext,
     type PendingContentStatus,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import { SaveToPendingContentStep } from '../steps/SaveToPendingContentStep';
 import { SaveToBookmarkStep } from '../steps/SaveToBookmarkStep';
 import type { StepFactoryConfig } from '../presets';

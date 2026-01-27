@@ -6,7 +6,7 @@ import { Scalar } from '@scalar/hono-api-reference';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
-import { CreditService, PaymentService } from '@platform/gamification-domain';
+import { CreditService, PaymentService } from '@abeauvois/platform-gamification-domain';
 import { createCreditsOpenApiRoutes } from './routes/credits.openapi.routes';
 import { createPaymentsOpenApiRoutes } from './routes/payments.openapi.routes';
 import { createWebhookRoutes } from './routes/webhooks.routes';

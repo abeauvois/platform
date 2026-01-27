@@ -16,7 +16,7 @@ The Platform SDK has been refactored to be a **generic, reusable API client** th
 
 ### After: Generic, Reusable SDK
 
-- SDK depends **only on `@platform/domain`**
+- SDK depends **only on `@abeauvois/platform-domain`**
 - Single generic `PlatformApiClient` class
 - CLI-specific logic moved to `apps/cli/lib/`
 - No file system or terminal dependencies in SDK
@@ -34,7 +34,7 @@ The Platform SDK has been refactored to be a **generic, reusable API client** th
                   │ uses
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  @platform/sdk                                  │
+│  @abeauvois/platform-sdk                                  │
 │  - PlatformApiClient (generic HTTP client)      │
 │  - Types (API request/response interfaces)      │
 └─────────────────┬───────────────────────────────┘
@@ -42,7 +42,7 @@ The Platform SDK has been refactored to be a **generic, reusable API client** th
                   │ depends on
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  @platform/domain                               │
+│  @abeauvois/platform-domain                               │
 │  - ILogger                                      │
 │  - Bookmark                                     │
 │  - Other domain entities                        │
@@ -60,7 +60,7 @@ The Platform SDK has been refactored to be a **generic, reusable API client** th
 │   └── types.ts              # API request/response types
 ├── tests/unit/
 │   └── test-platform-api-client.test.ts
-├── package.json              # Depends ONLY on @platform/domain
+├── package.json              # Depends ONLY on @abeauvois/platform-domain
 └── tsconfig.json
 ```
 
@@ -78,8 +78,8 @@ The Platform SDK has been refactored to be a **generic, reusable API client** th
 ### PlatformApiClient
 
 ```typescript
-import { PlatformApiClient } from "@platform/sdk";
-import type { ILogger } from "@platform/domain";
+import { PlatformApiClient } from "@abeauvois/platform-sdk";
+import type { ILogger } from "@abeauvois/platform-domain";
 
 const client = new PlatformApiClient({
   baseUrl: "http://localhost:3000",
@@ -181,7 +181,7 @@ const session = authManager.getCurrentSession();
 // apps/cli/commands/list.ts
 import { AuthManager } from "../lib/AuthManager.js";
 import { CliuiLogger } from "../lib/CliuiLogger.js";
-import { PlatformApiClient } from "@platform/sdk";
+import { PlatformApiClient } from "@abeauvois/platform-sdk";
 
 const logger = new CliuiLogger();
 const baseUrl = process.env.PLATFORM_API_URL || "http://localhost:3000";
@@ -206,7 +206,7 @@ console.table(bookmarks);
 
 ```typescript
 // apps/web-dashboard/lib/BrowserAuthManager.ts
-import { PlatformApiClient } from "@platform/sdk";
+import { PlatformApiClient } from "@abeauvois/platform-sdk";
 
 class BrowserAuthManager {
   private apiClient: PlatformApiClient;
@@ -238,8 +238,8 @@ class BrowserAuthManager {
 
 ```typescript
 // packages/trading-sdk/src/TradingApiClient.ts
-import { PlatformApiClient } from "@platform/sdk";
-import type { ILogger } from "@platform/domain";
+import { PlatformApiClient } from "@abeauvois/platform-sdk";
+import type { ILogger } from "@abeauvois/platform-domain";
 
 export class TradingApiClient {
   private platformClient: PlatformApiClient;
@@ -270,7 +270,7 @@ export class TradingApiClient {
 **Old way:**
 
 ```typescript
-import { Auth, Fetcher, CliuiLogger } from "@platform/sdk";
+import { Auth, Fetcher, CliuiLogger } from "@abeauvois/platform-sdk";
 
 const logger = new CliuiLogger();
 const auth = new Auth({ baseUrl, logger });
@@ -282,7 +282,7 @@ const bookmarks = await fetcher.fetchBookmarks();
 **New way:**
 
 ```typescript
-import { PlatformApiClient } from "@platform/sdk";
+import { PlatformApiClient } from "@abeauvois/platform-sdk";
 import { AuthManager } from "../lib/AuthManager.js";
 import { CliuiLogger } from "../lib/CliuiLogger.js";
 

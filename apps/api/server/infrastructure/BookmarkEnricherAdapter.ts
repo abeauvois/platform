@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MAX_EXTRACTED_URLS } from '@platform/platform-domain';
+import { MAX_EXTRACTED_URLS } from '@abeauvois/platform-domain';
 import { parseJsonResponse } from './parseJsonResponse';
-import type { ContentAnalysisResult, IBookmarkEnricher, ILogger, UrlExtractionResult } from '@platform/platform-domain';
+import type { ContentAnalysisResult, IBookmarkEnricher, ILogger, UrlExtractionResult } from '@abeauvois/platform-domain';
 
 /**
  * Adapter implementing IBookmarkEnricher using Anthropic Claude API

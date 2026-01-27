@@ -8,7 +8,7 @@
 
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { BinanceClient } from '../BinanceClient.js';
-import type { AccountBalance } from '@platform/trading-domain';
+import type { AccountBalance } from '@abeauvois/platform-trading-domain';
 
 describe('BinanceClient Balance Integration', () => {
     let client: BinanceClient;

@@ -2,7 +2,7 @@
  * Platform API Client Instance
  * Singleton client for platform operations (auth, settings) in the browser
  */
-import { SettingsClient } from '@platform/sdk';
+import { SettingsClient } from '@abeauvois/platform-sdk';
 import { config } from './config';
 
 /**

@@ -1,4 +1,4 @@
-import type { Task } from '@platform/task';
+import type { Task } from '@abeauvois/platform-task';
 
 export interface TaskResult {
     itemsProcessed: number;

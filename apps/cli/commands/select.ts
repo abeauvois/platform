@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 import { CsvFileWriter } from '../adapters/CsvFileWriter';
-import { Bookmark } from '@platform/platform-domain';
+import { Bookmark } from '@abeauvois/platform-domain';
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 

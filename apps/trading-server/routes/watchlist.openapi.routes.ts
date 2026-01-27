@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
-import type { IExchangeClient, IWatchlistRepository, IIdGenerator, IUserSettingsRepository } from '@platform/trading-domain';
+import type { IExchangeClient, IWatchlistRepository, IIdGenerator, IUserSettingsRepository } from '@abeauvois/platform-trading-domain';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 // OpenAPI schemas

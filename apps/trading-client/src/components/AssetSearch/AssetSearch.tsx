@@ -1,5 +1,5 @@
 import { Search, Loader2 } from 'lucide-react'
-import { Input } from '@platform/ui'
+import { Input } from '@abeauvois/platform-ui'
 import { useRef, useEffect } from 'react'
 import { useSymbolSearch } from '../../hooks/queries/useSymbolSearch'
 import { AssetSearchResult } from './AssetSearchResult'

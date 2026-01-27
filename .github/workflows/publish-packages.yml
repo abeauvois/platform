@@ -19,7 +19,7 @@ jobs:
 
       - name: Configure npm for GitHub Packages
         run: |
-          echo "@platform:registry=https://npm.pkg.github.com" > .npmrc
+          echo "@abeauvois:registry=https://npm.pkg.github.com" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> .npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

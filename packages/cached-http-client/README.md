@@ -1,4 +1,4 @@
-# @platform/cached-http-client
+# @abeauvois/platform-cached-http-client
 
 A generic, type-safe HTTP client with built-in caching, throttling, and retry logic for Node.js/Bun applications.
 
@@ -16,19 +16,19 @@ A generic, type-safe HTTP client with built-in caching, throttling, and retry lo
 
 ```bash
 # Using Bun
-bun add @platform/cached-http-client
+bun add @abeauvois/platform-cached-http-client
 
 # Using npm
-npm install @platform/cached-http-client
+npm install @abeauvois/platform-cached-http-client
 
 # Using yarn
-yarn add @platform/cached-http-client
+yarn add @abeauvois/platform-cached-http-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { CachedHttpClient, type ILogger } from "@platform/cached-http-client";
+import { CachedHttpClient, type ILogger } from "@abeauvois/platform-cached-http-client";
 
 // Implement the logger interface
 const logger: ILogger = {

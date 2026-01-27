@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { Bookmark } from '@platform/platform-domain';
+import { Bookmark } from '@abeauvois/platform-domain';
 import { InMemoryBookmarkRepository } from '../InMemoryBookmarkRepository';
 
 describe('InMemoryBookmarkRepository', () => {

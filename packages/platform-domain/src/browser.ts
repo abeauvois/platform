@@ -1,6 +1,6 @@
 /**
  * Browser-safe exports from platform-domain
- * Does NOT include @platform/task or any Node.js-specific code
+ * Does NOT include @abeauvois/platform-task or any Node.js-specific code
  */
 
 // Entities (browser-safe types and constants only)

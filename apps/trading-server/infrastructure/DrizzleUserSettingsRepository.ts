@@ -1,10 +1,10 @@
-import { db, userSettings, eq } from '@platform/db';
+import { db, userSettings, eq } from '@abeauvois/platform-db';
 import type {
     IUserSettingsRepository,
     UserTradingSettings,
     UserTradingSettingsUpdate,
     AccountMode,
-} from '@platform/trading-domain';
+} from '@abeauvois/platform-trading-domain';
 
 export class DrizzleUserSettingsRepository implements IUserSettingsRepository {
     async findByUserId(userId: string): Promise<UserTradingSettings | null> {

@@ -16,8 +16,8 @@ import {
   Input,
   Button,
   Label,
-} from '@platform/ui'
-import { detectStopOrderCategory } from '@platform/trading-domain'
+} from '@abeauvois/platform-ui'
+import { detectStopOrderCategory } from '@abeauvois/platform-trading-domain'
 import { formatPrice } from '../utils/balance'
 
 export interface StopPriceModalProps {

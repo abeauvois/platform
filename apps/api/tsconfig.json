@@ -12,10 +12,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./server/*"],
-      "@platform/auth": ["../../packages/platform-auth/src/index.ts"],
-      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"],
-      "@platform/cached-http-client": ["../../packages/cached-http-client/src/index.ts"],
-      "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
+      "@abeauvois/platform-auth": ["../../packages/platform-auth/src/index.ts"],
+      "@abeauvois/platform-domain": ["../../packages/platform-domain/src/index.ts"],
+      "@abeauvois/platform-cached-http-client": ["../../packages/cached-http-client/src/index.ts"],
+      "@abeauvois/platform-browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
     }
   }
 }

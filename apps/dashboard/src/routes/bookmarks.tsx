@@ -1,4 +1,4 @@
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@platform/ui'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@abeauvois/platform-ui'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { AlertTriangle, CircleX, X } from 'lucide-react'
@@ -7,8 +7,8 @@ import { useState } from 'react'
 import { BookmarkForm } from '../components/BookmarkForm'
 import { platformClient } from '../../platformClient'
 
-import type { SourceAdapter } from '@platform/platform-domain/browser'
-import type { Bookmark } from '@platform/sdk'
+import type { SourceAdapter } from '@abeauvois/platform-domain/browser'
+import type { Bookmark } from '@abeauvois/platform-sdk'
 import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/bookmarks')({

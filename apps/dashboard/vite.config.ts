@@ -21,16 +21,16 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       // Resolve workspace packages from source for build
-      '@platform/sdk': resolve(__dirname, '../../packages/platform-sdk/src/index.ts'),
-      '@platform/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
-      '@platform/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
-      '@platform/ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
-      '@platform/ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
+      '@abeauvois/platform-sdk': resolve(__dirname, '../../packages/platform-sdk/src/index.ts'),
+      '@abeauvois/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
+      '@abeauvois/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
+      '@abeauvois/platform-ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
+      '@abeauvois/platform-ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
     },
   },
   optimizeDeps: {
     // Include workspace packages in dependency optimization
-    include: ['@platform/sdk', '@platform/platform-domain', '@platform/ui'],
+    include: ['@abeauvois/platform-sdk', '@abeauvois/platform-domain', '@abeauvois/platform-ui'],
   },
   server: {
     port: DASHBOARD_PORT,

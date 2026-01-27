@@ -9,7 +9,7 @@ import {
     type ILinkRepository,
     type SourceAdapter,
     MAX_EXTRACTED_URLS,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 import { BaseWorkflowStep } from './BaseWorkflowStep';
 import { toBaseContent } from './utils';

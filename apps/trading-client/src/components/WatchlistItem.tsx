@@ -1,6 +1,6 @@
-import { formatPrice } from '@platform/trading-domain'
+import { formatPrice } from '@abeauvois/platform-trading-domain'
 import { X, RotateCcw } from 'lucide-react'
-import { Skeleton } from '@platform/ui'
+import { Skeleton } from '@abeauvois/platform-ui'
 
 import { extractBaseAsset } from '../utils/symbol'
 

@@ -1,6 +1,6 @@
 import { command } from 'cleye';
 import * as p from '@clack/prompts';
-import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy, MaltStrategy, type ScrapedListing } from '@platform/browser-scraper';
+import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy, MaltStrategy, type ScrapedListing } from '@abeauvois/platform-browser-scraper';
 import { createCliContext } from '../../lib/cli-context.js';
 
 /**

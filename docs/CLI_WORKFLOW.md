@@ -241,7 +241,7 @@ bun run cli list source gmail -f newsletter@example.com -l 7 -u -s database
 
 The workflow follows hexagonal architecture:
 
-1. **Domain Layer** (`@platform/platform-domain`)
+1. **Domain Layer** (`@abeauvois/platform-domain`)
    - `BackgroundTaskService` - orchestrates background tasks
    - `BackgroundTask` - task entity
    - `IBackgroundTaskRepository` - port for task persistence

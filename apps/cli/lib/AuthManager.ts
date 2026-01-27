@@ -1,5 +1,5 @@
-import type { ILogger } from '@platform/platform-domain';
-import { PlatformApiClient, type AuthResponse } from '@platform/sdk';
+import type { ILogger } from '@abeauvois/platform-domain';
+import { PlatformApiClient, type AuthResponse } from '@abeauvois/platform-sdk';
 import * as p from '@clack/prompts';
 import * as fs from 'fs';
 import * as path from 'path';

@@ -2,8 +2,8 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
 import { workflowValidator } from '../validators/workflow.validator';
 import { authMiddleware } from '@/middlewares/auth.middleware';
-import { getBoss, PgBossTaskRunner, TimestampIdGenerator } from '@platform/task';
-import { BackgroundTaskService, TaskError } from '@platform/platform-domain';
+import { getBoss, PgBossTaskRunner, TimestampIdGenerator } from '@abeauvois/platform-task';
+import { BackgroundTaskService, TaskError } from '@abeauvois/platform-domain';
 import { DrizzleBackgroundTaskRepository } from '../infrastructure/DrizzleBackgroundTaskRepository';
 
 // Lazy initialization - service is created on first use after boss is initialized

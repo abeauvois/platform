@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   toast,
-} from '@platform/ui'
+} from '@abeauvois/platform-ui'
 import { authClient } from '../lib/auth-client'
 
 export default function Header() {

@@ -4,10 +4,10 @@
  */
 
 import { eq, desc } from 'drizzle-orm';
-import { db } from '@platform/db';
-import { payments } from '@platform/db/schema';
-import type { IPaymentRepository, CreatePaymentData } from '@platform/gamification-domain';
-import type { Payment, PaymentStatus } from '@platform/gamification-domain';
+import { db } from '@abeauvois/platform-db';
+import { payments } from '@abeauvois/platform-db/schema';
+import type { IPaymentRepository, CreatePaymentData } from '@abeauvois/platform-gamification-domain';
+import type { Payment, PaymentStatus } from '@abeauvois/platform-gamification-domain';
 
 export class DrizzlePaymentRepository implements IPaymentRepository {
     async create(data: CreatePaymentData): Promise<Payment> {

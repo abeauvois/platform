@@ -1,4 +1,4 @@
-import { Skeleton } from '@platform/ui'
+import { Skeleton } from '@abeauvois/platform-ui'
 
 import { formatPrice } from '../utils/balance'
 

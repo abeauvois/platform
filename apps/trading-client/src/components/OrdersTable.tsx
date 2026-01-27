@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@abeauvois/platform-ui'
 import { ListOrdered } from 'lucide-react'
 
 export type OrderType = 'limit' | 'market' | 'stop_loss' | 'stop_loss_limit' | 'take_profit' | 'take_profit_limit' | 'stop' | 'stop_limit'

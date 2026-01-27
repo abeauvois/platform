@@ -43,8 +43,8 @@ apps/cli/
 
 ## Dependencies
 
-- `@platform/sdk` - Platform SDK for API communication (Auth, Fetcher, ConfigProvider)
-- `@platform/domain` - Domain entities
+- `@abeauvois/platform-sdk` - Platform SDK for API communication (Auth, Fetcher, ConfigProvider)
+- `@abeauvois/platform-domain` - Domain entities
 - `cleye` - CLI framework
 - `@poppinss/cliui` - Terminal UI
 
@@ -261,7 +261,7 @@ bun run api:renew-session
 3. Use Platform SDK for API operations:
 
 ```typescript
-import { Auth, Fetcher } from "@platform/sdk";
+import { Auth, Fetcher } from "@abeauvois/platform-sdk";
 
 const auth = new Auth({ baseUrl: API_URL });
 const credentials = await auth.login();
@@ -282,7 +282,7 @@ bun run build
 
 ## Troubleshooting
 
-### "Cannot find module '@platform/sdk'"
+### "Cannot find module '@abeauvois/platform-sdk'"
 
 Build the packages:
 

@@ -13,9 +13,9 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
-    "@platform/platform-domain": "workspace:*",
-    "@platform/sdk": "workspace:*",
-    "@platform/ui": "workspace:*",
+    "@abeauvois/platform-domain": "workspace:*",
+    "@abeauvois/platform-sdk": "workspace:*",
+    "@abeauvois/platform-ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-form": "^1.27.7",
     "@tanstack/react-query": "^5.66.5",

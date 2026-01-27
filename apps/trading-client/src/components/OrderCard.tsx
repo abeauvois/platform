@@ -1,5 +1,5 @@
-import { Button, Card, CardContent, Label } from '@platform/ui'
-import { calculatePricePrecision, formatPrice } from '@platform/trading-domain'
+import { Button, Card, CardContent, Label } from '@abeauvois/platform-ui'
+import { calculatePricePrecision, formatPrice } from '@abeauvois/platform-trading-domain'
 import { ChevronDown, CirclePlus, Info } from 'lucide-react'
 import { useState } from 'react'
 import { NumberInput, PercentageSlider, TabGroup } from './ui'

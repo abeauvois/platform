@@ -1,9 +1,9 @@
-import { calculateEMA, calculatePricePrecision, getMinMove } from '@platform/trading-domain'
+import { calculateEMA, calculatePricePrecision, getMinMove } from '@abeauvois/platform-trading-domain'
 import { useEffect, useMemo } from 'react'
 
 import { useKlines } from '../queries'
 
-import type { Candlestick } from '@platform/trading-domain'
+import type { Candlestick } from '@abeauvois/platform-trading-domain'
 import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts'
 
 export interface UseChartDataParams {

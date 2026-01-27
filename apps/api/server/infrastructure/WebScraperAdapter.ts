@@ -1,5 +1,5 @@
-import { CachedHttpClient } from '@platform/cached-http-client';
-import { type IWebScraper, type ILogger } from '@platform/platform-domain';
+import { CachedHttpClient } from '@abeauvois/platform-cached-http-client';
+import { type IWebScraper, type ILogger } from '@abeauvois/platform-domain';
 
 // LinkedIn post content selector
 const LINKEDIN_CONTENT_SELECTOR = '#ember35 > div > div > div.fie-impression-container';

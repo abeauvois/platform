@@ -1,5 +1,5 @@
-import { db, backgroundTasks, eq, desc, and } from '@platform/db';
-import type { IBackgroundTaskRepository, BackgroundTask, BackgroundTaskCreate, BackgroundTaskUpdate } from '@platform/platform-domain';
+import { db, backgroundTasks, eq, desc, and } from '@abeauvois/platform-db';
+import type { IBackgroundTaskRepository, BackgroundTask, BackgroundTaskCreate, BackgroundTaskUpdate } from '@abeauvois/platform-domain';
 
 export class DrizzleBackgroundTaskRepository implements IBackgroundTaskRepository {
     async create(data: BackgroundTaskCreate): Promise<BackgroundTask> {

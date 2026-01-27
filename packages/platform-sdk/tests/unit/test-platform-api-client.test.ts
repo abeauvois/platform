@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
 import { PlatformApiClient } from '../../src/PlatformApiClient.js';
-import type { ILogger } from '@platform/platform-domain';
+import type { ILogger } from '@abeauvois/platform-domain';
 
 describe('PlatformApiClient', () => {
     let mockLogger: ILogger;

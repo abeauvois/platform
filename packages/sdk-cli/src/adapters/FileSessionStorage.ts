@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { ISessionStorage } from '@platform/sdk';
+import type { ISessionStorage } from '@abeauvois/platform-sdk';
 
 /**
  * Stored session data structure

@@ -8,7 +8,7 @@
 
 import { describe, test, expect } from 'bun:test';
 import { BinanceClient } from '../BinanceClient.js';
-import type { MarketTicker } from '@platform/trading-domain';
+import type { MarketTicker } from '@abeauvois/platform-trading-domain';
 
 describe('BinanceClient Integration', () => {
     const client = new BinanceClient();

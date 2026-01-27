@@ -16,8 +16,8 @@
     "types": ["bun-types"],
     "baseUrl": ".",
     "paths": {
-      "@platform/sdk": ["../platform-sdk/src"],
-      "@platform/platform-domain": ["../platform-domain/src"]
+      "@abeauvois/platform-sdk": ["../platform-sdk/src"],
+      "@abeauvois/platform-domain": ["../platform-domain/src"]
     }
   },
   "include": ["src/**/*"],

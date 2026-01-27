@@ -1,5 +1,5 @@
 {
-  "name": "@platform/gamification-sdk",
+  "name": "@abeauvois/platform-gamification-sdk",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,8 +27,8 @@
     "directory": "packages/gamification-sdk"
   },
   "dependencies": {
-    "@platform/gamification-domain": "^1.0.0",
-    "@platform/sdk": "^0.0.1"
+    "@abeauvois/platform-gamification-domain": "^1.0.0",
+    "@abeauvois/platform-sdk": "^0.0.1"
   },
   "devDependencies": {
     "@types/bun": "latest",

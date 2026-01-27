@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { HonoEnv } from '../types';
-import type { IExchangeClient } from '@platform/trading-domain';
+import type { IExchangeClient } from '@abeauvois/platform-trading-domain';
 
 // OpenAPI schemas
 const SymbolPriceSchema = z.object({

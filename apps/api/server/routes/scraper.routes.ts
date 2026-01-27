@@ -3,9 +3,9 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import type { HonoEnv } from '../types';
 import { authMiddleware } from '@/middlewares/auth.middleware';
-import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy, MaltStrategy } from '@platform/browser-scraper';
-import { db, eq, desc } from '@platform/db';
-import { scrapedData } from '@platform/db/schema';
+import { ChromeCdpAdapter, LeboncoinStrategy, AutoScout24Strategy, MaltStrategy } from '@abeauvois/platform-browser-scraper';
+import { db, eq, desc } from '@abeauvois/platform-db';
+import { scrapedData } from '@abeauvois/platform-db/schema';
 
 // Request validation schemas
 const scrapeRequestSchema = z.object({

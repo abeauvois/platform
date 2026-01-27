@@ -1,4 +1,4 @@
-import type { BaseContent, ISourceReader, SourceReaderConfig } from '@platform/platform-domain';
+import type { BaseContent, ISourceReader, SourceReaderConfig } from '@abeauvois/platform-domain';
 
 // Re-export for convenience
 export type { ISourceReader, SourceReaderConfig };
@@ -30,6 +30,6 @@ export interface IExportService {
  * Port: Bookmark repository interface for saving to database
  */
 export interface ILinkRepository {
-    saveMany(links: import('@platform/platform-domain').Bookmark[]): Promise<import('@platform/platform-domain').Bookmark[]>;
+    saveMany(links: import('@abeauvois/platform-domain').Bookmark[]): Promise<import('@abeauvois/platform-domain').Bookmark[]>;
     existsByUrls(userId: string, urls: string[]): Promise<Set<string>>;
 }

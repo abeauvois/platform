@@ -1,4 +1,4 @@
-# @platform/browser-scraper
+# @abeauvois/platform-browser-scraper
 
 Browser scraping adapter using Chrome DevTools Protocol with Playwright.
 
@@ -13,7 +13,7 @@ Browser scraping adapter using Chrome DevTools Protocol with Playwright.
 ## Installation
 
 ```bash
-bun add @platform/browser-scraper
+bun add @abeauvois/platform-browser-scraper
 ```
 
 ## Usage
@@ -21,7 +21,7 @@ bun add @platform/browser-scraper
 ### Basic Usage with ChromeCdpAdapter
 
 ```typescript
-import { ChromeCdpAdapter, LeboncoinStrategy } from '@platform/browser-scraper';
+import { ChromeCdpAdapter, LeboncoinStrategy } from '@abeauvois/platform-browser-scraper';
 
 // Connect to Chrome instance
 const scraper = new ChromeCdpAdapter({
@@ -54,7 +54,7 @@ await scraper.disconnect();
 ### Creating Custom Scraping Strategies
 
 ```typescript
-import type { IScrapeStrategy, Page } from '@platform/browser-scraper';
+import type { IScrapeStrategy, Page } from '@abeauvois/platform-browser-scraper';
 
 interface MyCustomData {
   title: string;

@@ -2,7 +2,7 @@
  * Trading API Client Instance
  * Singleton client for trading operations in the browser
  */
-import { TradingApiClient } from '@platform/trading-sdk';
+import { TradingApiClient } from '@abeauvois/platform-trading-sdk';
 import { config } from './config';
 import { getAuthToken } from './auth-token';
 

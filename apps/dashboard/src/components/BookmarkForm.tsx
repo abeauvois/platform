@@ -8,11 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-} from '@platform/ui'
-import { SOURCE_ADAPTERS } from '@platform/platform-domain/browser'
+} from '@abeauvois/platform-ui'
+import { SOURCE_ADAPTERS } from '@abeauvois/platform-domain/browser'
 import { useForm } from '@tanstack/react-form'
 
-import type { SourceAdapter } from '@platform/platform-domain/browser'
+import type { SourceAdapter } from '@abeauvois/platform-domain/browser'
 
 interface BookmarkFormData {
   url: string

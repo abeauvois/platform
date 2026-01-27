@@ -1,4 +1,4 @@
-import type { IConfigProvider, ILogger } from '@platform/platform-domain';
+import type { IConfigProvider, ILogger } from '@abeauvois/platform-domain';
 import { PlatformApiClient } from '../PlatformApiClient.js';
 
 interface ApiConfigProviderOptions {

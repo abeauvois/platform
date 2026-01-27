@@ -1,4 +1,4 @@
-import { Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@platform/ui'
+import { Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@abeauvois/platform-ui'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 

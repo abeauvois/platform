@@ -1,4 +1,4 @@
-import { Button } from '@platform/ui'
+import { Button } from '@abeauvois/platform-ui'
 import { useDraggable } from '@dnd-kit/core'
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Star, Calendar } from 'lucide-react'
 import { useMemo, useState } from 'react'

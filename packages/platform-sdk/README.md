@@ -1,4 +1,4 @@
-# @platform/sdk
+# @abeauvois/platform-sdk
 
 Platform API client SDK for authentication and API communication.
 
@@ -15,7 +15,7 @@ Platform API client SDK for authentication and API communication.
 ## Installation
 
 ```bash
-bun add @platform/sdk
+bun add @abeauvois/platform-sdk
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ bun add @platform/sdk
 ### Browser with Cookies (Same-Origin)
 
 ```typescript
-import { PlatformApiClient } from '@platform/sdk';
+import { PlatformApiClient } from '@abeauvois/platform-sdk';
 
 const client = new PlatformApiClient({
   baseUrl: 'http://localhost:3000',
@@ -40,7 +40,7 @@ const session = await client.getSession();
 For cross-origin requests where cookies don't work (e.g., trading-client → trading-server):
 
 ```typescript
-import { PlatformApiClient } from '@platform/sdk';
+import { PlatformApiClient } from '@abeauvois/platform-sdk';
 
 const client = new PlatformApiClient({
   baseUrl: 'http://localhost:3001',
@@ -56,7 +56,7 @@ const data = await client.authenticatedRequest('/api/protected', {
 ### CLI with Manual Token
 
 ```typescript
-import { PlatformApiClient } from '@platform/sdk';
+import { PlatformApiClient } from '@abeauvois/platform-sdk';
 
 const client = new PlatformApiClient({
   baseUrl: 'http://localhost:3000',
@@ -112,7 +112,7 @@ await client.getConfigKeys(): Promise<string[]>
 Load configuration from the API server:
 
 ```typescript
-import { ApiConfigProvider } from '@platform/sdk';
+import { ApiConfigProvider } from '@abeauvois/platform-sdk';
 
 const config = new ApiConfigProvider({
   apiUrl: 'http://localhost:3000',
@@ -126,7 +126,7 @@ const apiKey = config.get('ANTHROPIC_API_KEY');
 ## Extending with Custom Clients
 
 ```typescript
-import { BaseClient } from '@platform/sdk';
+import { BaseClient } from '@abeauvois/platform-sdk';
 
 export class MyServiceClient extends BaseClient {
   async getItems(): Promise<Item[]> {
@@ -139,5 +139,5 @@ export class MyServiceClient extends BaseClient {
 
 ## Related Packages
 
-- [@platform/trading-sdk](../trading-sdk) - Trading API client
-- [@platform/auth](../platform-auth) - Authentication package
+- [@abeauvois/platform-trading-sdk](../trading-sdk) - Trading API client
+- [@abeauvois/platform-auth](../platform-auth) - Authentication package

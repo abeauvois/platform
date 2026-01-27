@@ -1,8 +1,8 @@
-import { PlatformApiClient } from '@platform/sdk';
+import { PlatformApiClient } from '@abeauvois/platform-sdk';
 import { FileSessionStorage } from './adapters/FileSessionStorage.js';
 import type { StoredSession } from './adapters/FileSessionStorage.js';
-import type { ILogger } from '@platform/platform-domain';
-import type { AuthResponse, ISessionStorage } from '@platform/sdk';
+import type { ILogger } from '@abeauvois/platform-domain';
+import type { AuthResponse, ISessionStorage } from '@abeauvois/platform-sdk';
 
 export interface AuthManagerConfig {
     /** Base URL of the platform API */

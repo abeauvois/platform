@@ -4,7 +4,7 @@ import {
     type StepResult,
     type ILogger,
     BaseContent,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 import { reportProgress } from './utils/progress';
 

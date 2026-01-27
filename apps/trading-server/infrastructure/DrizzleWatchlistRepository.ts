@@ -1,5 +1,5 @@
-import { db, watchlist, eq, and } from '@platform/db';
-import type { IWatchlistRepository, WatchlistItem, WatchlistItemCreate } from '@platform/trading-domain';
+import { db, watchlist, eq, and } from '@abeauvois/platform-db';
+import type { IWatchlistRepository, WatchlistItem, WatchlistItemCreate } from '@abeauvois/platform-trading-domain';
 
 export class DrizzleWatchlistRepository implements IWatchlistRepository {
     async add(data: WatchlistItemCreate): Promise<WatchlistItem> {

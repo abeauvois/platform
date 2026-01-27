@@ -3,7 +3,7 @@
  * HTTP client for interacting with the gamification-api microservice
  */
 
-import { BaseClient, type BaseClientConfig } from '@platform/sdk';
+import { BaseClient, type BaseClientConfig } from '@abeauvois/platform-sdk';
 import type {
     CreditBalance,
     CreditTransaction,
@@ -11,7 +11,7 @@ import type {
     TradeAccessResult,
     Payment,
     PaymentIntent,
-} from '@platform/gamification-domain';
+} from '@abeauvois/platform-gamification-domain';
 
 export interface GamificationApiClientConfig extends BaseClientConfig {
     /** Fetch credentials mode for cookie handling (default: 'include' for browser) */

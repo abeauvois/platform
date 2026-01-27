@@ -26,11 +26,11 @@ export type {
     UserTradingSettingsResponse,
     SymbolSearchResult,
     Candlestick,
-} from '@platform/trading-domain';
+} from '@abeauvois/platform-trading-domain';
 
 // Re-export auth types from platform SDK for convenience
 export type {
     SignUpData,
     SignInData,
     AuthResponse,
-} from '@platform/sdk';
+} from '@abeauvois/platform-sdk';

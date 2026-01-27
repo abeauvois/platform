@@ -1,4 +1,4 @@
-import { PlatformApiClient } from '@platform/sdk';
+import { PlatformApiClient } from '@abeauvois/platform-sdk';
 
 /**
  * Platform API client for the dashboard.

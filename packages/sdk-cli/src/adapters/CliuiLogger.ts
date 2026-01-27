@@ -1,5 +1,5 @@
 import { cliui } from '@poppinss/cliui';
-import type { ILogger } from '@platform/platform-domain';
+import type { ILogger } from '@abeauvois/platform-domain';
 
 /**
  * Logger adapter using @poppinss/cliui.

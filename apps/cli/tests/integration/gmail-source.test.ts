@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
-import { PlatformApiClient } from '@platform/sdk';
+import { PlatformApiClient } from '@abeauvois/platform-sdk';
 
 const API_BASE_URL = 'http://localhost:3000';
 

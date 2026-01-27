@@ -1,5 +1,5 @@
 import type { BackgroundTask, BackgroundTaskCreate, TaskResult } from '../entities/BackgroundTask.js';
-import type { TaskStatus, TaskProgress } from '@platform/task';
+import type { TaskStatus, TaskProgress } from '@abeauvois/platform-task';
 
 /**
  * Data for updating task status

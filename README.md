@@ -17,10 +17,10 @@ ideas: commodity, katapult, viite.io, ...
 │     Port 5000       │     Port 5001       │                                          │
 │                     │                     │                                          │
 │  ┌───────────────┐  │  ┌───────────────┐  │  ┌───────────────┐                       │
-│  │ @platform/sdk │  │  │@platform/     │  │  │ @platform/sdk │                       │
-│  │               │  │  │trading-sdk    │  │  │ @platform/    │                       │
-│  │ @platform/ui  │  │  │               │  │  │ sdk-cli       │                       │
-│  └───────┬───────┘  │  │ @platform/ui  │  │  └───────┬───────┘                       │
+│  │ @abeauvois/platform-sdk │  │  │@abeauvois/platform-     │  │  │ @abeauvois/platform-sdk │                       │
+│  │               │  │  │trading-sdk    │  │  │ @abeauvois/platform-    │                       │
+│  │ @abeauvois/platform-ui  │  │  │               │  │  │ sdk-cli       │                       │
+│  └───────┬───────┘  │  │ @abeauvois/platform-ui  │  │  └───────┬───────┘                       │
 │          │          │  └───────┬───────┘  │          │                               │
 └──────────┼──────────┴──────────┼──────────┴──────────┼───────────────────────────────┘
            │                     │                     │
@@ -39,9 +39,9 @@ ideas: commodity, katapult, viite.io, ...
 │ • Background Tasks  │  │ • Binance API       │
 │                     │  │                     │
 │  ┌───────────────┐  │  │  ┌───────────────┐  │
-│  │ @platform/auth│  │  │  │ @platform/auth│  │
-│  │ @platform/db  │  │  │  │ @platform/db  │  │
-│  │ @platform/task│  │  │  │ @platform/    │  │
+│  │ @abeauvois/platform-auth│  │  │  │ @abeauvois/platform-auth│  │
+│  │ @abeauvois/platform-db  │  │  │  │ @abeauvois/platform-db  │  │
+│  │ @abeauvois/platform-task│  │  │  │ @abeauvois/platform-    │  │
 │  └───────────────┘  │  │  │ trading-domain│  │
 └──────────┬──────────┘  │  └───────────────┘  │
            │             └──────────┬──────────┘
@@ -133,32 +133,32 @@ Platform serves as the central authentication provider. Other services (like tra
 
 ```
 Foundation Layer (no workspace dependencies):
-├── @platform/task         # pg-boss wrapper
-├── @platform/auth         # better-auth wrapper
-├── @platform/db           # Drizzle schema
-├── @platform/env          # Environment config
-├── @platform/utils        # Utilities
-├── @platform/ui           # UI components
-├── @platform/cached-http-client
-└── @platform/trading-domain
+├── @abeauvois/platform-task         # pg-boss wrapper
+├── @abeauvois/platform-auth         # better-auth wrapper
+├── @abeauvois/platform-db           # Drizzle schema
+├── @abeauvois/platform-env          # Environment config
+├── @abeauvois/platform-utils        # Utilities
+├── @abeauvois/platform-ui           # UI components
+├── @abeauvois/platform-cached-http-client
+└── @abeauvois/platform-trading-domain
 
 Domain Layer:
-└── @platform/platform-domain
-    └── depends on: @platform/task
+└── @abeauvois/platform-domain
+    └── depends on: @abeauvois/platform-task
 
 SDK Layer:
-├── @platform/sdk
-│   └── depends on: @platform/platform-domain
+├── @abeauvois/platform-sdk
+│   └── depends on: @abeauvois/platform-domain
 │
-└── @platform/trading-sdk
-    └── depends on: @platform/platform-domain // TODO: not sure this is necessary, could we put all in @platform/sdk?
-                    @platform/trading-domain
-                    @platform/sdk
+└── @abeauvois/platform-trading-sdk
+    └── depends on: @abeauvois/platform-domain // TODO: not sure this is necessary, could we put all in @abeauvois/platform-sdk?
+                    @abeauvois/platform-trading-domain
+                    @abeauvois/platform-sdk
 
 CLI Layer:
-└── @platform/sdk-cli
-    └── depends on: @platform/sdk.   // TODO: not sure both required, could we put all in @platform/sdk?
-                    @platform/platform-domain
+└── @abeauvois/platform-sdk-cli
+    └── depends on: @abeauvois/platform-sdk.   // TODO: not sure both required, could we put all in @abeauvois/platform-sdk?
+                    @abeauvois/platform-domain
 ```
 
 ## Hexagonal Architecture
@@ -203,7 +203,7 @@ The core domain follows hexagonal architecture (ports and adapters):
 | State     | TanStack React Query              |
 | Database  | PostgreSQL + Drizzle ORM          |
 | Auth      | better-auth (with bearer plugin)  |
-| Job Queue | pg-boss (via @platform/task)      |
+| Job Queue | pg-boss (via @abeauvois/platform-task)      |
 | API Docs  | OpenAPI + Scalar (trading-server) |
 
 ## Ports Reference
@@ -274,12 +274,12 @@ bun run ci:local       # Run full CI locally (typecheck + lint + build + test)
 
 ## Package Documentation
 
-### @platform/auth
+### @abeauvois/platform-auth
 
 Authentication package built on better-auth with bearer token support for cross-service authentication.
 
 ```typescript
-import { createAuth } from "@platform/auth";
+import { createAuth } from "@abeauvois/platform-auth";
 
 const auth = createAuth({
   db,
@@ -296,12 +296,12 @@ const auth = createAuth({
 - Bearer tokens for cross-service auth (via bearer plugin)
 - OpenAPI documentation
 
-### @platform/sdk
+### @abeauvois/platform-sdk
 
 Platform API client SDK with support for cookie and bearer token authentication.
 
 ```typescript
-import { PlatformApiClient } from "@platform/sdk";
+import { PlatformApiClient } from "@abeauvois/platform-sdk";
 
 // Browser with cookies
 const client = new PlatformApiClient({
@@ -316,12 +316,12 @@ const client = new PlatformApiClient({
 });
 ```
 
-### @platform/trading-sdk
+### @abeauvois/platform-trading-sdk
 
 Trading API client SDK for market data and trading operations.
 
 ```typescript
-import { TradingApiClient } from "@platform/trading-sdk";
+import { TradingApiClient } from "@abeauvois/platform-trading-sdk";
 
 const client = new TradingApiClient({
   baseUrl: "http://localhost:3001",
@@ -335,12 +335,12 @@ const watchlist = await client.getWatchlist();
 const ticker = await client.getMarketTicker("BTCUSDT");
 ```
 
-### @platform/task
+### @abeauvois/platform-task
 
 Background task abstractions following hexagonal architecture.
 
 ```typescript
-import { initBoss, createQueue, registerWorker } from "@platform/task";
+import { initBoss, createQueue, registerWorker } from "@abeauvois/platform-task";
 
 const boss = await initBoss({ connectionString: process.env.DATABASE_URL });
 await createQueue("my-queue");
@@ -349,13 +349,13 @@ await registerWorker("my-queue", async (job) => {
 });
 ```
 
-### @platform/db
+### @abeauvois/platform-db
 
 Database schema and migrations using Drizzle ORM.
 
 ```typescript
-import { db, eq } from "@platform/db";
-import { users } from "@platform/db/schema";
+import { db, eq } from "@abeauvois/platform-db";
+import { users } from "@abeauvois/platform-db/schema";
 
 const user = await db.select().from(users).where(eq(users.id, userId));
 ```

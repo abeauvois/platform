@@ -1,11 +1,11 @@
-import type { IConfigProvider } from '@platform/platform-domain';
+import type { IConfigProvider } from '@abeauvois/platform-domain';
 
 /**
  * Configuration provider that loads from .env files.
  * Uses Bun runtime APIs for file access.
  *
  * Note: This provider is CLI/server-specific and requires Bun runtime.
- * For web applications, use ApiConfigProvider from @platform/sdk instead.
+ * For web applications, use ApiConfigProvider from @abeauvois/platform-sdk instead.
  */
 export class EnvConfigProvider implements IConfigProvider {
     private config: Map<string, string> = new Map();

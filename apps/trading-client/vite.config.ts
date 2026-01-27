@@ -42,18 +42,18 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       // Resolve workspace packages from source for build
-      '@platform/trading-sdk': resolve(__dirname, '../../packages/trading-sdk/src/index.ts'),
-      '@platform/trading-domain': resolve(__dirname, '../../packages/trading-domain/src/index.ts'),
-      '@platform/sdk': resolve(__dirname, '../../packages/platform-sdk/src/index.ts'),
-      '@platform/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
-      '@platform/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
-      '@platform/ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
-      '@platform/ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
+      '@abeauvois/platform-trading-sdk': resolve(__dirname, '../../packages/trading-sdk/src/index.ts'),
+      '@abeauvois/platform-trading-domain': resolve(__dirname, '../../packages/trading-domain/src/index.ts'),
+      '@abeauvois/platform-sdk': resolve(__dirname, '../../packages/platform-sdk/src/index.ts'),
+      '@abeauvois/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
+      '@abeauvois/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
+      '@abeauvois/platform-ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
+      '@abeauvois/platform-ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
     },
   },
   optimizeDeps: {
     // Exclude aliased packages from pre-bundling since we resolve them to source
-    exclude: ['@platform/trading-sdk', '@platform/trading-domain', '@platform/sdk', '@platform/platform-domain', '@platform/ui'],
+    exclude: ['@abeauvois/platform-trading-sdk', '@abeauvois/platform-trading-domain', '@abeauvois/platform-sdk', '@abeauvois/platform-domain', '@abeauvois/platform-ui'],
   },
   server: {
     port: TRADING_CLIENT_PORT,

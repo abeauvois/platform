@@ -1,4 +1,4 @@
-# @platform/auth
+# @abeauvois/platform-auth
 
 Authentication package built on [better-auth](https://better-auth.com) with bearer token support for cross-service authentication.
 
@@ -13,7 +13,7 @@ Authentication package built on [better-auth](https://better-auth.com) with bear
 ## Installation
 
 ```bash
-bun add @platform/auth
+bun add @abeauvois/platform-auth
 ```
 
 ## Usage
@@ -21,9 +21,9 @@ bun add @platform/auth
 ### Creating an Auth Instance
 
 ```typescript
-import { createAuth } from '@platform/auth';
-import { db } from '@platform/db';
-import * as schema from '@platform/db/schema';
+import { createAuth } from '@abeauvois/platform-auth';
+import { db } from '@abeauvois/platform-db';
+import * as schema from '@abeauvois/platform-db/schema';
 
 const auth = createAuth({
   db,
@@ -52,7 +52,7 @@ app.on(['POST', 'GET', 'OPTIONS'], '/api/auth/*', async (c) => {
 ### Auth Middleware
 
 ```typescript
-import { createAuthMiddleware } from '@platform/auth';
+import { createAuthMiddleware } from '@abeauvois/platform-auth';
 
 const authMiddleware = createAuthMiddleware(auth);
 
@@ -100,7 +100,7 @@ export const authClient = createAuthClient({
 ### Service Setup (e.g., trading-server)
 
 ```typescript
-import { createAuth } from '@platform/auth';
+import { createAuth } from '@abeauvois/platform-auth';
 
 // Use the SAME secret as platform
 const auth = createAuth({

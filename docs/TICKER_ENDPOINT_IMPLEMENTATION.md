@@ -179,8 +179,8 @@ This implementation follows the project's architecture guidelines:
 ## Usage in Client Code
 
 ```typescript
-import { TradingApiClient } from "@platform/trading-sdk";
-import { ConsoleLogger } from "@platform/domain";
+import { TradingApiClient } from "@abeauvois/platform-trading-sdk";
+import { ConsoleLogger } from "@abeauvois/platform-domain";
 
 // Initialize client
 const client = new TradingApiClient({

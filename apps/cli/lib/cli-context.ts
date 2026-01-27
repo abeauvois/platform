@@ -1,5 +1,5 @@
-import type { ILogger, IConfigProvider } from '@platform/platform-domain';
-import { PlatformApiClient, ApiConfigProvider } from '@platform/sdk';
+import type { ILogger, IConfigProvider } from '@abeauvois/platform-domain';
+import { PlatformApiClient, ApiConfigProvider } from '@abeauvois/platform-sdk';
 import { AuthManager } from './AuthManager.js';
 import { createClackLogger } from './clack-logger.js';
 

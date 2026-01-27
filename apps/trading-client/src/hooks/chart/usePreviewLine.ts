@@ -1,4 +1,4 @@
-import { formatPrice } from '@platform/trading-domain'
+import { formatPrice } from '@abeauvois/platform-trading-domain'
 import { useCallback } from 'react'
 
 import { getPreviewLineOptions } from '../../components/TradingChart/chart-config'

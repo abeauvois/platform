@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { BaseContent, Bookmark, type ISourceReader, type ILogger, type WorkflowContext } from '@platform/platform-domain';
+import { BaseContent, Bookmark, type ISourceReader, type ILogger, type WorkflowContext } from '@abeauvois/platform-domain';
 import { InMemoryBookmarkRepository } from '../../../infrastructure/InMemoryBookmarkRepository';
 import { ReadStep, SaveToBookmarkStep } from '../steps';
 import type { StepFactoryConfig } from '../presets';

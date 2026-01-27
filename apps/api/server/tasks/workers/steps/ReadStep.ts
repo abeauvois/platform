@@ -1,5 +1,5 @@
 import { BaseWorkflowStep } from './BaseWorkflowStep';
-import type { BaseContent, StepResult, WorkflowContext } from '@platform/platform-domain';
+import type { BaseContent, StepResult, WorkflowContext } from '@abeauvois/platform-domain';
 import type { StepFactoryConfig } from '../presets';
 
 /**

@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '@platform/ui'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '@abeauvois/platform-ui'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { CircleX, Loader2 } from 'lucide-react'
 import { useState } from 'react'

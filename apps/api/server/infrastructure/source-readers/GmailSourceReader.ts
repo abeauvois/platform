@@ -1,4 +1,4 @@
-import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@platform/platform-domain';
+import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@abeauvois/platform-domain';
 import { GmailApiClient } from '../GmailApiClient';
 import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository';
 import { UrlExtractor } from '../UrlExtractor';

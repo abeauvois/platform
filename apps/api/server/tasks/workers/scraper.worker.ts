@@ -1,8 +1,8 @@
-import type { PgBoss, Job } from '@platform/task';
+import type { PgBoss, Job } from '@abeauvois/platform-task';
 import { QUEUE_NAMES } from '../types';
-import { ChromeCdpAdapter, LeboncoinStrategy, type ScrapedListing } from '@platform/browser-scraper';
-import { db } from '@platform/db';
-import { scrapedData } from '@platform/db/schema';
+import { ChromeCdpAdapter, LeboncoinStrategy, type ScrapedListing } from '@abeauvois/platform-browser-scraper';
+import { db } from '@abeauvois/platform-db';
+import { scrapedData } from '@abeauvois/platform-db/schema';
 
 /**
  * Payload for scraper jobs

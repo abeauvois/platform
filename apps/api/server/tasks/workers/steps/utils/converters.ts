@@ -1,4 +1,4 @@
-import { BaseContent, Bookmark, PendingContent } from '@platform/platform-domain';
+import { BaseContent, Bookmark, PendingContent } from '@abeauvois/platform-domain';
 
 /**
  * Convert a BaseContent item to a Bookmark.

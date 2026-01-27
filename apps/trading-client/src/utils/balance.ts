@@ -4,7 +4,7 @@ import type {
   SymbolPrice,
   BalanceResponse,
   MarginBalanceResponse,
-} from '@platform/trading-domain'
+} from '@abeauvois/platform-trading-domain'
 
 // Re-export domain types for backward compatibility
 export type { AccountBalance, MarginBalance, SymbolPrice, BalanceResponse, MarginBalanceResponse }

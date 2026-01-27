@@ -51,7 +51,7 @@ Example: If `apps/cli/tsconfig.json` has:
   "compilerOptions": {
     "lib": ["ES2022"],  // No DOM!
     "paths": {
-      "@platform/browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
+      "@abeauvois/platform-browser-scraper": ["../../packages/browser-scraper/src/index.ts"]
     }
   }
 }

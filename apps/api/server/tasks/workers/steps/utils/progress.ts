@@ -1,4 +1,4 @@
-import type { WorkflowContext } from '@platform/platform-domain';
+import type { WorkflowContext } from '@abeauvois/platform-domain';
 
 /**
  * Report progress for each item in the workflow context.

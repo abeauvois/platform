@@ -1,6 +1,6 @@
 import { google, gmail_v1 } from 'googleapis';
-import { GmailMessage } from '@platform/platform-domain';
-import { truncateText } from '@platform/utils';
+import { GmailMessage } from '@abeauvois/platform-domain';
+import { truncateText } from '@abeauvois/platform-utils';
 import { type IUrlExtractor, UrlExtractor } from './UrlExtractor.js';
 
 /**

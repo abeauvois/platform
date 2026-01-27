@@ -5,7 +5,7 @@
 
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
 import { Hono } from 'hono';
-import type { BaseContent } from '@platform/platform-domain';
+import type { BaseContent } from '@abeauvois/platform-domain';
 
 // Mock the GmailSourceReader module
 const mockRead = mock<() => Promise<BaseContent[]>>(() => Promise.resolve([]));

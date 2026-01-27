@@ -1,4 +1,4 @@
-import { Bookmark } from '@platform/platform-domain'
+import { Bookmark } from '@abeauvois/platform-domain'
 
 /**
  * Adapter: Implements CSV file writing using Bun's native file system

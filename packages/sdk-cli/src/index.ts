@@ -19,4 +19,4 @@ export { CliuiLogger } from './adapters/CliuiLogger';
 export { AuthManager, type AuthManagerConfig } from './AuthManager';
 
 // Re-export types from core SDK for convenience
-export type { ISessionStorage, AuthResponse } from '@platform/sdk';
+export type { ISessionStorage, AuthResponse } from '@abeauvois/platform-sdk';

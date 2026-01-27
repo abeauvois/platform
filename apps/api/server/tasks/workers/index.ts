@@ -1,5 +1,5 @@
-import type { PgBoss } from '@platform/task';
-import type { IBackgroundTaskRepository } from '@platform/platform-domain';
+import type { PgBoss } from '@abeauvois/platform-task';
+import type { IBackgroundTaskRepository } from '@abeauvois/platform-domain';
 import { registerWorkflowWorker } from './workflow.worker';
 import { registerEnrichmentWorker } from './enrichment.worker';
 import { registerScraperWorker } from './scraper.worker';

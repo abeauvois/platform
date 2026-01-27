@@ -5,7 +5,7 @@
  * This file should be imported at the very start of the server entry point.
  */
 
-import { createEnvConfig, validators, type EnvSchema } from '@platform/env';
+import { createEnvConfig, validators, type EnvSchema } from '@abeauvois/platform-env';
 
 const envSchema = {
     // Database (required for auth session validation)

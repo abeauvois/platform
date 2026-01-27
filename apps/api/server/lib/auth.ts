@@ -1,6 +1,6 @@
-import { createAuth } from '@platform/auth';
-import { db } from '@platform/db';
-import * as schema from '@platform/db/schema';
+import { createAuth } from '@abeauvois/platform-auth';
+import { db } from '@abeauvois/platform-db';
+import * as schema from '@abeauvois/platform-db/schema';
 
 // Build trusted origins from environment variables
 const trustedOrigins = [

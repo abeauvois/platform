@@ -1,4 +1,4 @@
-import { Input, cn } from '@platform/ui'
+import { Input, cn } from '@abeauvois/platform-ui'
 import { useState, useEffect } from 'react'
 
 interface AmountInputProps {

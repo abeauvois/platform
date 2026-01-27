@@ -1,5 +1,5 @@
 import type { IProgressReporter } from '../../../lib/progress-reporter.js';
-import type { SourceContentItem } from '@platform/sdk';
+import type { SourceContentItem } from '@abeauvois/platform-sdk';
 
 /**
  * Options for reading Gmail

@@ -21,7 +21,7 @@ import {
     type UrlExtractionResult,
     type ContentAnalysisResult,
     type PendingContentStatus,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import { BookmarkEnrichmentStep } from '../steps/BookmarkEnrichmentStep';
 import type { StepFactoryConfig } from '../presets';
 

@@ -6,7 +6,7 @@ Central platform server handling authentication, todos, bookmarks, configuration
 
 This is the **central API server** that all client apps connect to for shared functionality:
 
-- Authentication (via `@platform/auth`)
+- Authentication (via `@abeauvois/platform-auth`)
 - Todo management
 - Bookmark management
 - Configuration management (single source of truth for API keys and tokens)

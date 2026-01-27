@@ -1,5 +1,5 @@
 {
-    "name": "@platform/trading-domain",
+    "name": "@abeauvois/platform-trading-domain",
     "private": true,
     "version": "1.0.0",
     "description": "Trading domain layer (entities, types) for the trading application",

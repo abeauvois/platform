@@ -1,5 +1,5 @@
 {
-  "name": "@platform/sdk-cli",
+  "name": "@abeauvois/platform-sdk-cli",
   "version": "0.0.1",
   "type": "module",
   "main": "./src/index.ts",
@@ -11,8 +11,8 @@
     }
   },
   "dependencies": {
-    "@platform/sdk": "workspace:*",
-    "@platform/platform-domain": "workspace:*"
+    "@abeauvois/platform-sdk": "workspace:*",
+    "@abeauvois/platform-domain": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

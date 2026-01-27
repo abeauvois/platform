@@ -4,22 +4,22 @@
  */
 
 import { eq, desc, and, sql } from 'drizzle-orm';
-import { db } from '@platform/db';
+import { db } from '@abeauvois/platform-db';
 import {
     userCreditBalance,
     creditTransactions,
     userDailyActivity,
-} from '@platform/db/schema';
+} from '@abeauvois/platform-db/schema';
 import type {
     ICreditRepository,
-} from '@platform/gamification-domain';
+} from '@abeauvois/platform-gamification-domain';
 import type {
     CreditBalance,
     CreditTransaction,
     CreditTransactionType,
     UserTier,
-} from '@platform/gamification-domain';
-import { FREE_CREDITS } from '@platform/gamification-domain';
+} from '@abeauvois/platform-gamification-domain';
+import { FREE_CREDITS } from '@abeauvois/platform-gamification-domain';
 import { TimestampIdGenerator } from './TimestampIdGenerator';
 
 const idGenerator = new TimestampIdGenerator();

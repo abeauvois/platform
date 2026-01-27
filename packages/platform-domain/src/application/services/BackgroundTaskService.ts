@@ -1,4 +1,4 @@
-import type { IBackgroundTaskRunner, BackgroundTaskOptions, IIdGenerator } from '@platform/task';
+import type { IBackgroundTaskRunner, BackgroundTaskOptions, IIdGenerator } from '@abeauvois/platform-task';
 import type { IBackgroundTaskRepository } from '../../domain/ports/IBackgroundTaskRepository.js';
 import type { BackgroundTask } from '../../domain/entities/BackgroundTask.js';
 

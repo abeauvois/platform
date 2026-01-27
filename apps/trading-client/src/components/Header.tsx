@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   toast,
-} from '@platform/ui'
+} from '@abeauvois/platform-ui'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Loader2, LogIn, LogOut, Settings, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'

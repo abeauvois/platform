@@ -1,5 +1,5 @@
 {
-  "name": "@platform/auth",
+  "name": "@abeauvois/platform-auth",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.js",

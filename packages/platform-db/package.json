@@ -1,5 +1,5 @@
 {
-    "name": "@platform/db",
+    "name": "@abeauvois/platform-db",
     "version": "1.0.0",
     "type": "module",
     "exports": {

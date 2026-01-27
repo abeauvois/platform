@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@platform/ui'
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@abeauvois/platform-ui'
 import { useDroppable } from '@dnd-kit/core'
 import { RefreshCw, Star, StarOff, TrendingUp } from 'lucide-react'
 import { forwardRef, useCallback, useImperativeHandle } from 'react'

@@ -126,7 +126,7 @@ export interface WorkflowOptions {
 
 /**
  * Logger interface for workflow hooks
- * Matches ILogger from @platform/platform-domain
+ * Matches ILogger from @abeauvois/platform-domain
  */
 export interface ILogger {
     info(message: string, options?: { prefix?: string; suffix?: string }): void;

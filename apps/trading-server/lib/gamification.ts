@@ -3,7 +3,7 @@
  * Optional integration with the gamification-api for credit checks
  */
 
-import { GamificationApiClient } from '@platform/gamification-sdk';
+import { GamificationApiClient } from '@abeauvois/platform-gamification-sdk';
 import { env } from '../env';
 
 /**

@@ -1,6 +1,6 @@
 import { describe, test, expect, mock, beforeEach } from 'bun:test';
 import { BaseWorkflowStep } from '../BaseWorkflowStep';
-import type { WorkflowContext, StepResult, BaseContent, ILogger } from '@platform/platform-domain';
+import type { WorkflowContext, StepResult, BaseContent, ILogger } from '@abeauvois/platform-domain';
 import type { StepFactoryConfig } from '../../presets';
 
 // Concrete implementation for testing

@@ -1,5 +1,5 @@
 import * as p from '@clack/prompts';
-import type { ILogger } from '@platform/platform-domain';
+import type { ILogger } from '@abeauvois/platform-domain';
 
 /**
  * Create a clack-based logger that uses spinners for progress

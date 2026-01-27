@@ -1,5 +1,5 @@
-import { BaseClient } from '@platform/sdk';
-import type { ILogger } from '@platform/platform-domain';
+import { BaseClient } from '@abeauvois/platform-sdk';
+import type { ILogger } from '@abeauvois/platform-domain';
 import type {
     Position,
     Order,
@@ -16,7 +16,7 @@ import type {
     WatchlistItemResponse,
     UserTradingSettingsResponse,
     SymbolSearchResult,
-} from '@platform/trading-domain';
+} from '@abeauvois/platform-trading-domain';
 
 interface TradingApiClientConfig {
     baseUrl: string;

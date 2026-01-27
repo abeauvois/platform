@@ -7,7 +7,7 @@
  */
 
 import WebSocket from 'ws';
-import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, MaxBorrowable, Order, SymbolPrice, TradableSymbol, UserDataEventCallback, UserDataEvent } from '@platform/trading-domain';
+import type { AccountBalance, Candlestick, CreateOrderData, IExchangeClient, MarginBalance, MarketTicker, MaxBorrowable, Order, SymbolPrice, TradableSymbol, UserDataEventCallback, UserDataEvent } from '@abeauvois/platform-trading-domain';
 
 /**
  * Binance API response type for 24hr ticker

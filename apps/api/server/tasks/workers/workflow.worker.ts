@@ -1,4 +1,4 @@
-import type { PgBoss, Job } from '@platform/task';
+import type { PgBoss, Job } from '@abeauvois/platform-task';
 import {
     QUEUE_NAMES,
     type WorkflowJobPayload,
@@ -10,7 +10,7 @@ import {
     BaseContent,
     type ILogger,
     type IBackgroundTaskRepository,
-} from '@platform/platform-domain';
+} from '@abeauvois/platform-domain';
 import { getPreset } from './presets';
 
 /**

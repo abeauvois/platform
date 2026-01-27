@@ -3,7 +3,7 @@
  * Generates unique IDs using timestamp and random suffix
  */
 
-import type { IIdGenerator } from '@platform/gamification-domain';
+import type { IIdGenerator } from '@abeauvois/platform-gamification-domain';
 
 export class TimestampIdGenerator implements IIdGenerator {
     generate(prefix?: string): string {

@@ -4,7 +4,7 @@ import { env } from './env';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { createQueue, initBoss, scheduleRecurringTask, stopBoss } from '@platform/task';
+import { createQueue, initBoss, scheduleRecurringTask, stopBoss } from '@abeauvois/platform-task';
 import { auth } from './lib/auth';
 import { bookmarks } from './routes/bookmark.routes';
 import { config } from './routes/config.routes';

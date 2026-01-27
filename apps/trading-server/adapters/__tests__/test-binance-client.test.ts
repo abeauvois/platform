@@ -7,7 +7,7 @@
 
 import { describe, test, expect, beforeEach, mock, afterEach } from 'bun:test';
 import { BinanceClient } from '../BinanceClient.js';
-import type { IExchangeClient, MarketTicker, AccountBalance, MarginBalance, SymbolPrice, TradableSymbol } from '@platform/trading-domain';
+import type { IExchangeClient, MarketTicker, AccountBalance, MarginBalance, SymbolPrice, TradableSymbol } from '@abeauvois/platform-trading-domain';
 
 describe('BinanceClient', () => {
     let client: BinanceClient;

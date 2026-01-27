@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { PlatformApiClient } from '../../src/index.js';
-import { Bookmark, type ILogger } from '@platform/platform-domain';
+import { Bookmark, type ILogger } from '@abeauvois/platform-domain';
 import { TEST_API_URL } from '../test-config.js';
 
 /**

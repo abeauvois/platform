@@ -1,7 +1,7 @@
 /**
  * Trading API Functions
  * Thin wrappers around TradingApiClient for backward compatibility with existing hooks.
- * All types are re-exported from @platform/trading-domain for consistency.
+ * All types are re-exported from @abeauvois/platform-trading-domain for consistency.
  */
 import { tradingClient } from './trading-client';
 import { settingsClient } from './platform-client';
@@ -14,8 +14,8 @@ import type {
   KlinesResponse,
   WatchlistItemResponse,
   SymbolSearchResult,
-} from '@platform/trading-domain';
-import type { UserSettings, UserSettingsUpdate, AccountMode } from '@platform/sdk';
+} from '@abeauvois/platform-trading-domain';
+import type { UserSettings, UserSettingsUpdate, AccountMode } from '@abeauvois/platform-sdk';
 
 // Re-export types for backward compatibility with existing imports
 export type {

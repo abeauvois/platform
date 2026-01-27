@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { Bookmark, GetBookmarksByUserIdService } from '@platform/platform-domain'
+import { Bookmark, GetBookmarksByUserIdService } from '@abeauvois/platform-domain'
 import { createBookmarkValidator } from '../validators/create-bookmark.validator'
 import { DrizzleBookmarkRepository } from '../infrastructure/DrizzleBookmarkRepository'
 import type { HonoEnv } from '../types'

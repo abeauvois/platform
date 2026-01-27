@@ -3,7 +3,7 @@
  */
 
 // Re-export from platform-task for convenience
-export * from '@platform/task'
+export * from '@abeauvois/platform-task'
 
 // Entities
 export * from './domain/entities/BaseContent'

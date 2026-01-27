@@ -33,7 +33,7 @@ You are working within a Bun-based TypeScript monorepo with hexagonal architectu
 
 ### 1. Reuse Existing Packages
 - Always check `/packages/trading-domain/` for existing domain models before creating new ones
-- Use `@platform/trading-sdk` for API client functionality
+- Use `@abeauvois/platform-trading-sdk` for API client functionality
 - Leverage `cached-http-client` for Binance API calls with proper rate limiting
 - Check existing implementations in `/apps/trading/server/` before writing new code
 

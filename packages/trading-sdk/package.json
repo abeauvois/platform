@@ -1,5 +1,5 @@
 {
-    "name": "@platform/trading-sdk",
+    "name": "@abeauvois/platform-trading-sdk",
     "version": "0.0.1",
     "type": "module",
     "main": "./dist/index.js",
@@ -18,9 +18,9 @@
         "test:integration": "bun test ./tests/integration"
     },
     "dependencies": {
-        "@platform/platform-domain": "workspace:*",
-        "@platform/trading-domain": "workspace:*",
-        "@platform/sdk": "workspace:*"
+        "@abeauvois/platform-domain": "workspace:*",
+        "@abeauvois/platform-trading-domain": "workspace:*",
+        "@abeauvois/platform-sdk": "workspace:*"
     },
     "devDependencies": {
         "@types/bun": "latest",

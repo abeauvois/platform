@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { PlatformApiClient, ApiConfigProvider } from '../../src/index.js';
-import type { ILogger } from '@platform/platform-domain';
+import type { ILogger } from '@abeauvois/platform-domain';
 import { TEST_API_URL } from '../test-config.js';
 
 /**

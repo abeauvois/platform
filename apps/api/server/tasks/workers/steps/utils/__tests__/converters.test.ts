@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { toBookmark, toPendingContent, toBaseContent } from '../converters';
-import { BaseContent, Bookmark, PendingContent } from '@platform/platform-domain';
+import { BaseContent, Bookmark, PendingContent } from '@abeauvois/platform-domain';
 
 describe('converters', () => {
     const createMockBaseContent = (overrides: Partial<BaseContent> = {}): BaseContent => {

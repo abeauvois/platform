@@ -5,7 +5,7 @@ import { DrizzlePendingContentRepository } from '../../infrastructure/DrizzlePen
 import { WebScraperAdapter } from '../../infrastructure/WebScraperAdapter';
 import { BookmarkEnricherAdapter } from '../../infrastructure/BookmarkEnricherAdapter';
 import { AnalyzeStep, BookmarkEnrichmentStep, EnrichStep, ExportStep, ReadStep, SaveToPendingContentStep } from './steps';
-import type { BaseContent, ILogger, ISourceReader, IWorkflowStep } from '@platform/platform-domain';
+import type { BaseContent, ILogger, ISourceReader, IWorkflowStep } from '@abeauvois/platform-domain';
 import type { SAVE_TO_DESTINATIONS, WorkflowRequest } from '@/validators/workflow.validator';
 
 /**

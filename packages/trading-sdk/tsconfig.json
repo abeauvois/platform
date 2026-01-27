@@ -15,9 +15,9 @@
     "allowSyntheticDefaultImports": true,
     "types": ["bun-types"],
     "paths": {
-      "@platform/platform-domain": ["../platform-domain/src"],
-      "@platform/trading-domain": ["../trading-domain/src"],
-      "@platform/sdk": ["../platform-sdk/src"]
+      "@abeauvois/platform-domain": ["../platform-domain/src"],
+      "@abeauvois/platform-trading-domain": ["../trading-domain/src"],
+      "@abeauvois/platform-sdk": ["../platform-sdk/src"]
     }
   },
   "include": ["src/**/*"],

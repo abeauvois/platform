@@ -7,7 +7,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@platform/ui'
+} from '@abeauvois/platform-ui'
 import { AlertCircle, Loader2, RefreshCw } from 'lucide-react'
 import type { ReactNode } from 'react'
 

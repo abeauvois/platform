@@ -1,4 +1,4 @@
-import { cn } from '@platform/ui'
+import { cn } from '@abeauvois/platform-ui'
 
 interface PercentageSliderProps {
   value: number

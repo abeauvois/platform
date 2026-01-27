@@ -25,13 +25,13 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@platform/trading-sdk": ["../../packages/trading-sdk/src/index.ts"],
-      "@platform/trading-domain": ["../../packages/trading-domain/src/index.ts"],
-      "@platform/sdk": ["../../packages/platform-sdk/src/index.ts"],
-      "@platform/platform-domain": ["../../packages/platform-domain/src/index.ts"],
-      "@platform/platform-domain/*": ["../../packages/platform-domain/src/*"],
-      "@platform/ui": ["../../packages/platform-ui/src/index.ts"],
-      "@platform/ui/*": ["../../packages/platform-ui/src/*"]
+      "@abeauvois/platform-trading-sdk": ["../../packages/trading-sdk/src/index.ts"],
+      "@abeauvois/platform-trading-domain": ["../../packages/trading-domain/src/index.ts"],
+      "@abeauvois/platform-sdk": ["../../packages/platform-sdk/src/index.ts"],
+      "@abeauvois/platform-domain": ["../../packages/platform-domain/src/index.ts"],
+      "@abeauvois/platform-domain/*": ["../../packages/platform-domain/src/*"],
+      "@abeauvois/platform-ui": ["../../packages/platform-ui/src/index.ts"],
+      "@abeauvois/platform-ui/*": ["../../packages/platform-ui/src/*"]
     }
   }
 }

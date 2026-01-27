@@ -8,7 +8,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { fetchMaxBorrowable } from '../lib/api'
-import type { MaxBorrowable } from '@platform/trading-domain'
+import type { MaxBorrowable } from '@abeauvois/platform-trading-domain'
 
 export interface UseMarginAvailabilityConfig {
   /** Base asset symbol (e.g., 'BTC') */

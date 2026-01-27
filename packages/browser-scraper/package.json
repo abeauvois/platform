@@ -1,5 +1,5 @@
 {
-  "name": "@platform/browser-scraper",
+  "name": "@abeauvois/platform-browser-scraper",
   "version": "1.0.0",
   "description": "Browser scraping adapter using Chrome DevTools Protocol with Puppeteer",
   "type": "module",
@@ -29,7 +29,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@platform/platform-domain": "workspace:*",
+    "@abeauvois/platform-domain": "workspace:*",
     "puppeteer-core": "^24.35.0"
   },
   "devDependencies": {
