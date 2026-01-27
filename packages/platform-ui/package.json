@@ -1,6 +1,5 @@
 {
   "name": "@platform/ui",
-  "private": true,
   "version": "1.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -13,10 +12,20 @@
     "./globals.css": "./src/styles/globals.css",
     "./lib/utils": "./src/lib/utils.ts"
   },
+  "files": ["src"],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "echo 'UI ships source files, no build needed'",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abeauvois/platform.git",
+    "directory": "packages/platform-ui"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0-alpha.5",

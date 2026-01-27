@@ -1,34 +1,44 @@
 {
-    "name": "@platform/sdk",
-    "version": "0.0.1",
-    "type": "module",
-    "main": "./dist/platform-sdk/src/index.js",
-    "module": "./dist/platform-sdk/src/index.js",
-    "types": "./dist/platform-sdk/src/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/platform-sdk/src/index.d.ts",
-            "import": "./dist/platform-sdk/src/index.js",
-            "default": "./dist/platform-sdk/src/index.js"
-        },
-        "./server": {
-            "types": "./dist/platform-sdk/src/server.d.ts",
-            "import": "./dist/platform-sdk/src/server.js",
-            "default": "./dist/platform-sdk/src/server.js"
-        }
+  "name": "@platform/sdk",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/platform-sdk/src/index.js",
+  "module": "./dist/platform-sdk/src/index.js",
+  "types": "./dist/platform-sdk/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/platform-sdk/src/index.d.ts",
+      "import": "./dist/platform-sdk/src/index.js",
+      "default": "./dist/platform-sdk/src/index.js"
     },
-    "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "test": "bun test",
-        "test:unit": "bun test ./tests/unit",
-        "test:integration": "bun test ./tests/integration"
-    },
-    "dependencies": {
-        "@platform/platform-domain": "workspace:*"
-    },
-    "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "^5.0.0"
+    "./server": {
+      "types": "./dist/platform-sdk/src/server.d.ts",
+      "import": "./dist/platform-sdk/src/server.js",
+      "default": "./dist/platform-sdk/src/server.js"
     }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "bun test",
+    "test:unit": "bun test ./tests/unit",
+    "test:integration": "bun test ./tests/integration"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abeauvois/platform.git",
+    "directory": "packages/platform-sdk"
+  },
+  "dependencies": {
+    "@platform/platform-domain": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
 }

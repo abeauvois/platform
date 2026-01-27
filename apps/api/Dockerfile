@@ -14,9 +14,6 @@ COPY apps/cli/package.json ./apps/cli/
 COPY apps/cli-landing/package.json ./apps/cli-landing/
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY apps/gamification-api/package.json ./apps/gamification-api/
-COPY apps/trading-server/package.json ./apps/trading-server/
-COPY apps/trading-client/package.json ./apps/trading-client/
-
 COPY packages/browser-scraper/package.json ./packages/browser-scraper/
 COPY packages/cached-http-client/package.json ./packages/cached-http-client/
 COPY packages/gamification-domain/package.json ./packages/gamification-domain/
@@ -29,8 +26,6 @@ COPY packages/platform-task/package.json ./packages/platform-task/
 COPY packages/platform-ui/package.json ./packages/platform-ui/
 COPY packages/platform-utils/package.json ./packages/platform-utils/
 COPY packages/sdk-cli/package.json ./packages/sdk-cli/
-COPY packages/trading-domain/package.json ./packages/trading-domain/
-COPY packages/trading-sdk/package.json ./packages/trading-sdk/
 COPY packages/platform-env/package.json ./packages/platform-env/
 
 RUN bun install --frozen-lockfile

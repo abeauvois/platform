@@ -11,11 +11,9 @@ on:
       app:
         description: "App to deploy"
         required: true
-        default: "trading"
+        default: "api"
         type: choice
         options:
-          - trading
-          - trading-client
           - api
       environment:
         description: "Environment to deploy to"
@@ -46,31 +44,19 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_APP: ${{ inputs.app }}
           INPUT_ENV: ${{ inputs.environment }}
-          TRADING_PROD_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_PROD_SERVICE_ID }}
-          TRADING_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_STAGING_SERVICE_ID }}
-          TRADING_CLIENT_PROD_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_CLIENT_PROD_SERVICE_ID }}
-          TRADING_CLIENT_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_TRADING_CLIENT_STAGING_SERVICE_ID }}
           API_PROD_SERVICE_ID: ${{ secrets.RAILWAY_API_PROD_SERVICE_ID }}
           API_STAGING_SERVICE_ID: ${{ secrets.RAILWAY_API_STAGING_SERVICE_ID }}
         run: |
           if [[ "$EVENT_NAME" == "release" ]]; then
-            echo "app=trading" >> $GITHUB_OUTPUT
+            echo "app=api" >> $GITHUB_OUTPUT
             echo "environment=production" >> $GITHUB_OUTPUT
-            echo "service_id=$TRADING_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
+            echo "service_id=$API_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
           else
             echo "app=$INPUT_APP" >> $GITHUB_OUTPUT
             echo "environment=$INPUT_ENV" >> $GITHUB_OUTPUT
 
             # Map app + environment to Railway service IDs
-            if [[ "$INPUT_APP" == "trading" && "$INPUT_ENV" == "staging" ]]; then
-              echo "service_id=$TRADING_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
-            elif [[ "$INPUT_APP" == "trading" && "$INPUT_ENV" == "production" ]]; then
-              echo "service_id=$TRADING_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
-            elif [[ "$INPUT_APP" == "trading-client" && "$INPUT_ENV" == "staging" ]]; then
-              echo "service_id=$TRADING_CLIENT_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
-            elif [[ "$INPUT_APP" == "trading-client" && "$INPUT_ENV" == "production" ]]; then
-              echo "service_id=$TRADING_CLIENT_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
-            elif [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "staging" ]]; then
+            if [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "staging" ]]; then
               echo "service_id=$API_STAGING_SERVICE_ID" >> $GITHUB_OUTPUT
             elif [[ "$INPUT_APP" == "api" && "$INPUT_ENV" == "production" ]]; then
               echo "service_id=$API_PROD_SERVICE_ID" >> $GITHUB_OUTPUT
