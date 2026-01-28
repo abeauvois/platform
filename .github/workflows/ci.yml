@@ -114,7 +114,7 @@ jobs:
             path: apps/api
           - name: dashboard
             path: apps/dashboard
-- name: cli
+          - name: cli
             path: apps/cli
           - name: packages
             path: .
