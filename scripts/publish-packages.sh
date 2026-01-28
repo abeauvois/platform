@@ -16,10 +16,24 @@ PACKAGES=(
 )
 
 for pkg in "${PACKAGES[@]}"; do
-  echo "==> Building and publishing $pkg..."
+  echo "==> Processing $pkg..."
   cd "$ROOT_DIR/$pkg"
-  bun run build
-  npm publish
+
+  # Get package name and version from package.json
+  PKG_NAME=$(node -p "require('./package.json').name")
+  PKG_VERSION=$(node -p "require('./package.json').version")
+
+  # Check if this version is already published
+  PUBLISHED_VERSION=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
+
+  if [ "$PUBLISHED_VERSION" = "$PKG_VERSION" ]; then
+    echo "    $PKG_NAME@$PKG_VERSION already published, skipping..."
+  else
+    echo "    Building and publishing $PKG_NAME@$PKG_VERSION..."
+    bun run build
+    npm publish
+  fi
+
   cd "$ROOT_DIR"
 done
 
