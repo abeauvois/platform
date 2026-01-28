@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-core",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Generic platform infrastructure: logging, config, tasks, workflows",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },

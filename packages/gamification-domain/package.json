@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-gamification-domain",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Gamification domain layer (entities, ports, services) for credits system",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "bun test"

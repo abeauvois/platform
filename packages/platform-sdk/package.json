@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-sdk",
-  "version": "0.0.1",
+  "version": "1.5.0",
   "type": "module",
   "main": "./dist/platform-sdk/src/index.js",
   "module": "./dist/platform-sdk/src/index.js",
@@ -17,7 +17,10 @@
       "default": "./dist/platform-sdk/src/server.js"
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
