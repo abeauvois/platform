@@ -38,7 +38,7 @@
     "directory": "packages/platform-sdk"
   },
   "dependencies": {
-    "@abeauvois/platform-domain": "^1.0.0"
+    "@abeauvois/platform-domain": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

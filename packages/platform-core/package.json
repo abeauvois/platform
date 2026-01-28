@@ -29,7 +29,7 @@
     "directory": "packages/platform-core"
   },
   "dependencies": {
-    "@abeauvois/platform-task": "^0.0.1"
+    "@abeauvois/platform-task": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

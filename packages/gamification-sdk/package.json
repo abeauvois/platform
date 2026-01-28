@@ -30,8 +30,8 @@
     "directory": "packages/gamification-sdk"
   },
   "dependencies": {
-    "@abeauvois/platform-gamification-domain": "^1.0.0",
-    "@abeauvois/platform-sdk": "^0.0.1"
+    "@abeauvois/platform-gamification-domain": "workspace:*",
+    "@abeauvois/platform-sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",
