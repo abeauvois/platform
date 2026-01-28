@@ -2,9 +2,6 @@
  * Platform Core — generic infrastructure types and services.
  */
 
-// Re-export from platform-task for convenience
-export * from '@abeauvois/platform-task'
-
 // Entities
 export * from './domain/entities/BackgroundTask'
 
