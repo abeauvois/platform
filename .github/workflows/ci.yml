@@ -31,16 +31,11 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache dependencies
+      - name: Cache bun install cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-cache-${{ hashFiles('**/bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -48,23 +43,23 @@ jobs:
       - name: Type checking (packages)
         run: |
           # Order matters: check packages in dependency order
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-task/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-core/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-ingestion/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-domain/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-sdk/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/browser-scraper/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-task/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-core/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-ingestion/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-domain/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-sdk/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p packages/browser-scraper/tsconfig.json
 
       - name: Build packages (required for app typecheck)
         run: bun run build:lib
 
       - name: Type checking (apps)
         run: |
-          bun --bun tsc --noEmit --skipLibCheck -p apps/api/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p apps/cli/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p apps/api/tsconfig.json
+          bunx tsc --noEmit --skipLibCheck -p apps/cli/tsconfig.json
 
       - name: Lint dashboard
         working-directory: apps/dashboard
@@ -83,16 +78,11 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache dependencies
+      - name: Cache bun install cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-cache-${{ hashFiles('**/bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -130,16 +120,11 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache dependencies
+      - name: Cache bun install cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-cache-${{ hashFiles('**/bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -222,16 +207,11 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache dependencies
+      - name: Cache bun install cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-cache-${{ hashFiles('**/bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -276,16 +256,11 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache dependencies
+      - name: Cache bun install cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-            **/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-cache-${{ hashFiles('**/bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
