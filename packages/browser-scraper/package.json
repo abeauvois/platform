@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-browser-scraper",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Browser scraping adapter using Chrome DevTools Protocol with Puppeteer",
   "type": "module",
   "main": "dist/index.js",
