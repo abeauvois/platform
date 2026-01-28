@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1768770295160,
-      "tag": "0000_furry_the_enforcers",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1769101100566,
-      "tag": "0001_chilly_black_cat",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1769102747017,
-      "tag": "0002_past_wallflower",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1769109101748,
-      "tag": "0003_medical_taskmaster",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1769112465500,
-      "tag": "0004_naive_daimon_hellstrom",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1769116968479,
-      "tag": "0005_black_the_leader",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1769518511021,
-      "tag": "0006_foamy_terror",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1769609851830,
-      "tag": "0007_secret_crystal",
+      "when": 1769618310282,
+      "tag": "0000_bent_retro_girl",
       "breakpoints": true
     }
   ]

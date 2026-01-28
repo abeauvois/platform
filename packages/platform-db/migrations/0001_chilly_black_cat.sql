@@ -1,1 +1,0 @@
-ALTER TABLE "watchlist" ADD COLUMN "reference_timestamp" bigint;

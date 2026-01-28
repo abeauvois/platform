@@ -1,1 +1,0 @@
-ALTER TABLE "user_trading_settings" ADD COLUMN "global_reference_timestamp" bigint;
