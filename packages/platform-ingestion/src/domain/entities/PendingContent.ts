@@ -1,5 +1,5 @@
-import type { SourceAdapter } from "./SourceAdapter";
-import type { FileType } from "./RawFile";
+import type { SourceAdapter } from "./SourceAdapter.js";
+import type { FileType } from "./RawFile.js";
 
 /**
  * Status lifecycle for pending content:

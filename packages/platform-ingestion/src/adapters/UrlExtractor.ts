@@ -1,13 +1,7 @@
+import type { IUrlExtractor } from '../domain/ports/IUrlExtractor.js';
+
 /** URL regex pattern for detecting HTTP/HTTPS URLs */
 const URL_REGEX = /(https?:\/\/[^\s<>"')\]]+)/g;
-
-/**
- * Port: IUrlExtractor interface
- */
-export interface IUrlExtractor {
-    containsUrl(content: string): boolean;
-    extractFirst(content: string): string;
-}
 
 /**
  * URL extraction utility for finding URLs in text content

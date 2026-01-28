@@ -28,10 +28,10 @@ export type SourceAdapter = typeof SOURCE_ADAPTERS[number];
 /**
  * Type guard to validate if a value is a valid SourceAdapter
  * Use this at boundaries (API inputs, file parsing, etc.)
- * 
+ *
  * @param value - The value to check
  * @returns true if value is a valid SourceAdapter, false otherwise
- * 
+ *
  * @example
  * ```typescript
  * const jsonData = JSON.parse(input);

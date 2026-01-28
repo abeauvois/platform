@@ -25,6 +25,8 @@ export default defineConfig({
       '@abeauvois/platform-core': resolve(__dirname, '../../packages/platform-core/src/index.ts'),
       '@abeauvois/platform-domain/browser': resolve(__dirname, '../../packages/platform-domain/src/browser.ts'),
       '@abeauvois/platform-domain': resolve(__dirname, '../../packages/platform-domain/src/index.ts'),
+      '@abeauvois/platform-ingestion/browser': resolve(__dirname, '../../packages/platform-ingestion/src/browser.ts'),
+      '@abeauvois/platform-ingestion': resolve(__dirname, '../../packages/platform-ingestion/src/index.ts'),
       '@abeauvois/platform-ui/globals.css': resolve(__dirname, '../../packages/platform-ui/src/styles/globals.css'),
       '@abeauvois/platform-ui': resolve(__dirname, '../../packages/platform-ui/src/index.ts'),
       '@abeauvois/platform-task': resolve(__dirname, '../../packages/platform-task/src/index.ts'),

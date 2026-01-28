@@ -21,6 +21,7 @@ COPY packages/gamification-sdk/package.json ./packages/gamification-sdk/
 COPY packages/platform-auth/package.json ./packages/platform-auth/
 COPY packages/platform-db/package.json ./packages/platform-db/
 COPY packages/platform-domain/package.json ./packages/platform-domain/
+COPY packages/platform-ingestion/package.json ./packages/platform-ingestion/
 COPY packages/platform-sdk/package.json ./packages/platform-sdk/
 COPY packages/platform-task/package.json ./packages/platform-task/
 COPY packages/platform-ui/package.json ./packages/platform-ui/

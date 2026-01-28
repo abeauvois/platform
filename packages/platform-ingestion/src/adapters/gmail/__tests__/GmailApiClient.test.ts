@@ -5,7 +5,7 @@
 
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
 import type { gmail_v1 } from 'googleapis';
-import { GmailApiClient, type GmailCredentials } from '../GmailApiClient';
+import { GmailApiClient, type GmailCredentials } from '../GmailApiClient.js';
 
 // Define mock response types
 type MessagesListResponse = { data: gmail_v1.Schema$ListMessagesResponse };

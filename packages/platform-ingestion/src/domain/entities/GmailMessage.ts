@@ -1,6 +1,6 @@
 /**
  * Domain Entity: GmailMessage
- * 
+ *
  * Represents a Gmail message with core business data.
  * This is a pure domain entity with no external dependencies.
  */

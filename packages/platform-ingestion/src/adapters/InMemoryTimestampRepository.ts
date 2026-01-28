@@ -1,10 +1,4 @@
-/**
- * Port: ITimestampRepository interface
- */
-export interface ITimestampRepository {
-    getLastExecutionTime(): Promise<Date | null>;
-    saveLastExecutionTime(timestamp: Date): Promise<void>;
-}
+import type { ITimestampRepository } from '../domain/ports/ITimestampRepository.js';
 
 /**
  * In-Memory Timestamp Repository
@@ -16,7 +10,7 @@ export class InMemoryTimestampRepository implements ITimestampRepository {
     private readonly timestamps: Map<string, Date> = new Map();
     private readonly defaultKey: string = 'default';
 
-    constructor(private readonly key?: string) {
+    constructor(key?: string) {
         if (key) {
             this.defaultKey = key;
         }

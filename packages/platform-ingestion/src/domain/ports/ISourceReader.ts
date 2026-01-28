@@ -20,5 +20,5 @@ export interface SourceReaderConfig {
  * ingestion workflow (analysis, enrichment, export) - that's the worker's job.
  */
 export interface ISourceReader {
-    read(config: SourceReaderConfig): Promise<BaseContent[]>;
+    read(config: SourceReaderConfig): Promise<Array<BaseContent>>;
 }

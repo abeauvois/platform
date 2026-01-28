@@ -16,7 +16,9 @@
     "types": ["bun-types"],
     "baseUrl": ".",
     "paths": {
-      "@abeauvois/platform-domain": ["../platform-domain/src"]
+      "@abeauvois/platform-domain": ["../platform-domain/src/index.ts"],
+      "@abeauvois/platform-ingestion": ["../platform-ingestion/src/index.ts"],
+      "@abeauvois/platform-ingestion/browser": ["../platform-ingestion/src/browser.ts"]
     }
   },
   "include": ["src/**/*"],

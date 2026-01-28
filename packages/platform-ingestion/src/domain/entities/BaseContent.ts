@@ -1,5 +1,5 @@
-import type { SourceAdapter } from "./SourceAdapter";
-import type { FileType } from "./RawFile";
+import type { SourceAdapter } from "./SourceAdapter.js";
+import type { FileType } from "./RawFile.js";
 
 /**
  * Domain Entity: Represents extracted content with metadata
@@ -8,7 +8,7 @@ export class BaseContent {
     constructor(
         public readonly url: string,
         public readonly sourceAdapter: SourceAdapter = 'None',
-        public readonly tags: string[] = [],
+        public readonly tags: Array<string> = [],
         public readonly summary: string = '',
         public readonly rawContent: string = '',
         public readonly createdAt: Date = new Date(),
@@ -19,7 +19,7 @@ export class BaseContent {
     /**
      * Creates a new BaseContent with updated categorization
      */
-    withCategorization(tags: string[], summary: string): BaseContent {
+    withCategorization(tags: Array<string>, summary: string): BaseContent {
         return new BaseContent(
             this.url,
             this.sourceAdapter,

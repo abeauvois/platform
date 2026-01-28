@@ -1,6 +1,4 @@
-import { BaseContent } from "./BaseContent";
-import type { FileType } from "./RawFile";
-import type { SourceAdapter } from "./SourceAdapter";
+import { BaseContent, type FileType, type SourceAdapter } from '@abeauvois/platform-ingestion';
 
 /**
  * Domain Entity: Represents an extracted email link with metadata
@@ -10,7 +8,7 @@ export class Bookmark implements BaseContent {
         public readonly url: string,
         public readonly userId: string,
         public readonly sourceAdapter: SourceAdapter = 'None',
-        public readonly tags: string[] = [],
+        public readonly tags: Array<string> = [],
         public readonly summary: string = '',
         public readonly rawContent: string = '',
         public readonly createdAt: Date = new Date(),
@@ -22,7 +20,7 @@ export class Bookmark implements BaseContent {
     /**
      * Creates a new Bookmark with updated categorization
      */
-    withCategorization(tags: string[], summary: string): Bookmark {
+    withCategorization(tags: Array<string>, summary: string): Bookmark {
         return new Bookmark(
             this.url,
             this.userId,

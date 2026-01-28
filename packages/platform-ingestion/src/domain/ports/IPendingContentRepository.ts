@@ -18,21 +18,21 @@ export interface IPendingContentRepository {
      * @param contents Array of PendingContent to save
      * @returns Array of saved PendingContent with generated IDs
      */
-    saveMany(contents: PendingContent[]): Promise<PendingContent[]>;
+    saveMany(contents: Array<PendingContent>): Promise<Array<PendingContent>>;
 
     /**
      * Find pending content items for a specific user
      * @param userId The user ID to filter by
      * @returns Array of pending PendingContent items
      */
-    findPendingByUserId(userId: string): Promise<PendingContent[]>;
+    findPendingByUserId(userId: string): Promise<Array<PendingContent>>;
 
     /**
      * Find all pending content items across all users
      * Used by scheduled enrichment task
      * @returns Array of all pending PendingContent items
      */
-    findAllPending(): Promise<PendingContent[]>;
+    findAllPending(): Promise<Array<PendingContent>>;
 
     /**
      * Update the status of a pending content item
@@ -65,5 +65,5 @@ export interface IPendingContentRepository {
      * @param urls Array of URLs to check
      * @returns Set of URLs that already exist
      */
-    existsByUrls(userId: string, urls: string[]): Promise<Set<string>>;
+    existsByUrls(userId: string, urls: Array<string>): Promise<Set<string>>;
 }

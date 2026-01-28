@@ -1,15 +1,9 @@
 import { google, gmail_v1 } from 'googleapis';
-import { GmailMessage } from '@abeauvois/platform-domain';
 import { truncateText } from '@abeauvois/platform-utils';
-import { type IUrlExtractor, UrlExtractor } from './UrlExtractor.js';
-
-/**
- * Port: IEmailClient interface
- * Defined here to avoid circular dependencies with platform-domain
- */
-export interface IEmailClient {
-    fetchMessagesSince(since: Date, filterEmail?: string, withUrl?: boolean): Promise<GmailMessage[]>;
-}
+import { GmailMessage } from '../../domain/entities/GmailMessage.js';
+import type { IEmailClient } from '../../domain/ports/IEmailClient.js';
+import type { IUrlExtractor } from '../../domain/ports/IUrlExtractor.js';
+import { UrlExtractor } from '../UrlExtractor.js';
 
 export interface GmailCredentials {
     clientId: string;
@@ -48,8 +42,8 @@ export class GmailApiClient implements IEmailClient {
      * @param filterEmail - Only fetch messages from this email address
      * @param withUrl - If true, only return messages that contain URLs
      */
-    async fetchMessagesSince(since: Date, filterEmail?: string, withUrl?: boolean): Promise<GmailMessage[]> {
-        const messages: GmailMessage[] = [];
+    async fetchMessagesSince(since: Date, filterEmail?: string, withUrl?: boolean): Promise<Array<GmailMessage>> {
+        const messages: Array<GmailMessage> = [];
         const query = this.buildSearchQuery(since, filterEmail);
 
         try {
@@ -97,7 +91,7 @@ export class GmailApiClient implements IEmailClient {
     /**
      * Get header value by name (case-insensitive)
      */
-    private getHeader(headers: gmail_v1.Schema$MessagePartHeader[], name: string): string {
+    private getHeader(headers: Array<gmail_v1.Schema$MessagePartHeader>, name: string): string {
         const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
         return header?.value || '';
     }
@@ -106,7 +100,7 @@ export class GmailApiClient implements IEmailClient {
      * Build LLM-friendly raw content from message parts
      */
     private buildRawContent(
-        headers: gmail_v1.Schema$MessagePartHeader[],
+        headers: Array<gmail_v1.Schema$MessagePartHeader>,
         payload: gmail_v1.Schema$MessagePart | undefined
     ): { rawContent: string; subject: string } {
         const from = this.getHeader(headers, 'From');
