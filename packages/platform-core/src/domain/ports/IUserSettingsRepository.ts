@@ -1,46 +1,72 @@
 /**
- * User Settings types and repository port
+ * User Settings Repository Port
+ * Supports multi-level settings with namespaced preferences
  */
 
-export type Theme = 'light' | 'dark' | 'system';
+import type {
+    PlatformSettings,
+    SettingsNamespace,
+    UserSettings,
+    UserSettingsUpdate,
+} from '../entities/Settings';
 
-/**
- * User settings domain entity
- */
-export interface UserSettings {
-    userId: string;
-    theme: Theme;
-    locale: string;
-    preferences: Record<string, unknown>;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-/**
- * Data for updating user settings (all fields optional)
- */
-export interface UserSettingsUpdate {
-    theme?: Theme;
-    locale?: string;
-    preferences?: Record<string, unknown>;
-}
+// Re-export types for convenience
+export type { Theme, SettingsNamespace, PlatformSettings, UserSettings, UserSettingsUpdate } from '../entities/Settings';
+export * from '../entities/Settings';
 
 /**
  * Repository port for user settings persistence
  */
 export interface IUserSettingsRepository {
     /**
-     * Find settings by user ID
+     * Find full settings by user ID
      * @param userId - The user's ID
-     * @returns The user settings or null if not found
+     * @returns The complete user settings or null if not found
      */
     findByUserId(userId: string): Promise<UserSettings | null>;
 
     /**
-     * Create or update user settings
+     * Create or update user settings (full update)
      * @param userId - The user's ID
      * @param data - Partial settings to upsert
      * @returns The upserted settings
      */
     upsert(userId: string, data: UserSettingsUpdate): Promise<UserSettings>;
+
+    /**
+     * Get a single namespace's settings
+     * @param userId - The user's ID
+     * @param namespace - The namespace to retrieve (e.g., 'app:dashboard')
+     * @returns The namespace settings or empty object if not found
+     */
+    getNamespace(userId: string, namespace: SettingsNamespace): Promise<Record<string, unknown>>;
+
+    /**
+     * Update platform settings (theme, locale)
+     * @param userId - The user's ID
+     * @param data - Platform settings to update
+     * @returns The updated full settings
+     */
+    updatePlatform(userId: string, data: Partial<PlatformSettings>): Promise<UserSettings>;
+
+    /**
+     * Update a specific namespace's settings (deep merge)
+     * @param userId - The user's ID
+     * @param namespace - The namespace to update (e.g., 'app:dashboard')
+     * @param data - Settings to merge into the namespace
+     * @returns The updated full settings
+     */
+    updateNamespace(
+        userId: string,
+        namespace: SettingsNamespace,
+        data: Record<string, unknown>
+    ): Promise<UserSettings>;
+
+    /**
+     * Reset a namespace to empty (remove all settings for that namespace)
+     * @param userId - The user's ID
+     * @param namespace - The namespace to reset
+     * @returns The updated full settings
+     */
+    resetNamespace(userId: string, namespace: SettingsNamespace): Promise<UserSettings>;
 }

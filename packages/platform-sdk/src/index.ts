@@ -25,9 +25,18 @@ export {
     type ScrapedDataItem,
     type SaveScrapedDataOptions,
     type ListScrapedDataOptions,
+    // Settings types
     type UserSettings,
     type UserSettingsUpdate,
     type Theme,
+    type SettingsNamespace,
+    type PlatformSettings,
+    type DashboardAppSettings,
+    type CliAppSettings,
+    type TradingDomainSettings,
+    type BookmarksDomainSettings,
+    type NamespaceSettingsMap,
+    type KnownNamespace,
 } from './clients/index.js';
 
 // Config Providers (browser-compatible only)
