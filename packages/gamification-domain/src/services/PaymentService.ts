@@ -3,19 +3,19 @@
  * Domain service for payment orchestration
  */
 
-import type { IPaymentRepository } from '../ports/IPaymentRepository.js';
-import type { IPaymentGateway } from '../ports/IPaymentGateway.js';
-import type { IIdGenerator } from '../ports/IIdGenerator.js';
-import type { ICreditRepository } from '../ports/ICreditRepository.js';
+import type { IPaymentRepository } from '../ports/IPaymentRepository';
+import type { IPaymentGateway } from '../ports/IPaymentGateway';
+import type { IIdGenerator } from '../ports/IIdGenerator';
+import type { ICreditRepository } from '../ports/ICreditRepository';
 import type {
     CreatePaymentIntentData,
     PaymentIntent,
     Payment,
-} from '../types.js';
+} from '../types';
 import {
     CREDITS_PER_EUR,
     TIER2_MIN_PURCHASE,
-} from '../types.js';
+} from '../types';
 
 /**
  * Error thrown when a payment operation fails

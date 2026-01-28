@@ -3,7 +3,7 @@
  * Interface for payment record operations
  */
 
-import type { Payment, PaymentStatus } from '../types.js';
+import type { Payment, PaymentStatus } from '../types';
 
 /**
  * Data for creating a payment record

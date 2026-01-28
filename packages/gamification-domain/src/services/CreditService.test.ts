@@ -4,15 +4,15 @@
  */
 
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
-import { CreditService } from './CreditService.js';
-import type { ICreditRepository } from '../ports/ICreditRepository.js';
-import type { CreditBalance, CreditTransaction } from '../types.js';
+import { CreditService } from './CreditService';
+import type { ICreditRepository } from '../ports/ICreditRepository';
+import type { CreditBalance, CreditTransaction } from '../types';
 import {
     FREE_CREDITS,
     DAILY_ACTIVE_COST,
     TRADE_BASE_COST,
     ORDER_THRESHOLD_TIER2,
-} from '../types.js';
+} from '../types';
 
 // Mock repository factory
 function createMockRepository(overrides?: Partial<ICreditRepository>): ICreditRepository {

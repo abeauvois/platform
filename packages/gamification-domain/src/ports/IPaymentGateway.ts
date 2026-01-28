@@ -3,7 +3,7 @@
  * Interface for external payment provider operations
  */
 
-import type { PaymentIntent } from '../types.js';
+import type { PaymentIntent } from '../types';
 
 /**
  * Parameters for creating a payment intent

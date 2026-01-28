@@ -3,5 +3,5 @@
  * Public exports for service classes
  */
 
-export * from './CreditService.js';
-export * from './PaymentService.js';
+export * from './CreditService';
+export * from './PaymentService';

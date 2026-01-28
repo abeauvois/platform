@@ -7,7 +7,7 @@ import type {
     CreditBalance,
     CreditTransaction,
     CreditTransactionType,
-} from '../types.js';
+} from '../types';
 
 /**
  * Data for creating a credit transaction

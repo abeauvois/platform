@@ -3,20 +3,20 @@
  * Domain service for credit-related business logic
  */
 
-import type { ICreditRepository } from '../ports/ICreditRepository.js';
+import type { ICreditRepository } from '../ports/ICreditRepository';
 import type {
     CreditBalance,
     CreditTransaction,
     AccessContext,
     TradeAccessResult,
-} from '../types.js';
+} from '../types';
 import {
     FREE_CREDITS,
     DAILY_ACTIVE_COST,
     TRADE_BASE_COST,
     ORDER_THRESHOLD_TIER2,
     TIER2_MIN_PURCHASE,
-} from '../types.js';
+} from '../types';
 
 /**
  * Error thrown when a credit operation fails

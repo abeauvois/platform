@@ -4,13 +4,13 @@
  */
 
 import { describe, test, expect, beforeEach, mock } from 'bun:test';
-import { PaymentService } from './PaymentService.js';
-import type { IPaymentRepository } from '../ports/IPaymentRepository.js';
-import type { IPaymentGateway } from '../ports/IPaymentGateway.js';
-import type { IIdGenerator } from '../ports/IIdGenerator.js';
-import type { ICreditRepository } from '../ports/ICreditRepository.js';
-import type { Payment, PaymentIntent, CreditBalance } from '../types.js';
-import { CREDITS_PER_EUR, FREE_CREDITS } from '../types.js';
+import { PaymentService } from './PaymentService';
+import type { IPaymentRepository } from '../ports/IPaymentRepository';
+import type { IPaymentGateway } from '../ports/IPaymentGateway';
+import type { IIdGenerator } from '../ports/IIdGenerator';
+import type { ICreditRepository } from '../ports/ICreditRepository';
+import type { Payment, PaymentIntent, CreditBalance } from '../types';
+import { CREDITS_PER_EUR, FREE_CREDITS } from '../types';
 
 // Mock factories
 function createMockPaymentRepo(overrides?: Partial<IPaymentRepository>): IPaymentRepository {
