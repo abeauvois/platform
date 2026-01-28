@@ -15,8 +15,9 @@ This is a Bun-based TypeScript monorepo with workspaces for apps and packages.
 └── cli/              # Command-line interface (cleye)
 
 /packages
+├── platform-core/       # Core domain: settings, logging, config ports (depends on platform-task)
 ├── platform-task/       # Background task abstractions (pg-boss adapters, Task types)
-├── platform-domain/     # Shared domain entities and services (depends on platform-task)
+├── platform-domain/     # Shared domain entities and services (depends on platform-core)
 ├── platform-auth/       # Authentication (better-auth)
 ├── platform-db/         # Database schema (Drizzle ORM + PostgreSQL)
 ├── platform-sdk/        # Platform API client SDK
@@ -81,6 +82,73 @@ const task = await taskService.startTask(userId, request);
 // Returns BackgroundTask with taskId, not "jobId"
 ```
 
+### Multi-Level Settings Architecture
+
+User settings follow a flexible multi-level architecture with namespaced preferences:
+
+- **Platform settings**: Typed columns (`theme`, `locale`) with validation
+- **Namespaced preferences**: JSONB column for app/domain/feature-specific settings
+- **No migrations needed**: New namespaces can be added without schema changes
+
+#### Namespace Convention
+
+Namespaces follow the pattern `{scope}:{name}` where scope is `app`, `domain`, or `feature`:
+
+```json
+{
+  "app:dashboard": { "sidebarCollapsed": true, "defaultView": "grid" },
+  "app:cli": { "outputFormat": "json", "colorEnabled": true },
+  "domain:trading": { "defaultExchange": "binance", "riskLevel": "moderate" },
+  "domain:bookmarks": { "autoEnrich": true, "archiveAfterDays": 90 },
+  "feature:beta": { "enrolled": true }
+}
+```
+
+#### Settings API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/settings` | Full settings (platform + all namespaces) |
+| PATCH | `/api/settings` | Update platform and/or namespaces |
+| GET | `/api/settings/platform` | Platform settings only |
+| PATCH | `/api/settings/platform` | Update theme/locale |
+| GET | `/api/settings/namespace/:ns` | Single namespace settings |
+| PATCH | `/api/settings/namespace/:ns` | Deep merge into namespace |
+| DELETE | `/api/settings/namespace/:ns` | Reset namespace to empty |
+
+#### SDK Usage
+
+```typescript
+import { SettingsClient } from '@abeauvois/platform-sdk';
+
+const settings = new SettingsClient({ baseUrl: 'http://localhost:3000' });
+
+// Platform settings
+const platform = await settings.getPlatform();
+await settings.updatePlatform({ theme: 'dark' });
+
+// Namespace settings (type-safe for known namespaces)
+const dashboard = await settings.getNamespace('app:dashboard');
+await settings.updateNamespace('app:dashboard', { sidebarCollapsed: true });
+
+// Reset a namespace
+await settings.resetNamespace('app:dashboard');
+```
+
+#### Domain Types
+
+Settings types are defined in `@abeauvois/platform-core`:
+
+```typescript
+import type {
+  UserSettings,
+  PlatformSettings,
+  SettingsNamespace,
+  DashboardAppSettings,
+  TradingDomainSettings,
+} from '@abeauvois/platform-core';
+```
+
 ### API Server Structure
 
 The API server (`/apps/api/server`) follows hexagonal architecture:
@@ -89,6 +157,7 @@ The API server (`/apps/api/server`) follows hexagonal architecture:
 /apps/api/server/
 ├── infrastructure/          # Adapters implementing domain ports
 │   ├── DrizzleBackgroundTaskRepository.ts  # IBackgroundTaskRepository
+│   ├── DrizzleUserSettingsRepository.ts    # IUserSettingsRepository
 │   ├── GmailApiClient.ts                   # IEmailClient
 │   ├── InMemoryBookmarkRepository.ts       # ILinkRepository
 │   ├── InMemoryTimestampRepository.ts      # ITimestampRepository
@@ -102,8 +171,11 @@ The API server (`/apps/api/server`) follows hexagonal architecture:
 │       └── workflow.steps.ts # Workflow step implementations
 ├── routes/                  # HTTP API adapters
 │   ├── workflow.routes.ts   # Task-based workflows (async)
-│   └── sources.routes.ts    # Direct source reading (sync)
+│   ├── sources.routes.ts    # Direct source reading (sync)
+│   └── settings.routes.ts   # User settings (platform + namespaces)
 └── validators/              # Request validation (Zod)
+    ├── workflow.validator.ts
+    └── settings.validator.ts
 ```
 
 ### Source Reading Patterns
