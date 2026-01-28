@@ -47,11 +47,14 @@ jobs:
 
       - name: Type checking (packages)
         run: |
+          # Order matters: check packages in dependency order
           bun --bun tsc --noEmit --skipLibCheck -p packages/platform-task/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-core/tsconfig.json
+          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-ingestion/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/platform-domain/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/platform-sdk/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json
-          bun --bun tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json
           bun --bun tsc --noEmit --skipLibCheck -p packages/browser-scraper/tsconfig.json
 
