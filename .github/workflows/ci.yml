@@ -40,26 +40,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Type checking (packages)
-        run: |
-          # Order matters: check packages in dependency order
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-task/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-utils/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-core/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-ingestion/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-domain/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-sdk/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/platform-db/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/cached-http-client/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p packages/browser-scraper/tsconfig.json
-
-      - name: Build packages (required for app typecheck)
+      - name: Build packages first (required for type checking)
         run: bun run build:lib
 
-      - name: Type checking (apps)
-        run: |
-          bunx tsc --noEmit --skipLibCheck -p apps/api/tsconfig.json
-          bunx tsc --noEmit --skipLibCheck -p apps/cli/tsconfig.json
+      - name: Type checking (packages and apps)
+        run: bun run ci:typecheck
 
       - name: Lint dashboard
         working-directory: apps/dashboard
