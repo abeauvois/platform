@@ -685,6 +685,65 @@ When reviewing Dependabot PRs for major version bumps:
 2. If errors occur, search for migration documentation
 3. Update code to match new API before merging
 
+## Release & Package Versioning
+
+This monorepo uses **unified versioning** - all packages share the same version as the platform.
+
+### How It Works
+
+```
+Push to main (with conventional commits)
+    ↓
+release.yml: Calculate version bump based on commit types
+    ↓
+Sync all package.json files to new version
+    ↓
+Commit version bump [skip ci]
+    ↓
+Create GitHub Release (e.g., v1.5.0)
+    ↓
+publish-packages.yml triggers automatically
+    ↓
+Publish all packages to GitHub Packages (@abeauvois/*)
+```
+
+### Version Bump Rules (Conventional Commits)
+
+| Commit Type | Example | Version Bump |
+|-------------|---------|--------------|
+| `feat:` or `feat(scope):` | `feat(auth): add OAuth support` | Minor (1.4.0 → 1.5.0) |
+| `fix:` or `fix(scope):` | `fix(api): resolve timeout issue` | Patch (1.4.0 → 1.4.1) |
+| `BREAKING CHANGE` or `!:` | `feat!: redesign API` | Major (1.4.0 → 2.0.0) |
+| `chore:`, `docs:`, `refactor:` | `chore: update deps` | No release |
+
+### Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `release.yml` | Push to main | Calculate version, sync package.json files, create GitHub Release |
+| `publish-packages.yml` | Release published (or manual) | Build and publish packages to GitHub Packages |
+| `deploy.yml` | Release published (or manual) | Deploy to Railway |
+
+### Manual Triggers
+
+```bash
+# Dry run to preview what version would be created
+gh workflow run release.yml -f dry_run=true
+
+# Manually publish packages (uses versions in package.json)
+gh workflow run publish-packages.yml
+
+# Deploy to staging
+gh workflow run deploy.yml -f app=api -f environment=staging
+```
+
+### Why Unified Versioning?
+
+- **Simplicity**: One version to track across all packages
+- **Compatibility**: All packages at v1.5.0 are guaranteed to work together
+- **Less tooling**: No need for Changesets, Lerna, or complex dependency graphs
+- **Internal focus**: Packages are tightly coupled and consumed together
+
 ## Git Worktree for Parallel Development
 
 Use the worktree script to create isolated environments for parallel PR development:
