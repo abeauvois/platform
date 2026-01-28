@@ -724,6 +724,17 @@ Publish all packages to GitHub Packages (@abeauvois/*)
 | `publish-packages.yml` | Release published (or manual) | Build and publish packages to GitHub Packages |
 | `deploy.yml` | Release published (or manual) | Deploy to Railway |
 
+### Railway Configuration
+
+**Important:** Disable Railway's auto-deploy to avoid duplicate builds:
+1. Railway dashboard → Service → Settings → Source
+2. Turn OFF "Automatic Deployments"
+
+Deployments are managed by `deploy.yml`, not Railway's auto-deploy. This prevents:
+- Duplicate builds for the same commit
+- Builds for version bump commits (`[skip ci]` is ignored by Railway)
+- Wasted build minutes
+
 ### Manual Triggers
 
 ```bash
