@@ -43,7 +43,7 @@ for pkg in "${PACKAGES[@]}"; do
     echo "    $PKG_NAME@$PKG_VERSION already published, skipping..."
   else
     echo "    Publishing $PKG_NAME@$PKG_VERSION..."
-    npm publish
+    bun publish --no-interactive
   fi
 
   cd "$ROOT_DIR"
