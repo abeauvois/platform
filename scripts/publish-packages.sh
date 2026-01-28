@@ -4,17 +4,30 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Packages to publish (in dependency order)
 PACKAGES=(
   "packages/platform-task"
   "packages/platform-env"
+  "packages/platform-core"
   "packages/platform-auth"
-  "packages/gamification-domain"
+  "packages/platform-db"
+  "packages/platform-utils"
+  "packages/cached-http-client"
+  "packages/platform-ingestion"
   "packages/platform-domain"
+  "packages/gamification-domain"
   "packages/platform-sdk"
-  "packages/platform-ui"
   "packages/gamification-sdk"
+  "packages/platform-ui"
+  "packages/browser-scraper"
 )
 
+# Build all packages first to resolve workspace dependencies
+echo "==> Building all packages..."
+cd "$ROOT_DIR"
+bun run build
+
+# Now publish each package
 for pkg in "${PACKAGES[@]}"; do
   echo "==> Processing $pkg..."
   cd "$ROOT_DIR/$pkg"
@@ -29,8 +42,7 @@ for pkg in "${PACKAGES[@]}"; do
   if [ "$PUBLISHED_VERSION" = "$PKG_VERSION" ]; then
     echo "    $PKG_NAME@$PKG_VERSION already published, skipping..."
   else
-    echo "    Building and publishing $PKG_NAME@$PKG_VERSION..."
-    bun run build
+    echo "    Publishing $PKG_NAME@$PKG_VERSION..."
     npm publish
   fi
 
