@@ -18,8 +18,7 @@
     "paths": {
       "@abeauvois/platform-core": ["../platform-core/src/index.ts"],
       "@abeauvois/platform-task": ["../platform-task/src/index.ts"],
-      "@abeauvois/platform-ingestion": ["../platform-ingestion/src/index.ts"],
-      "@abeauvois/platform-ingestion/browser": ["../platform-ingestion/src/browser.ts"]
+      "@abeauvois/platform-utils": ["../platform-utils/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

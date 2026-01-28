@@ -1,6 +1,6 @@
-import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@abeauvois/platform-domain';
+import type { ILogger } from '@abeauvois/platform-core';
+import { BaseContent, InMemoryTimestampRepository, type ISourceReader, type SourceReaderConfig } from '@abeauvois/platform-ingestion';
 import { DrizzleBookmarkRepository } from '../DrizzleBookmarkRepository';
-import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository';
 
 // Singleton timestamp repository to persist state across jobs
 const bookmarkTimestampRepo = new InMemoryTimestampRepository('bookmark');
@@ -12,7 +12,7 @@ export function createBookmarkSourceReader(logger: ILogger): ISourceReader | und
     const repository = new DrizzleBookmarkRepository();
 
     return {
-        async read(config: SourceReaderConfig): Promise<BaseContent[]> {
+        async read(config: SourceReaderConfig): Promise<Array<BaseContent>> {
             logger.info('Fetching bookmarks from database...');
 
             // Calculate since timestamp

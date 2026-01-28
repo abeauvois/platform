@@ -1,11 +1,14 @@
-import { BaseContent, type ILogger, type ISourceReader, type SourceReaderConfig } from '@abeauvois/platform-domain';
-import { GmailApiClient } from '../GmailApiClient';
-import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository';
-import { UrlExtractor } from '../UrlExtractor';
+import type { ILogger } from '@abeauvois/platform-core';
+import { BaseContent } from '../../domain/entities/BaseContent.js';
+import type { ISourceReader, SourceReaderConfig } from '../../domain/ports/ISourceReader.js';
+import { GmailApiClient } from './GmailApiClient.js';
+import { InMemoryTimestampRepository } from '../InMemoryTimestampRepository.js';
+import { UrlExtractor } from '../UrlExtractor.js';
 
 // Singleton timestamp repository to persist state across jobs
 const gmailTimestampRepo = new InMemoryTimestampRepository('gmail');
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+
 /**
  * Create a Gmail source reader that fetches real Gmail messages
  */
@@ -28,7 +31,7 @@ export function createGmailSourceReader(logger: ILogger): ISourceReader | undefi
     });
 
     return {
-        async read(config: SourceReaderConfig): Promise<BaseContent[]> {
+        async read(config: SourceReaderConfig): Promise<Array<BaseContent>> {
             logger.info('Fetching Gmail messages...');
 
             // Calculate since timestamp

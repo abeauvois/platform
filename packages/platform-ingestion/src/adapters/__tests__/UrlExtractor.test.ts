@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { UrlExtractor } from '../UrlExtractor';
+import { UrlExtractor } from '../UrlExtractor.js';
 
 describe('UrlExtractor', () => {
     const extractor = new UrlExtractor();

@@ -3,7 +3,7 @@
  * Public exports for port interfaces
  */
 
-export * from './IIdGenerator.js';
-export * from './ICreditRepository.js';
-export * from './IPaymentRepository.js';
-export * from './IPaymentGateway.js';
+export * from './IIdGenerator';
+export * from './ICreditRepository';
+export * from './IPaymentRepository';
+export * from './IPaymentGateway';
