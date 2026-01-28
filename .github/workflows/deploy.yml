@@ -109,7 +109,7 @@ jobs:
 
       - name: Create GitHub Deployment
         id: create-deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const deployment = await github.rest.repos.createDeployment({
@@ -130,7 +130,7 @@ jobs:
             }
 
       - name: Update Deployment Status to In Progress
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.repos.createDeploymentStatus({
@@ -173,7 +173,7 @@ jobs:
 
       - name: Create Health Check Run
         id: create-check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const check = await github.rest.checks.create({
@@ -193,7 +193,7 @@ jobs:
 
       - name: Run Health Checks
         id: health-check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const deployUrl = '${{ steps.deploy.outputs.url }}';
@@ -309,7 +309,7 @@ jobs:
 
       - name: Handle deployment failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const deploymentId = '${{ steps.create-deployment.outputs.deployment_id }}';
