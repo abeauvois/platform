@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-ingestion",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Content ingestion: source reading, normalization, and staging",
   "type": "module",
   "main": "./dist/index.js",

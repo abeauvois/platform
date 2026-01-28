@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-gamification-domain",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Gamification domain layer (entities, ports, services) for credits system",
   "type": "module",
   "main": "./dist/index.js",
