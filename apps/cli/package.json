@@ -1,6 +1,6 @@
 {
   "name": "platform-cli-tool",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "description": "Platform CLI for managing personal data",
   "type": "module",
   "bin": {

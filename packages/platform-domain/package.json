@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-domain",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "description": "Shared domain layer (entities, ports, workflow) for the email links monorepo",
   "type": "module",
   "main": "./dist/index.js",

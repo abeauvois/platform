@@ -1,6 +1,6 @@
 {
   "name": "email-links-monorepo",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "private": true,
   "description": "Monorepo for email link extractor and cached HTTP client library",
   "workspaces": [

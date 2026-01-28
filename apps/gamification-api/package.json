@@ -23,5 +23,5 @@
     "@types/bun": "latest",
     "@types/pg": "^8.15.5"
   },
-  "version": "1.5.3"
+  "version": "1.6.0"
 }
