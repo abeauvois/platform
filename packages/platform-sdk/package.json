@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-sdk",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "type": "module",
   "main": "./dist/platform-sdk/src/index.js",
   "module": "./dist/platform-sdk/src/index.js",
