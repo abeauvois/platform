@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-cached-http-client",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Generic HTTP client with caching, throttling, and retry logic",
   "type": "module",
   "main": "dist/index.js",
