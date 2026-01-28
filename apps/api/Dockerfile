@@ -19,6 +19,7 @@ COPY packages/cached-http-client/package.json ./packages/cached-http-client/
 COPY packages/gamification-domain/package.json ./packages/gamification-domain/
 COPY packages/gamification-sdk/package.json ./packages/gamification-sdk/
 COPY packages/platform-auth/package.json ./packages/platform-auth/
+COPY packages/platform-core/package.json ./packages/platform-core/
 COPY packages/platform-db/package.json ./packages/platform-db/
 COPY packages/platform-domain/package.json ./packages/platform-domain/
 COPY packages/platform-ingestion/package.json ./packages/platform-ingestion/
@@ -36,10 +37,12 @@ FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build packages first
+# Build packages first (order matters for dependencies)
+RUN cd packages/platform-core && bun run build || true
 RUN cd packages/cached-http-client && bun run build || true
 RUN cd packages/platform-task && bun run build || true
 RUN cd packages/platform-utils && bun run build || true
+RUN cd packages/platform-ingestion && bun run build || true
 RUN cd packages/browser-scraper && bun run build || true
 
 # Build API
