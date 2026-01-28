@@ -1,6 +1,6 @@
 {
   "name": "@abeauvois/platform-sdk-cli",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
